@@ -1,0 +1,5 @@
+/.venv
+/.idea
+/pysiglib/__pycache__
+/pysiglib/.idea
+/examples/__pycache__
