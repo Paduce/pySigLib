@@ -21,5 +21,6 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <utility>
+#include <thread>
 
 #endif //CPPCH_H

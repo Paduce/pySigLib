@@ -440,7 +440,23 @@ namespace cpSigTests
                 1., 1., 1., 0.5, 0.5, 0.5, 0.5,
                 1., 0., 1., 0., 1., -1., 0.5 };
 
-            checkResult(f, path, trueSig, 3, dimension, length, degree, false, false, true);
+            checkResult(f, path, trueSig, 3, dimension, length, degree, false, false, true, false);
+            checkResult(f, path, trueSig, 3, dimension, length, degree, false, false, true, true);
+        }
+
+        TEST_METHOD(BatchSigTestDegree1) {
+            auto f = batchSignature;
+            uint64_t dimension = 2, length = 4, degree = 1;
+            std::vector<double> path = { 0., 0., 0.25, 0.25, 0.5, 0.5, 1., 1.,
+                0., 0., 0.4, 0.4, 0.6, 0.6, 1., 1.,
+                0., 0., 1., 0.5, 4., 0., 0., 1. };
+
+            std::vector<double> trueSig = { 1., 1., 1.,
+                1., 1., 1.,
+                1., 0., 1. };
+
+            checkResult(f, path, trueSig, 3, dimension, length, degree, false, false, true, false);
+            checkResult(f, path, trueSig, 3, dimension, length, degree, false, false, true, true);
         }
 
         TEST_METHOD(ManualTimeAugTest) {

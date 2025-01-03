@@ -3,3 +3,8 @@
 /pysiglib/__pycache__
 /pysiglib/.idea
 /examples/__pycache__
+/examples/times_avx_2.pickle
+/examples/signature_times_linear_avx_2.pdf
+/examples/signature_times_linear_avx_2.png
+/examples/signature_times_log_avx_2.pdf
+/examples/signature_times_log_avx_2.png

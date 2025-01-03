@@ -60,7 +60,7 @@ def signature_(path, degree, timeAug = False, leadLag = False, horner = True):
 
     return out
 
-def batchSignature_(path, degree, timeAug = False, leadLag = False, horner = True):
+def batchSignature_(path, degree, timeAug = False, leadLag = False, horner = True, parallel = True):
     batchSize = path.shape[0]
     length = path.shape[1]
     dimension = path.shape[2]
@@ -70,26 +70,26 @@ def batchSignature_(path, degree, timeAug = False, leadLag = False, horner = Tru
         dataPtr = path.ctypes.data_as(POINTER(c_int))
         outPtr = out.ctypes.data_as(POINTER(c_int))
 
-        cpsig.batchSignatureInt.argtypes = (POINTER(c_int), POINTER(c_int), c_int, c_int, c_int, c_int, c_bool, c_bool, c_bool)
-        cpsig.batchSignatureInt(dataPtr, outPtr, batchSize, dimension, length, degree, timeAug, leadLag, horner)
+        cpsig.batchSignatureInt.argtypes = (POINTER(c_int), POINTER(c_int), c_int, c_int, c_int, c_int, c_bool, c_bool, c_bool, c_bool)
+        cpsig.batchSignatureInt(dataPtr, outPtr, batchSize, dimension, length, degree, timeAug, leadLag, horner, parallel)
 
     elif np.issubdtype(path.dtype, np.floating):
         dataPtr = path.ctypes.data_as(POINTER(c_double))
         outPtr = out.ctypes.data_as(POINTER(c_double))
 
-        cpsig.batchSignature.argtypes = (POINTER(c_double), POINTER(c_double), c_int, c_int, c_int, c_int, c_bool, c_bool, c_bool)
-        cpsig.batchSignature(dataPtr, outPtr, batchSize, dimension, length, degree, timeAug, leadLag, horner)
+        cpsig.batchSignature.argtypes = (POINTER(c_double), POINTER(c_double), c_int, c_int, c_int, c_int, c_bool, c_bool, c_bool, c_bool)
+        cpsig.batchSignature(dataPtr, outPtr, batchSize, dimension, length, degree, timeAug, leadLag, horner, parallel)
 
     else:
         raise ValueError("path.dtype must be integer or float, got " + str(path.dtype) + " instead.")
 
     return out
 
-def signature(path, degree, timeAug = False, leadLag = False, horner = True):
+def signature(path, degree, timeAug = False, leadLag = False, horner = True, parallel = True):
     if len(path.shape) == 2:
         return signature_(path, degree, timeAug, leadLag, horner)
     elif len(path.shape) == 3:
-        return batchSignature_(path, degree, timeAug, leadLag, horner)
+        return batchSignature_(path, degree, timeAug, leadLag, horner, parallel)
     else:
         raise ValueError("path.shape must have length 2 or 3, got length " + str(path.shape) + " instead.")
 

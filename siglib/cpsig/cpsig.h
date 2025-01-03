@@ -13,5 +13,5 @@ extern "C" CPSIG_API double getPathElement(double* dataPtr, int dataLength, int 
 
 extern "C" CPSIG_API void signature(double* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true);
 extern "C" CPSIG_API void signatureInt(int* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true);
-extern "C" CPSIG_API void batchSignature(double* path, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true);
-extern "C" CPSIG_API void batchSignatureInt(int* path, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true);
+extern "C" CPSIG_API void batchSignature(double* path, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true, bool parallel = true);
+extern "C" CPSIG_API void batchSignatureInt(int* path, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true, bool parallel = true);

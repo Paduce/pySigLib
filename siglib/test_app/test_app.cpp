@@ -175,40 +175,40 @@ int main()
         return 2;
     }
 
-    using batchSignatureFN = void(__cdecl*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool);
+    using batchSignatureFN = void(__cdecl*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
 
     batchSignatureFN batchSignature = (batchSignatureFN)::GetProcAddress(cpsig, "batchSignature");
     if (signature == NULL) {
         return 2;
     }
 
-    using batchSignatureIntFN = void(__cdecl*)(int*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool);
+    using batchSignatureIntFN = void(__cdecl*)(int*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
 
     batchSignatureIntFN batchSignatureInt = (batchSignatureIntFN)::GetProcAddress(cpsig, "batchSignatureInt");
     if (signature == NULL) {
         return 2;
     }
 
-    //////////////////////////////////////////////
-    // Example Signature
-    //////////////////////////////////////////////
+    ////////////////////////////////////////////////
+    //// Example Signature
+    ////////////////////////////////////////////////
 
-    printExample("Signature");
+    //printExample("Signature");
 
-    uint64_t dimension1 = 5, length1 = 10000, degree1 = 4;
-    std::vector<double> path1 = testData(dimension1, length1);
+    //uint64_t dimension1 = 5, length1 = 10000, degree1 = 4;
+    //std::vector<double> path1 = testData(dimension1, length1);
 
-    std::vector<double> out1;
-    uint64_t data_size1 = polyLength(dimension1, degree1);
-    out1.reserve(data_size1);
+    //std::vector<double> out1;
+    //uint64_t data_size1 = polyLength(dimension1, degree1);
+    //out1.reserve(data_size1);
 
-    for (int i = 0; i < data_size1; i++) {
-        out1.push_back(0.);
-    }
+    //for (int i = 0; i < data_size1; i++) {
+    //    out1.push_back(0.);
+    //}
 
-    timeFunction(1000, signature, path1.data(), out1.data(), dimension1, length1, degree1, false, false, true);
+    //timeFunction(1000, signature, path1.data(), out1.data(), dimension1, length1, degree1, false, false, true);
 
-    std::cout << "done\n";
+    //std::cout << "done\n";
 
     ////////////////////////////////////////////////
     //// Example Signature Int
@@ -231,30 +231,51 @@ int main()
 
     //std::cout << "done\n";
 
+    //////////////////////////////////////////////
+    // Example Batch Signature
+    //////////////////////////////////////////////
+
+    printExample("Batch Signature");
+
+    uint64_t dimension3 = 10, length3 = 100, degree3 = 5, batch3 = 100;
+    std::vector<double> data3;
+    uint64_t sz3 = batch3 * dimension3 * length3;
+    for (uint64_t i = 0; i < sz3; ++i) data3.push_back((double)i);
+
+
+    std::vector<double> result3;
+    uint64_t data_size3 = polyLength(dimension3, degree3) * batch3;
+    result3.reserve(data_size3);
+
+    for (int i = 0; i < data_size3; i++) {
+        result3.push_back(0.);
+    }
+
+    timeFunction(10, batchSignature, data3.data(), result3.data(), batch3, dimension3, length3, degree3, false, false, true, false);
+
+    std::cout << "done\n";
+
     ////////////////////////////////////////////////
-    //// Example Batch Signature
+    //// Example Batch Signature Parallel
     ////////////////////////////////////////////////
 
-    //printExample("Batch Signature");
+    //printExample("Batch Signature Parallel");
 
-    //uint64_t dimension3 = 2, length3 = 4, degree3 = 2;
-    //std::vector<double> data3 = { 0., 0., 0.25, 0.25, 0.5, 0.5, 1., 1.,
-    //    0., 0., 0.4, 0.4, 0.6, 0.6, 1., 1.,
-    //    0., 0., 1., 0.5, 4., 0., 0., 1. };
+    //uint64_t dimension5 = 3, length5 = 10000, degree5 = 5, batch5 = 100;
+    //std::vector<double> data5;
+    //uint64_t sz5 = batch5 * dimension5 * length5;
+    //for (uint64_t i = 0; i < sz5; ++i) data5.push_back((double)i);
 
-    //std::vector<double> trueResult3 = { 1., 1., 1., 0.5, 0.5, 0.5, 0.5,
-    //    1., 1., 1., 0.5, 0.5, 0.5, 0.5,
-    //    1., 0., 1., 0., 1., -1., 0.5 };
 
-    //std::vector<double> result3;
-    //uint64_t data_size3 = polyLength(dimension3, degree3) * 3;
-    //result3.reserve(data_size3);
+    //std::vector<double> result5;
+    //uint64_t data_size5 = polyLength(dimension5, degree5) * batch5;
+    //result3.reserve(data_size5);
 
-    //for (int i = 0; i < data_size3; i++) {
-    //    result3.push_back(0.);
+    //for (int i = 0; i < data_size5; i++) {
+    //    result5.push_back(0.);
     //}
 
-    //timeFunction(1, batchSignature, data3.data(), result3.data(), 3, dimension3, length3, degree3, false, false, true);
+    //timeFunction(10, batchSignature, data5.data(), result5.data(), batch5, dimension5, length5, degree5, false, false, true, true);
 
     //std::cout << "done\n";
 

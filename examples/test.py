@@ -15,22 +15,13 @@ plotting_params.set_plotting_params(8, 10, 12)
 AVX = 2
 
 if __name__ == '__main__':
-    X = np.array([[0,5],[0,2],[5,2],[5,4],[2,4],[2,9],[4,9]]) #0 5 2 4 9
-    print(X[:,0])
-    s = iisignature.sig(X,3)
-    stringg = ""
-    for a in s:
-        stringg += str(a) + ", "
-    print(stringg)
-    raise
-
     sig.cpsig_hello_world(5)
     sig.cusig_hello_world(5)
     print("\n")
-    X = np.random.uniform(size = (32, 128, 4)).astype("double")
+    X = np.random.uniform(size = (32, 128, 6)).astype("double")
     torchX = torch.tensor(X)
 
-    N = 50
+    N = 2
 
     def timeiisig(degree):
         best_time = float('inf')
@@ -47,7 +38,7 @@ if __name__ == '__main__':
         best_time = float('inf')
         for i in range(N):
             start = timeit.default_timer()
-            sig.signature(X, degree, horner = horner)
+            sig.signature(X, degree, horner = horner, parallel = False)
             end = timeit.default_timer()
             time_ = end - start
             if time_ < best_time:

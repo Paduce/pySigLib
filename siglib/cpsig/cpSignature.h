@@ -128,7 +128,7 @@ void signatureHorner_(Path<T>& path, double* out, uint64_t degree)
 		for (uint64_t i = 0UL; i < dimension; ++i)
 			increments[i] = nextPt[i] - prevPt[i];
 
-		for (int64_t targetLevel = degree; targetLevel > 0UL; --targetLevel) {
+		for (int64_t targetLevel = degree; targetLevel > 1UL; --targetLevel) {
 
 			double oneOverLevel = 1. / targetLevel;
 			const uint64_t targetLevelSize = levelIndex[targetLevel + 1UL] - levelIndex[targetLevel];
@@ -139,7 +139,7 @@ void signatureHorner_(Path<T>& path, double* out, uint64_t degree)
 				hornerStep[i] = increments[i] * oneOverLevel;
 
 			for (int64_t leftLevel = 1UL, rightLevel = targetLevel - 1UL;
-				leftLevel < targetLevel; 
+				leftLevel < targetLevel - 1UL; 
 				++leftLevel, --rightLevel) { //for each, add current leftLevel and times by z / rightLevel
 
 				const uint64_t leftLevelSize = levelIndex[leftLevel + 1UL] - levelIndex[leftLevel];
@@ -163,13 +163,30 @@ void signatureHorner_(Path<T>& path, double* out, uint64_t degree)
 				}
 			}
 
-			//======================
-				//Add on the horner step
-			resultPtr = out + levelIndex[targetLevel];
+			//======================= Do last iteration (leftLevel = targetLevel - 1) separately for speed, and add result straight into out
 
-			for (uint64_t i = 0UL; i < targetLevelSize; ++i, ++resultPtr)
-				*resultPtr += hornerStep[i];
+			const uint64_t leftLevelSize = levelIndex[targetLevel] - levelIndex[targetLevel - 1UL];
+
+			//Horner stuff
+			//Add
+			double* leftPtr = out + levelIndex[targetLevel - 1UL];
+			for (uint64_t i = 0UL; i < leftLevelSize; ++i) {
+				hornerStep[i] += *(leftPtr++);
+			}
+
+			//Multiply and add, writing straight into out
+			double leftOverLevel;
+			resultPtr = out + levelIndex[targetLevel + 1];
+			for (double* leftPtr = hornerStep + leftLevelSize - 1UL; leftPtr != hornerStep - 1UL; --leftPtr) {
+				leftOverLevel = (*leftPtr);
+				for (double* rightPtr = increments + dimension - 1UL; rightPtr != increments - 1UL; --rightPtr) {
+					*(--resultPtr) += (*leftPtr) * (*rightPtr); //no oneOverLevel here, as rightLevel = 1
+				}
+			}
 		}
+		//Update targetLevel == 1
+		for (uint64_t i = 0; i < dimension; ++i)
+			out[i + 1] += increments[i];
 	}
 	ALIGNED_FREE(increments);
 	ALIGNED_FREE(hornerStep);
@@ -180,24 +197,25 @@ template<typename T>
 void signature_(T* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true)
 {
 	if (dimension == 0) { throw std::invalid_argument("signature received path of dimension 0"); }
-	else if (length <= 1) {
+
+	Path<T> pathObj(path, dimension, length, timeAug, leadLag); //Work with pathObj to capture timeAug, leadLag transformations
+
+	if (pathObj.length() <= 1) {
 		out[0] = 1.;
-		uint64_t resultLength = polyLength(dimension, degree);
+		uint64_t resultLength = polyLength(pathObj.dimension(), degree);
 		std::fill(out + 1, out + resultLength, 0.);
 		return;
 	}
-	else if (degree == 0) { out[0] = 1.; return; }
-	else if (degree == 1) { 
-		Path<T> pathObj(path, dimension, length, timeAug, leadLag);
+	if (degree == 0) { out[0] = 1.; return; }
+	if (degree == 1) {
 		Point<T> firstPt = pathObj.begin();
 		Point<T> lastPt = --pathObj.end();
 		out[0] = 1.;
-		for (uint64_t i = 0; i < dimension; ++i)
+		uint64_t dimension_ = pathObj.dimension();
+		for (uint64_t i = 0; i < dimension_; ++i)
 			out[i + 1] = lastPt[i] - firstPt[i];
 		return; 
 	}
-
-	Path<T> pathObj(path, dimension, length, timeAug, leadLag);
 
 	if (horner)
 		signatureHorner_(pathObj, out, degree);
@@ -206,13 +224,15 @@ void signature_(T* path, double* out, uint64_t dimension, uint64_t length, uint6
 }
 
 template<typename T>
-void batchSignature_(T* path, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true)
+void batchSignature_(T* path, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true, bool parallel = true)
 {
 	if (dimension == 0) { throw std::invalid_argument("signature received path of dimension 0"); }
 
-	const uint64_t resultLength = polyLength(dimension, degree);
+	Path<T> dummyPathObj(nullptr, dimension, length, timeAug, leadLag); //Work with pathObj to capture timeAug, leadLag transformations
 
-	if (length <= 1) {
+	const uint64_t resultLength = polyLength(dummyPathObj.dimension(), degree);
+
+	if (dummyPathObj.length() <= 1) {
 		double* const outEnd = out + resultLength * batchSize;
 		std::fill(out, outEnd, 0.);
 		for (double* outPtr = out;
@@ -226,7 +246,7 @@ void batchSignature_(T* path, double* out, uint64_t batchSize, uint64_t dimensio
 		std::fill(out, out + batchSize, 1.);
 		return; }
 
-	const uint64_t flatPathLength = dimension * length;
+	const uint64_t flatPathLength = dummyPathObj.dimension() * dummyPathObj.length();
 	T* const dataEnd = path + flatPathLength * batchSize;
 
 	if (degree == 1) {
@@ -234,16 +254,38 @@ void batchSignature_(T* path, double* out, uint64_t batchSize, uint64_t dimensio
 		T* pathPtr;
 		double* outPtr;
 
-		for (pathPtr = path, outPtr = out;
-			pathPtr < dataEnd;
-			pathPtr += flatPathLength, outPtr += resultLength) {
+		if (parallel) {
 
-			Path<T> pathObj(pathPtr, dimension, length, timeAug, leadLag);
-			Point<T> firstPt = pathObj.begin();
-			Point<T> lastPt = --pathObj.end();
-			out[0] = 1.;
-			for (uint64_t i = 0; i < dimension; ++i)
-				outPtr[i + 1] = static_cast<double>(lastPt[i] - firstPt[i]);
+			std::vector<std::thread> workers;
+
+			auto threadFunc = [dimension, length, degree, timeAug, leadLag](T* pathPtr, double* outPtr) {
+				Path<T> pathObj(pathPtr, dimension, length, timeAug, leadLag);
+				Point<T> firstPt = pathObj.begin();
+				Point<T> lastPt = --pathObj.end();
+				outPtr[0] = 1.;
+				for (uint64_t i = 0; i < pathObj.dimension(); ++i)
+					outPtr[i + 1] = static_cast<double>(lastPt[i] - firstPt[i]);
+				};
+
+			for (pathPtr = path, outPtr = out;
+				pathPtr < dataEnd;
+				pathPtr += flatPathLength, outPtr += resultLength) {
+				workers.emplace_back(threadFunc, pathPtr, outPtr);
+			}
+			for (auto& w : workers) w.join();
+		}
+		else {
+			for (pathPtr = path, outPtr = out;
+				pathPtr < dataEnd;
+				pathPtr += flatPathLength, outPtr += resultLength) {
+
+				Path<T> pathObj(pathPtr, dimension, length, timeAug, leadLag);
+				Point<T> firstPt = pathObj.begin();
+				Point<T> lastPt = --pathObj.end();
+				outPtr[0] = 1.;
+				for (uint64_t i = 0; i < pathObj.dimension(); ++i)
+					outPtr[i + 1] = static_cast<double>(lastPt[i] - firstPt[i]);
+			}
 		}
 		return;
 	}
@@ -253,11 +295,29 @@ void batchSignature_(T* path, double* out, uint64_t batchSize, uint64_t dimensio
 	T* pathPtr;
 	double* outPtr;
 
-	for (pathPtr = path, outPtr = out;
-		pathPtr < dataEnd;
-		pathPtr += flatPathLength, outPtr += resultLength) {
+	if (parallel) {
+		std::vector<std::thread> workers;
 
-		Path<T> pathObj(pathPtr, dimension, length, timeAug, leadLag);
-		(*f)(pathObj, outPtr, degree);
+		auto threadFunc = [f, dimension, length, degree, timeAug, leadLag](T* pathPtr, double* outPtr) {
+			Path<T> pathObj(pathPtr, dimension, length, timeAug, leadLag);
+			(*f)(pathObj, outPtr, degree);
+			};
+
+		for (pathPtr = path, outPtr = out;
+			pathPtr < dataEnd;
+			pathPtr += flatPathLength, outPtr += resultLength) {
+
+			workers.emplace_back(threadFunc, pathPtr, outPtr);
+		}
+		for (auto& w : workers) w.join();
+	}
+	else {
+		for (pathPtr = path, outPtr = out;
+			pathPtr < dataEnd;
+			pathPtr += flatPathLength, outPtr += resultLength) {
+
+			Path<T> pathObj(pathPtr, dimension, length, timeAug, leadLag);
+			(*f)(pathObj, outPtr, degree);
+		}
 	}
 }
