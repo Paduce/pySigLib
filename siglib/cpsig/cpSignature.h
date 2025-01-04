@@ -3,6 +3,7 @@
 #include "cpsig.h"
 #include "cpPath.h"
 #include "cpVectorFuncs.h"
+#include "thread_pool.h"
 
 #define AVX
 #define ALIGNMENT 64
@@ -278,9 +279,6 @@ void batchSignature_(T* path, double* out, uint64_t batchSize, uint64_t dimensio
 		double* outPtr;
 
 		if (parallel) {
-
-			std::vector<std::thread> workers;
-
 			auto threadFunc = [dimension, length, degree, timeAug, leadLag](T* pathPtr, double* outPtr) {
 				Path<T> pathObj(pathPtr, dimension, length, timeAug, leadLag);
 				Point<T> firstPt = pathObj.begin();
@@ -290,12 +288,31 @@ void batchSignature_(T* path, double* out, uint64_t batchSize, uint64_t dimensio
 					outPtr[i + 1] = static_cast<double>(lastPt[i] - firstPt[i]);
 				};
 
+			const int maxThreads = getMaxThreads();
+
+			thread_pool<void> pool(maxThreads);
+			pool.start(maxThreads);
+			std::vector<std::packaged_task<void()>> tasks;
+			tasks.reserve(batchSize);
+			std::vector<std::future<void>> results;
+			results.reserve(batchSize);
+
 			for (pathPtr = path, outPtr = out;
 				pathPtr < dataEnd;
 				pathPtr += flatPathLength, outPtr += resultLength) {
-				workers.emplace_back(threadFunc, pathPtr, outPtr);
+
+				tasks.emplace_back(std::bind(threadFunc, pathPtr, outPtr));
 			}
-			for (auto& w : workers) w.join();
+
+			for (auto& t : tasks) {
+				while (!pool.run(t));
+			}
+
+			for (auto& r : results) {
+				r.get();
+			}
+
+			pool.stop();
 		}
 		else {
 			for (pathPtr = path, outPtr = out;
@@ -319,20 +336,36 @@ void batchSignature_(T* path, double* out, uint64_t batchSize, uint64_t dimensio
 	double* outPtr;
 
 	if (parallel) {
-		std::vector<std::thread> workers;
-
 		auto threadFunc = [f, dimension, length, degree, timeAug, leadLag](T* pathPtr, double* outPtr) {
 			Path<T> pathObj(pathPtr, dimension, length, timeAug, leadLag);
 			(*f)(pathObj, outPtr, degree);
 			};
 
+		const int maxThreads = getMaxThreads();
+
+		thread_pool<void> pool(maxThreads);
+		pool.start(maxThreads);
+		std::vector<std::packaged_task<void()>> tasks;
+		tasks.reserve(batchSize);
+		std::vector<std::future<void>> results;
+		results.reserve(batchSize);
+
 		for (pathPtr = path, outPtr = out;
 			pathPtr < dataEnd;
 			pathPtr += flatPathLength, outPtr += resultLength) {
 
-			workers.emplace_back(threadFunc, pathPtr, outPtr);
+			tasks.emplace_back(std::bind(threadFunc, pathPtr, outPtr));
 		}
-		for (auto& w : workers) w.join();
+
+		for (auto& t : tasks) {
+			while (!pool.run(t));
+		}
+
+		for (auto& r : results) {
+			r.get();
+		}
+
+		pool.stop();
 	}
 	else {
 		for (pathPtr = path, outPtr = out;
