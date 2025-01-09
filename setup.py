@@ -17,8 +17,8 @@ class CustomInstall(install):
 
             shutil.copy(cpsig_dll_path, dir_)
             shutil.copy(cusig_dll_path, dir_)
-        else:
-            return
+
+        super().run()
 
 setup(
     name='pysiglib',
