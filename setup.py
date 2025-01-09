@@ -4,16 +4,21 @@ from pathlib import Path
 import shutil
 import os
 
+GETDLL = False
+
 class CustomInstall(install):
     def run(self):
-        parent_dir = Path(__file__).parent
-        dir_ = parent_dir / 'pysiglib'
+        if GETDLL:
+            parent_dir = Path(__file__).parent
+            dir_ = parent_dir / 'pysiglib'
 
-        cusig_dll_path = parent_dir / 'siglib' / 'x64' / 'Release' / 'cusig.dll'
-        cpsig_dll_path = parent_dir / 'siglib' / 'x64' / 'Release' / 'cpsig.dll'
+            cusig_dll_path = parent_dir / 'siglib' / 'x64' / 'Release' / 'cusig.dll'
+            cpsig_dll_path = parent_dir / 'siglib' / 'x64' / 'Release' / 'cpsig.dll'
 
-        shutil.copy(cpsig_dll_path, dir_)
-        shutil.copy(cusig_dll_path, dir_)
+            shutil.copy(cpsig_dll_path, dir_)
+            shutil.copy(cusig_dll_path, dir_)
+        else:
+            return
 
 setup(
     name='pysiglib',
@@ -22,6 +27,6 @@ setup(
     include_package_data=True,
     package_data={'': ['cpsig.dll', 'cusig.dll']},
     cmdclass={
-        'install': CustomInstall,  # Custom install command to modify PATH
+        'install': CustomInstall,
     },
 )
