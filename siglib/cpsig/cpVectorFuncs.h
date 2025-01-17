@@ -1,7 +1,9 @@
 #pragma once
 #include "cppch.h"
+#include "macros.h"
 
-__forceinline void vecMultAdd(double* out, double* other, double scalar, uint64_t size)
+#ifdef AVX
+FORCE_INLINE void vecMultAdd(double* out, double* other, double scalar, uint64_t size)
 {
 	uint64_t firstLoopRemainder = size % 4UL;
 
@@ -41,7 +43,7 @@ __forceinline void vecMultAdd(double* out, double* other, double scalar, uint64_
 	}
 }
 
-__forceinline void vecMultAssign(double* out, double* other, double scalar, uint64_t size) {
+FORCE_INLINE void vecMultAssign(double* out, double* other, double scalar, uint64_t size) {
 	uint64_t firstLoopRemainder = size % 4UL;
 
 	__m256d a;
@@ -73,3 +75,4 @@ __forceinline void vecMultAssign(double* out, double* other, double scalar, uint
 		_mm_store_sd(outPtr, c);
 	}
 }
+#endif

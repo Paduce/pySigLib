@@ -1,11 +1,24 @@
 #pragma once
-#include <cstdint>
+#include "cppch.h"
 
-#ifdef CPSIG_EXPORTS
-#define CPSIG_API __declspec(dllexport)
+#if defined(CPSIG_EXPORTS)
+	#if defined (_MSC_VER)
+		#define CPSIG_API __declspec(dllexport)
+	#elif defined (__GNUC__)
+		#define CPSIG_API __attribute__((visibility("default")))
+	#else
+		#define CPSIG_API
+	#endif
 #else
-#define CPSIG_API __declspec(dllimport)
+	#if defined (_MSC_VER)
+		#define CPSIG_API __declspec(dllimport)
+	#elif defined (__GNUC__)
+		#define CPSIG_API 
+	#else
+		#define CPSIG_API 
+	#endif
 #endif
+
 
 extern "C" {
 

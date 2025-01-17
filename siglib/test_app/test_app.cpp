@@ -1,11 +1,19 @@
 // test_app.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include <Windows.h>
+#if defined(_WIN32)
+    #include <Windows.h>
+    #include <strsafe.h>
+#else
+    #include <stdlib.h>
+    #include <stdio.h>
+    #include <dlfcn.h>
+    #include <float.h>
+#endif
+
 #include <iostream>
 #include <vector>
 #include <string>
-#include <strsafe.h>
 #include <chrono>
 #include <limits>
 
@@ -50,23 +58,24 @@ void timeFunction(int numRuns, FN f, Args... args) {
         auto t1 = high_resolution_clock::now();
         f(args...);
         auto t2 = high_resolution_clock::now();
-
+        std::cout << ".";
         duration<double, std::milli> ms_double = t2 - t1;
         double time = ms_double.count();
         if (time < runningMinTime)
             runningMinTime = time;
     }
 
-    std::cout << "Took " << runningMinTime << "ms\n";
+    std::cout << "\nMin run time: " << runningMinTime << "ms\n";
 }
 
-int main()
-{
-    std::string file_path = __FILE__;
-    std::string dir_path = file_path.substr(0, file_path.rfind("\\"));
-    dir_path = dir_path.substr(0, dir_path.rfind("\\"));
-    dir_path += "\\x64\\Release";
 
+int main(int argc, char* argv[])
+{
+    std::string dir_path(".");
+
+    if (argc >= 2) {
+        dir_path = argv[1];
+    }
 
     //////////////////////////////////////////////
     // Load cpsig
@@ -75,14 +84,17 @@ int main()
 
     std::cout << "Loading cpsig from " << cpsig_path << std::endl;
 
+
+#if defined(_WIN32) && !defined __GNUC__
+
     HMODULE cpsig = ::LoadLibraryA(cpsig_path.c_str());
     if (cpsig == NULL) {
         // failed to load dll
         LPVOID lpMsgBuf;
         LPVOID lpDisplayBuf;
-        DWORD dw = GetLastError();
+        DWORD dw = ::GetLastError();
 
-        FormatMessage(
+        ::FormatMessage(
             FORMAT_MESSAGE_ALLOCATE_BUFFER |
             FORMAT_MESSAGE_FROM_SYSTEM |
             FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -94,21 +106,34 @@ int main()
 
         // Display the error message and exit the process
 
-        lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT,
+        lpDisplayBuf = (LPVOID)::LocalAlloc(LMEM_ZEROINIT,
             (lstrlen((LPCTSTR)lpMsgBuf) + 40) * sizeof(TCHAR));
-        StringCchPrintf((LPTSTR)lpDisplayBuf,
+
+        ::StringCchPrintf((LPTSTR)lpDisplayBuf,
             LocalSize(lpDisplayBuf) / sizeof(TCHAR),
-            TEXT("failed with error %d: %s"),
+            TEXT("Failed with error %d: %s"),
             dw, lpMsgBuf);
-        MessageBox(NULL, (LPCTSTR)lpDisplayBuf, TEXT("Error"), MB_OK);
+
+        //std::cerr << std::string((LPCTSTR)lpDisplayBuf);
 
         LocalFree(lpMsgBuf);
         LocalFree(lpDisplayBuf);
         return 1;
     }
 
-    std::cout << "cpsig loaded\n" << std::endl;
+#else
 
+    // /home/shmelev/Projects/Daniils/pySigLib/siglib/dist/release
+    void* cpsig = dlopen("/home/shmelev/Projects/Daniils/pySigLib/siglib/dist/release/libcpsig.so", RTLD_LAZY | RTLD_DEEPBIND);
+    if (!cpsig) {
+        fputs(dlerror(), stderr);
+        return 1;
+    }
+
+#endif
+
+
+    /*
     //////////////////////////////////////////////
     // Load cusig
     //////////////////////////////////////////////
@@ -149,45 +174,38 @@ int main()
     }
 
     std::cout << "cusig loaded\n" << std::endl;
+    */
 
     //////////////////////////////////////////////
-    // Load functions
+    // Getting functions pointers
     //////////////////////////////////////////////
 
-    using polyLengthFN = uint64_t(__cdecl*)(uint64_t, uint64_t);
+#if defined(_WIN32) && !defined(__GNUC__)
+#define CDECL_ __cdecl
+#else
+#define CDECL_
+#endif
 
-    polyLengthFN polyLength = (polyLengthFN)::GetProcAddress(cpsig, "polyLength");
-    if (polyLength == NULL) {
-        return 2;
-    }
+    using polyLengthFN              = uint64_t(CDECL_*)(uint64_t, uint64_t);
+    using signatureDoubleFN         = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, bool, bool, bool);
+    using signatureInt32FN          = void(CDECL_*)(int*, double*, uint64_t, uint64_t, uint64_t, bool, bool, bool);
+    using batchSignatureDoubleFN    = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
+    using batchSignatureInt32FN     = void(CDECL_*)(int*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
 
-    using signatureDoubleFN = void(__cdecl*)(double*, double*, uint64_t, uint64_t, uint64_t, bool, bool, bool);
+#if defined(_WIN32)
+#define GET_FN_PTR ::GetProcAddress
+#else
+#define GET_FN_PTR dlsym
+#endif
 
-    signatureDoubleFN signatureDouble = (signatureDoubleFN)::GetProcAddress(cpsig, "signatureDouble");
-    if (signatureDouble == NULL) {
-        return 2;
-    }
+#define GET_FN(NAME) NAME ## FN NAME = reinterpret_cast<NAME ## FN>(GET_FN_PTR(cpsig, #NAME)); \
+    if (!NAME) { std::cerr << "Failed to get the address of function " #NAME "\n"; return 2; }
 
-    using signatureInt32FN = void(__cdecl*)(int*, double*, uint64_t, uint64_t, uint64_t, bool, bool, bool);
-
-    signatureInt32FN signatureInt32 = (signatureInt32FN)::GetProcAddress(cpsig, "signatureInt32");
-    if (signatureInt32 == NULL) {
-        return 2;
-    }
-
-    using batchSignatureDoubleFN = void(__cdecl*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
-
-    batchSignatureDoubleFN batchSignatureDouble = (batchSignatureDoubleFN)::GetProcAddress(cpsig, "batchSignatureDouble");
-    if (batchSignatureDouble == NULL) {
-        return 2;
-    }
-
-    using batchSignatureInt32FN = void(__cdecl*)(int*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
-
-    batchSignatureInt32FN batchSignatureInt32 = (batchSignatureInt32FN)::GetProcAddress(cpsig, "batchSignatureInt32");
-    if (batchSignatureInt32 == NULL) {
-        return 2;
-    }
+    GET_FN(polyLength);
+    GET_FN(signatureDouble);
+    GET_FN(signatureInt32);
+    GET_FN(batchSignatureDouble);
+    GET_FN(batchSignatureInt32);
 
     ////////////////////////////////////////////////
     //// Example Signature
@@ -266,18 +284,19 @@ int main()
     uint64_t sz5 = batch5 * dimension5 * length5;
     for (uint64_t i = 0; i < sz5; ++i) data5.push_back((double)i);
 
-
     std::vector<double> result5;
     uint64_t data_size5 = polyLength(dimension5, degree5) * batch5;
+
     result5.reserve(data_size5);
 
     for (int i = 0; i < data_size5; i++) {
         result5.push_back(0.);
     }
 
-    timeFunction(100, batchSignatureDouble, data5.data(), result5.data(), batch5, dimension5, length5, degree5, false, false, true, true);
+    timeFunction(10, batchSignatureDouble, data5.data(), result5.data(), batch5, dimension5, length5, degree5, false, false, true, true);
 
     std::cout << "done\n";
+
 
     ////////////////////////////////////////////////
     //// Example Batch Signature Int

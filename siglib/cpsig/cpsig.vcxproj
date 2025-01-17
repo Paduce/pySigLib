@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -22,14 +22,14 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -99,19 +99,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="cpsig.h" />
-    <ClInclude Include="cpframework.h" />
     <ClInclude Include="cpPath.h" />
     <ClInclude Include="cppch.h" />
     <ClInclude Include="cpSignature.h" />
     <ClInclude Include="cpTensorPoly.h" />
     <ClInclude Include="cpVectorFuncs.h" />
+    <ClInclude Include="macros.h" />
     <ClInclude Include="multithreading.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpPathTransforms.cpp" />
     <ClCompile Include="cpsig.cpp" />
     <ClCompile Include="cpSignature.cpp" />
-    <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="cppch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -120,7 +119,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
-    <None Include="Jamroot.jam" />
+    <None Include="Jamfile.jam" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,6 +1,6 @@
 #pragma once
 #include "cppch.h"
-#include "cpsig.h"
+
 
 inline unsigned int getMaxThreads() {
 	static const unsigned int maxThreads = std::thread::hardware_concurrency();

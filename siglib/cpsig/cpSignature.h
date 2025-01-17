@@ -1,24 +1,17 @@
 #pragma once
 #include "cppch.h"
-#include "cpsig.h"
-#include "cpPath.h"
-#include "cpVectorFuncs.h"
+
 #include "multithreading.h"
 
-#define AVX
-#define ALIGNMENT 64
-
-#if ALIGNMENT>0
-	#define ALIGNED_MALLOC(SZ) std::assume_aligned<ALIGNMENT>(_aligned_malloc(SZ, ALIGNMENT))
-	#define ALIGNED_FREE(P) _aligned_free(P)
-#else
-	#define ALIGNED_MALLOC(SZ) malloc(SZ)
-	#define ALIGNED_FREE(P) free(P)	
+#include "cpPath.h"
+#include "macros.h"
+#ifdef AVX
+#include "cpVectorFuncs.h"
 #endif
 
 
 template<typename T>
-__forceinline void linearSignature_(Point<T>& startPt, Point<T>& endPt, double* out, uint64_t dimension, uint64_t degree, uint64_t* levelIndex)
+FORCE_INLINE void linearSignature_(Point<T>& startPt, Point<T>& endPt, double* out, uint64_t dimension, uint64_t degree, uint64_t* levelIndex)
 {
 	//Computes the signature of a linear segment joining startPt and endPt
 	out[0] = 1.;
@@ -108,6 +101,10 @@ void signatureHorner_(Path<T>& path, double* out, uint64_t degree)
 	++nextPt;
 
 	uint64_t* levelIndex = (uint64_t*)ALIGNED_MALLOC(sizeof(uint64_t) * (degree + 2));
+	if (!levelIndex) {
+		//std::cerr << "Failed to allocate memory for levelIndex." << std::endl;
+		return;
+	}
 	levelIndex[0] = 0UL;
 	for (uint64_t i = 1UL; i <= degree + 1UL; i++)
 		levelIndex[i] = levelIndex[i - 1UL] * dimension + 1UL;
@@ -189,10 +186,8 @@ void signatureHorner_(Path<T>& path, double* out, uint64_t degree)
 				vecMultAdd(resultPtr, increments, *leftPtr, dimension);
 			}
 #else
-			double leftOverLevel;
-			resultPtr = out + levelIndex[targetLevel + 1];
+			double* resultPtr = out + levelIndex[targetLevel + 1];
 			for (double* leftPtr = hornerStep + leftLevelSize - 1UL; leftPtr != hornerStep - 1UL; --leftPtr) {
-				leftOverLevel = (*leftPtr);
 				for (double* rightPtr = increments + dimension - 1UL; rightPtr != increments - 1UL; --rightPtr) {
 					*(--resultPtr) += (*leftPtr) * (*rightPtr); //no oneOverLevel here, as rightLevel = 1
 				}

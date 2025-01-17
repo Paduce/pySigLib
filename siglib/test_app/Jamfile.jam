@@ -1,0 +1,5 @@
+
+exe test_app : test_app.cpp : <threading>multi <warnings>off <warnings-as-errors>off 
+	;
+
+# 

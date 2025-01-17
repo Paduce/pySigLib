@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cpframework.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cppch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -39,11 +36,11 @@
     <ClInclude Include="multithreading.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="macros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="cppch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -62,6 +59,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
-    <None Include="Jamroot.jam" />
+    <None Include="Jamfile.jam" />
   </ItemGroup>
 </Project>

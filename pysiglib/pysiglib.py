@@ -4,16 +4,25 @@ import ctypes
 from ctypes import c_float, c_double, c_int32, c_int64, c_bool, POINTER, cast
 import os
 import sys
+import platform
+
+SYSTEM = platform.system()
 
 dir_ = os.path.dirname(sys.modules['pysiglib'].__file__)
 print(dir_)
 
-cpsig_path = os.path.join(dir_, 'cpsig.dll')
-cusig_path = os.path.join(dir_, 'cusig.dll')
+if SYSTEM == 'Windows':
+    cpsig_path = os.path.join(dir_, 'cpsig.dll')
+    cusig_path = os.path.join(dir_, 'cusig.dll')
 
-#https://github.com/NVIDIA/warp/issues/24
-cpsig = ctypes.CDLL(cpsig_path, winmode = 0)
-cusig = ctypes.CDLL(cusig_path, winmode = 0)
+    #https://github.com/NVIDIA/warp/issues/24
+    cpsig = ctypes.CDLL(cpsig_path, winmode = 0)
+    cusig = ctypes.CDLL(cusig_path, winmode = 0)
+elif SYSTEM == 'Darwin':
+    cpsig_path = os.path.join(dir_, 'cpsig.dll')
+    cpsig = ctypes.CDLL(cpsig_path)
+else:
+    raise Exception("Unsupported OS during pysiglib.py")
 
 def cpsig_hello_world(x):
     cpsig.cpsig_hello_world(x)

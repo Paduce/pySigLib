@@ -16,6 +16,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpsig_unit_testing", "cpsig
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cusig_unit_testing", "cusig_unit_testing\cusig_unit_testing.vcxproj", "{0006BFBA-A34D-4FD1-9401-0088B26F93DC}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{54D27269-836F-405C-A9D3-F04534ED1BD8}"
+	ProjectSection(SolutionItems) = preProject
+		Jamroot.jam = Jamroot.jam
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

@@ -7,22 +7,20 @@
 #ifndef CPPCH_H
 #define CPPCH_H
 
-// add headers that you want to pre-compile here
-#include "cpframework.h"
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>
-#include <cmath>
 #include <vector>
 #include <string>
-#include <type_traits>
 #include <span>
 #include <memory>
 #include <algorithm>
 #include <stdlib.h>
 #include <utility>
 #include <thread>
-#include <immintrin.h>
 #include <functional>
+#ifndef __APPLE__
+#include <immintrin.h>
+#endif
 
 #endif //CPPCH_H
