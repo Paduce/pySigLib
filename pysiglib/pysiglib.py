@@ -19,7 +19,7 @@ if SYSTEM == 'Windows':
     cpsig = ctypes.CDLL(cpsig_path, winmode = 0)
     cusig = ctypes.CDLL(cusig_path, winmode = 0)
 elif SYSTEM == 'Darwin':
-    cpsig_path = os.path.join(dir_, 'cpsig.dll')
+    cpsig_path = os.path.join(dir_, 'libcpsig.dylib')
     cpsig = ctypes.CDLL(cpsig_path)
 else:
     raise Exception("Unsupported OS during pysiglib.py")
