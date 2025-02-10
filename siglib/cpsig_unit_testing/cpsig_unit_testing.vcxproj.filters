@@ -39,6 +39,9 @@
     <ClInclude Include="..\cpsig\cpTensorPoly.h">
       <Filter>Header Files\cpsig</Filter>
     </ClInclude>
+    <ClInclude Include="..\cpsig\cpSigKernel.h">
+      <Filter>Header Files\cpsig</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\cpsig\cppch.cpp">
@@ -55,6 +58,9 @@
     </ClCompile>
     <ClCompile Include="..\cpsig\cpUnitTests.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\cpsig\cpSigKernel.cpp">
+      <Filter>Source Files\cpsig</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

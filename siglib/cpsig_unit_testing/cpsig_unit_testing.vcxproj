@@ -15,12 +15,14 @@
     <ClInclude Include="..\cpsig\cpPath.h" />
     <ClInclude Include="..\cpsig\cppch.h" />
     <ClInclude Include="..\cpsig\cpsig.h" />
+    <ClInclude Include="..\cpsig\cpSigKernel.h" />
     <ClInclude Include="..\cpsig\cpSignature.h" />
     <ClInclude Include="..\cpsig\cpTensorPoly.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\cpsig\cppch.cpp" />
     <ClCompile Include="..\cpsig\cpsig.cpp" />
+    <ClCompile Include="..\cpsig\cpSigKernel.cpp" />
     <ClCompile Include="..\cpsig\cpSignature.cpp" />
     <ClCompile Include="..\cpsig\cpTensorPoly.cpp" />
     <ClCompile Include="..\cpsig\cpUnitTests.cpp" />

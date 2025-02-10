@@ -18,30 +18,36 @@
     <ClInclude Include="cuframework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cupch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cusig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vectoradd.h">
+    <ClInclude Include="cupch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="cupch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cusig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="vectoradd.cu">
       <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="cuSigKernel.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="cuSigKernel.h">
+      <Filter>Header Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="vectoradd.h">
+      <Filter>Header Files</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

@@ -74,6 +74,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <CudaCompile>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -95,12 +98,16 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <CudaCompile>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="cusig.h" />
     <ClInclude Include="cuframework.h" />
     <ClInclude Include="cupch.h" />
-    <ClInclude Include="vectoradd.h" />
+    <CudaCompile Include="cuSigKernel.h" />
+    <CudaCompile Include="vectoradd.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cusig.cpp" />
@@ -111,6 +118,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="cuSigKernel.cu" />
     <CudaCompile Include="vectoradd.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

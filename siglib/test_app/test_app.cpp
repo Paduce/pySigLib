@@ -17,6 +17,8 @@
 #include <chrono>
 #include <limits>
 
+#include "cuda_runtime.h"
+
 std::vector<double> testData(uint64_t dimension, uint64_t length) {
     std::vector<double> data;
     uint64_t data_size = dimension * length;
@@ -133,7 +135,7 @@ int main(int argc, char* argv[])
 #endif
 
 
-    /*
+    
     //////////////////////////////////////////////
     // Load cusig
     //////////////////////////////////////////////
@@ -174,7 +176,7 @@ int main(int argc, char* argv[])
     }
 
     std::cout << "cusig loaded\n" << std::endl;
-    */
+    
 
     //////////////////////////////////////////////
     // Getting functions pointers
@@ -192,20 +194,26 @@ int main(int argc, char* argv[])
     using batchSignatureDoubleFN    = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
     using batchSignatureInt32FN     = void(CDECL_*)(int*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
 
+    using sigKernelDoubleFN = void(CDECL_*)(double*, double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool);
+    using sigKernelDoubleCUDAFN = void(CDECL_*)(double*, double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool);
+
 #if defined(_WIN32)
 #define GET_FN_PTR ::GetProcAddress
 #else
 #define GET_FN_PTR dlsym
 #endif
 
-#define GET_FN(NAME) NAME ## FN NAME = reinterpret_cast<NAME ## FN>(GET_FN_PTR(cpsig, #NAME)); \
+#define GET_FN(NAME, LIBNAME) NAME ## FN NAME = reinterpret_cast<NAME ## FN>(GET_FN_PTR(LIBNAME, #NAME)); \
     if (!NAME) { std::cerr << "Failed to get the address of function " #NAME "\n"; return 2; }
 
-    GET_FN(polyLength);
-    GET_FN(signatureDouble);
-    GET_FN(signatureInt32);
-    GET_FN(batchSignatureDouble);
-    GET_FN(batchSignatureInt32);
+    GET_FN(polyLength, cpsig);
+    GET_FN(signatureDouble, cpsig);
+    GET_FN(signatureInt32, cpsig);
+    GET_FN(batchSignatureDouble, cpsig);
+    GET_FN(batchSignatureInt32, cpsig);
+    GET_FN(sigKernelDouble, cpsig);
+
+    GET_FN(sigKernelDoubleCUDA, cusig);
 
     ////////////////////////////////////////////////
     //// Example Signature
@@ -277,7 +285,7 @@ int main(int argc, char* argv[])
     //// Example Batch Signature Parallel
     ////////////////////////////////////////////////
 
-    printExample("Batch Signature Parallel");
+    /*printExample("Batch Signature Parallel");
 
     uint64_t dimension5 = 10, length5 = 1000, degree5 = 5, batch5 = 100;
     std::vector<double> data5;
@@ -295,7 +303,7 @@ int main(int argc, char* argv[])
 
     timeFunction(10, batchSignatureDouble, data5.data(), result5.data(), batch5, dimension5, length5, degree5, false, false, true, true);
 
-    std::cout << "done\n";
+    std::cout << "done\n";*/
 
 
     ////////////////////////////////////////////////
@@ -319,6 +327,54 @@ int main(int argc, char* argv[])
     //timeFunction(1, batchSignatureInt32, data4.data(), result4.data(), 2, dimension4, length4, degree4, false, false, true);
 
     //std::cout << "done\n";
+
+    //////////////////////////////////////////////
+    // Example Signature Kernel
+    //////////////////////////////////////////////
+
+    printExample("Batch Signature Kernel");
+
+    uint64_t dimension4 = 5, length4 = 1000;
+    std::vector<double> data4;
+	data4.resize(dimension4* length4);
+    for (uint64_t i = 0; i < dimension4 * length4; ++i) data4[i] = (i % 2 ? 0.1 : 0.5);
+
+    double res;
+    //sigKernelDouble(data4.data(), data4.data(), &res, dimension4, length4, length4, 2, 2, false, false);
+
+    timeFunction(10, sigKernelDouble, data4.data(), data4.data(), &res, dimension4, length4, length4, 0, 0, false, false);
+
+    std::cout << res << " done\n";
+
+    //////////////////////////////////////////////
+    // Example Signature Kernel
+    //////////////////////////////////////////////
+
+    printExample("Batch Signature Kernel");
+
+    /*uint64_t dimension4 = 5, length4 = 1000;
+    std::vector<double> data4;
+    data4.resize(dimension4* length4);
+    for (uint64_t i = 0; i < dimension4 * length4; ++i) data4[i] = (i % 2 ? 0.1 : 0.5);*/
+
+    //double res;
+    
+    double* d_a;
+    double* d_out;
+    cudaMalloc(&d_a, sizeof(double) * data4.size());
+    cudaMalloc(&d_out, sizeof(double));
+
+    // Copy data from the host to the device (CPU -> GPU)
+    cudaMemcpy(d_a, data4.data(), sizeof(double) * data4.size(), cudaMemcpyHostToDevice);
+
+    timeFunction(10, sigKernelDoubleCUDA, d_a, d_a, d_out, dimension4, length4, length4, 0, 0, false, false);
+
+    cudaMemcpy(&res, d_out, sizeof(double), cudaMemcpyDeviceToHost);
+
+    cudaFree(d_a);
+    cudaFree(d_out);
+
+    std::cout << res << " done\n";
 
     return 0;
 }

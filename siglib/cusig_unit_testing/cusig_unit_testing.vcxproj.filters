@@ -38,6 +38,12 @@
     <CudaCompile Include="..\cusig\vectoradd.cu">
       <Filter>Source Files\cusig</Filter>
     </CudaCompile>
+    <CudaCompile Include="..\cusig\cuSigKernel.cu">
+      <Filter>Source Files\cusig</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\cusig\cuSigKernel.h">
+      <Filter>Header Files\cusig</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\cusig\cupch.cpp">

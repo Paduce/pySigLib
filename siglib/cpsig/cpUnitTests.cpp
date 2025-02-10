@@ -3,6 +3,7 @@
 #include "cpTensorPoly.h"
 #include "cpPath.h"
 #include "cpSignature.h"
+#include "cpSigKernel.h"
 #include <algorithm>
 #include <random>
 #include <iostream>
@@ -37,6 +38,20 @@ void checkResult(FN f, std::vector<T>& path, std::vector<double>& true_, Args...
         Assert::IsTrue(abs(true_[i] - out[i]) < EPSILON);
 
     Assert::IsTrue(abs( - 1. - out[true_.size()]) < EPSILON);
+}
+
+template<typename FN, typename T, typename... Args>
+void checkResult2(FN f, std::vector<T>& path1, std::vector<T>& path2, std::vector<double>& true_, Args... args) {
+    std::vector<double> out;
+    out.resize(true_.size() + 1); //+1 at the end just to check we don't write more than expected
+    out[true_.size()] = -1.;
+
+    f(path1.data(), path2.data(), out.data(), args...);
+
+    for (uint64_t i = 0; i < true_.size(); ++i)
+        Assert::IsTrue(abs(true_[i] - out[i]) < EPSILON);
+
+    Assert::IsTrue(abs(-1. - out[true_.size()]) < EPSILON);
 }
 
 namespace cpSigTests
@@ -480,6 +495,25 @@ namespace cpSigTests
             std::vector<double> out;
             out.resize(batch * polyLength(dimension * 2, degree));
             f(path.data(), out.data(), batch, dimension, length, degree, false, true, true, false);
+        }
+    };
+
+    TEST_CLASS(sigKernelTest) {
+    public:
+        TEST_METHOD(LinearPathTest) {
+            auto f = sigKernelDouble;
+            uint64_t dimension = 2, length = 3;
+            std::vector<double> path = { 0., 0., 0.5, 0.5, 1.,1. };
+            std::vector<double> trueSig = { 4.256702149748847 };
+            checkResult2(f, path, path, trueSig, dimension, length, length, 2, 2, false, false);
+        }
+
+        TEST_METHOD(ManualTest) {
+            auto f = sigKernelDouble;
+            uint64_t dimension = 3, length = 4;
+            std::vector<double> path = { .9, .5, .8, .5, .3, .0, .0, .2, .6, .4, .0, .2 };
+            std::vector<double> trueSig = { 2.1529809076880486 };
+            checkResult2(f, path, path, trueSig, dimension, length, length, 2, 2, false, false);
         }
     };
 }

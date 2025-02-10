@@ -170,7 +170,7 @@ public:
 	virtual inline void setToIndex(int64_t n) { ptr = path->_data.data() + n * path->_dataDimension; }
 
 	inline T* data() const { return ptr; }
-	virtual inline uint64_t index() const { return static_cast<uint64_t>((ptr - path->_data.data()) / path->_dataDimension); }
+	virtual inline uint64_t index() const { return static_cast<uint64_t>((ptr - path->_data.data()) / path->_dataDimension); } //TODO: this can be heavy in "!=" operators
 
 	bool operator==(const PointImpl& other) const { return path == other.path && index() == other.index(); }
 	bool operator!=(const PointImpl& other) const { return path != other.path || index() != other.index(); }

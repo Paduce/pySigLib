@@ -9,7 +9,18 @@
 
 // add headers that you want to pre-compile here
 #include "cuframework.h"
-#include <vector>
 #include "cuda_runtime.h"
+//#include <cstdint>
+//#include <cstring>
+//#include <stdexcept>
+#include <vector>
+//#include <string>
+//#include <memory>
+#include <algorithm>
+//#include <stdlib.h>
+//#include <utility>
+//#include <functional>
+#include <iostream>
+//#include <thrust/fill.h>
 
 #endif //PCH_H

@@ -88,6 +88,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <FloatingPointModel>Precise</FloatingPointModel>
       <SDLCheck>true</SDLCheck>
+      <AdditionalOptions>/Qvec-report:2 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -101,6 +102,7 @@
     <ClInclude Include="cpsig.h" />
     <ClInclude Include="cpPath.h" />
     <ClInclude Include="cppch.h" />
+    <ClInclude Include="cpSigKernel.h" />
     <ClInclude Include="cpSignature.h" />
     <ClInclude Include="cpTensorPoly.h" />
     <ClInclude Include="cpVectorFuncs.h" />
@@ -110,6 +112,7 @@
   <ItemGroup>
     <ClCompile Include="cpPathTransforms.cpp" />
     <ClCompile Include="cpsig.cpp" />
+    <ClCompile Include="cpSigKernel.cpp" />
     <ClCompile Include="cpSignature.cpp" />
     <ClCompile Include="cppch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

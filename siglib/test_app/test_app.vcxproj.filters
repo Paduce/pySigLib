@@ -15,11 +15,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="test_app.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <None Include="Jamfile.jam" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Jamfile.jam" />
+    <CudaCompile Include="test_app.cpp">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

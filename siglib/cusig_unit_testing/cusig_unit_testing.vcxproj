@@ -14,9 +14,11 @@
     <ClInclude Include="..\cusig\cuframework.h" />
     <ClInclude Include="..\cusig\cupch.h" />
     <ClInclude Include="..\cusig\cusig.h" />
+    <CudaCompile Include="..\cusig\cuSigKernel.h" />
     <ClInclude Include="..\cusig\vectoradd.h" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="..\cusig\cuSigKernel.cu" />
     <CudaCompile Include="..\cusig\vectoradd.cu" />
   </ItemGroup>
   <ItemGroup>
@@ -83,6 +85,9 @@
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <CudaCompile>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -104,6 +109,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <CudaCompile>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
