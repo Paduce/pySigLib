@@ -6,7 +6,7 @@ import os
 import platform
 
 GETDLL = True
-USE_CUDA = False
+USE_CUDA = True
 
 SYSTEM = platform.system()
 if SYSTEM == 'Darwin':

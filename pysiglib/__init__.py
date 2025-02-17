@@ -1,1 +1,1 @@
-from .pysiglib import polyLength, signature
+from .pysiglib import polyLength, signature, sigKernel
