@@ -15,21 +15,29 @@ __global__ void goursatPde(
 	T* path2_ = path2 + blockId * length2 * dimension;
 
 	__shared__ double diagonals[99]; // Three diagonals of length 33 (32 + initial condition) are rotated and reused
+	extern __shared__ double sharedMem[];
+
+	uint64_t sharedMemSize1 = (dyadicOrder1 < 5 ? (1 << (5 - dyadicOrder1)) : 2) * dimension;
+
+	double* diffs1 = sharedMem;
+	double* diffs2 = sharedMem + sharedMemSize1;
 
 	uint64_t numFullRuns = (dyadicLength2 - 1) / 32;
 	uint64_t remainder = (dyadicLength2 - 1) % 32;
 
 	for (int i = 0; i < numFullRuns; ++i)
-		goursatPde32(initialCondition_, diagonals, path1_, path2_, i, 32);
+		goursatPde32(initialCondition_, diagonals, diffs1, diffs2, path1_, path2_, i, 32);
 
 	if (remainder)
-		goursatPde32(initialCondition_, diagonals, path1_, path2_, numFullRuns, remainder);
+		goursatPde32(initialCondition_, diagonals, diffs1, diffs2, path1_, path2_, numFullRuns, remainder);
 }
 
 template<typename T>
 __device__ void goursatPde32(
 	double* initialCondition, //This is the top row of the grid, which will be overwritten to become the bottom row of this grid.
 	double* diagonals,
+	double* diffs1,
+	double* diffs2,
 	T* path1,
 	T* path2,
 	uint64_t iteration,
@@ -50,6 +58,17 @@ __device__ void goursatPde32(
 	if (threadId == 0) {
 		diagonals[prevPrevDiagIdx] = initialCondition[0];
 		diagonals[prevDiagIdx] = initialCondition[1];
+	}
+
+	uint64_t sharedMemSize1 = (dyadicOrder1 < 5 ? (1 << (5 - dyadicOrder1)) : 2) * dimension;
+	uint64_t sharedMemSize2 = (dyadicOrder2 < 5 ? (1 << (5 - dyadicOrder2)) : 1) * dimension; //When we jump in steps of 32 we can never straddle a dyadic boundary, hence 1 not 2 here
+
+	uint64_t path2Start = (iteration * 32) >> dyadicOrder2;
+	uint64_t path2StartIdx = path2Start * dimension;
+
+	if (threadId < sharedMemSize2) {
+		for (uint64_t k = 0; k < dimension; ++k)
+			diffs2[threadId * dimension + k] = path2[path2StartIdx + (threadId + 1) * dimension + k] - path2[path2StartIdx + threadId * dimension + k];
 	}
 
 	__syncthreads();
@@ -77,7 +96,7 @@ __device__ void goursatPde32(
 
 			double deriv = 0;
 			for (uint64_t k = 0; k < dimension; ++k) {
-				deriv += (path1[ii * dimension + k] - path1[(ii - 1) * dimension + k]) * (path2[jj * dimension + k] - path2[(jj - 1) * dimension + k]);
+				deriv += (path1[ii * dimension + k] - path1[(ii - 1) * dimension + k]) * diffs2[(jj - 1 - path2Start) * dimension + k];
 			}
 			deriv *= dyadicFrac;
 			double deriv2 = deriv * deriv * twelth;
@@ -147,7 +166,10 @@ void sigKernelCUDA_(
 	cudaMemcpy(initialCondition, ones, dyadicLength1_ * batchSize_ * sizeof(double), cudaMemcpyHostToDevice);
 	free(ones);
 
-	goursatPde << <batchSize_, 32 >> > (initialCondition, path1, path2);
+	uint64_t sharedMemSize1 = (dyadicOrder1_ < 5 ? (1 << (5 - dyadicOrder1_)) : 2) * dimension_;
+	uint64_t sharedMemSize2 = (dyadicOrder2_ < 5 ? (1 << (5 - dyadicOrder2_)) : 1) * dimension_;
+
+	goursatPde << <batchSize_, 32, (sharedMemSize1 + sharedMemSize2) * sizeof(double) >> > (initialCondition, path1, path2);
 
 	for (uint64_t i = 0; i < batchSize_; ++i)
 		cudaMemcpy(out + i, initialCondition + (i + 1) * dyadicLength1_ - 1, sizeof(double), cudaMemcpyDeviceToDevice);
