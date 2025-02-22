@@ -11,22 +11,22 @@
 
 template<typename T>
 void getSigKernel_(
-	Path<T>& path1,
-	Path<T>& path2,
+	T* path1,
+	T* path2,
+	const uint64_t length1,
+	const uint64_t length2,
+	const uint64_t dimension,
 	double* out,
-	uint64_t dyadicOrder1,
-	uint64_t dyadicOrder2
+	const uint64_t dyadicOrder1,
+	const uint64_t dyadicOrder2
 ) {
-	const uint64_t dimension = path1.dimension();
-	const uint64_t length1 = path1.length();
-	const uint64_t length2 = path2.length();
 
-	Point<T> prevPt1(path1.begin());
-	Point<T> nextPt1(path1.begin());
-	++nextPt1;
+	T* prevPt1(path1);
+	T* nextPt1(path1);
+	nextPt1 += dimension;
 
-	const Point<T> lastPt1(path1.end());
-	const Point<T> lastPt2(path2.end());
+	T* const lastPt1(path1 + dimension * length1);
+	T* const lastPt2(path2 + dimension * length2);
 
 	const double dyadicFrac = 1. / (1ULL << (dyadicOrder1 + dyadicOrder2));
 	const double twelth = 1. / 12;
@@ -52,6 +52,11 @@ void getSigKernel_(
 		throw std::bad_alloc();
 		return;
 	}
+	double* diff2 = (double*)malloc(dimension * sizeof(double));
+	if (!diff2) {
+		throw std::bad_alloc();
+		return;
+	}
 	double* derivTerm1 = (double*)malloc((length2 - 1) * sizeof(double)); // 1.0 + 0.5 * deriv + deriv2
 	if (!derivTerm1) {
 		throw std::bad_alloc();
@@ -68,19 +73,23 @@ void getSigKernel_(
 	double* k21 = k11 + dyadicLength2;
 	double* k22 = k21 + 1;
 
-	for (uint64_t ii = 0; ii < length1 - 1; ++prevPt1, ++nextPt1, ++ii) {
+	for (uint64_t ii = 0; ii < length1 - 1; prevPt1+=dimension, nextPt1 += dimension, ++ii) {
 
 		for (uint64_t k = 0; k < dimension; ++k)
-			diff1[k] = static_cast<double>((nextPt1[k] - prevPt1[k]));
+			diff1[k] = static_cast<double>(nextPt1[k]) - static_cast<double>(prevPt1[k]);
 
-		Point<T> prevPt2(path2.begin());
-		Point<T> nextPt2(path2.begin());
-		++nextPt2;
-		for (uint64_t m = 0; m < length2 - 1; ++prevPt2, ++nextPt2, ++m) {
-			double deriv = 0;
+		T* prevPt2(path2);
+		T* nextPt2(path2);
+		nextPt2 += dimension;
+		for (uint64_t m = 0; m < length2 - 1; prevPt2 += dimension, nextPt2 += dimension, ++m) {
+			//double deriv = 0;
 			for (uint64_t k = 0; k < dimension; ++k) {
-				deriv += diff1[k] * static_cast<double>((nextPt2[k] - prevPt2[k]));
+				diff2[k] = static_cast<double>((nextPt2[k] - prevPt2[k]));
 			}
+			/*for (uint64_t k = 0; k < dimension; ++k) {
+				deriv += diff1[k] * diff2[k];
+			}*/
+			double deriv = dot_product(diff1, diff2, dimension);
 			deriv *= dyadicFrac;
 			double deriv2 = deriv * deriv * twelth;
 			derivTerm1[m] = 1.0 + 0.5 * deriv + deriv2;
@@ -106,6 +115,7 @@ void getSigKernel_(
 	free(derivTerm1);
 	free(derivTerm2);
 	free(diff1);
+	free(diff2);
 	free(pdeGrid);
 }
 
@@ -118,16 +128,10 @@ void sigKernel_(
 	uint64_t length1,
 	uint64_t length2,
 	uint64_t dyadicOrder1,
-	uint64_t dyadicOrder2,
-	bool timeAug = false,
-	bool leadLag = false
+	uint64_t dyadicOrder2
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
-
-	Path<T> pathObj1(path1, dimension, length1, timeAug, leadLag); //Work with pathObj to capture timeAug, leadLag transformations
-	Path<T> pathObj2(path2, dimension, length2, timeAug, leadLag);
-
-	getSigKernel_(pathObj1, pathObj2, out, dyadicOrder1, dyadicOrder2);
+	getSigKernel_(path1, path2, length1, length2, dimension, out, dyadicOrder1, dyadicOrder2);
 }
 
 template<typename T>
@@ -141,8 +145,6 @@ void batchSigKernel_(
 	uint64_t length2,
 	uint64_t dyadicOrder1,
 	uint64_t dyadicOrder2,
-	bool timeAug = false,
-	bool leadLag = false,
 	bool parallel = true
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
@@ -152,9 +154,7 @@ void batchSigKernel_(
 	T* const dataEnd1 = path1 + flatPathLength1 * batchSize;
 
 	auto sigKernelFunc = [&](T* path1Ptr, T* path2Ptr, double* outPtr) {
-		Path<T> pathObj1(path1Ptr, dimension, length1, timeAug, leadLag);
-		Path<T> pathObj2(path2Ptr, dimension, length2, timeAug, leadLag);
-		getSigKernel_(pathObj1, pathObj2, outPtr, dyadicOrder1, dyadicOrder2);
+		getSigKernel_(path1Ptr, path2Ptr, length1, length2, dimension, outPtr, dyadicOrder1, dyadicOrder2);
 		};
 
 	if (parallel) {

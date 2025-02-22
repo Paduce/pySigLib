@@ -75,4 +75,27 @@ FORCE_INLINE void vecMultAssign(double* out, double* other, double scalar, uint6
 		_mm_store_sd(outPtr, c);
 	}
 }
+
+FORCE_INLINE double dot_product(const double* a, const double* b, size_t N) {
+	__m256d sum = _mm256_setzero_pd();
+
+	size_t k = 0;
+	size_t limit = N & ~3UL;
+	for (; k < limit; k += 4) {
+		__m256d va = _mm256_loadu_pd(&a[k]);
+		__m256d vb = _mm256_loadu_pd(&b[k]);
+		sum = _mm256_fmadd_pd(va, vb, sum);
+	}
+
+	double tmp[4];
+	_mm256_storeu_pd(tmp, sum);
+	double out = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+
+	for (; k < N; ++k) {
+		out += a[k] * b[k];
+	}
+
+	return out;
+}
+
 #endif
