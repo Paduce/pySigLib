@@ -194,8 +194,8 @@ int main(int argc, char* argv[])
     using batchSignatureDoubleFN    = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
     using batchSignatureInt32FN     = void(CDECL_*)(int*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
 
-    using sigKernelDoubleFN = void(CDECL_*)(double*, double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
-    using batchSigKernelDoubleFN = void(CDECL_*)(double*, double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+    using sigKernelDoubleFN = void(CDECL_*)(double*, double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, bool);
+    using batchSigKernelDoubleFN = void(CDECL_*)(double*, double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool);
     using sigKernelDoubleCUDAFN = void(CDECL_*)(double*, double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
     using batchSigKernelDoubleCUDAFN = void(CDECL_*)(double*, double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
@@ -338,7 +338,7 @@ int main(int argc, char* argv[])
 
     printExample("Batch Signature Kernel");
 
-    uint64_t dimension4 = 5, length4 = 1000, batch4 = 100;
+    uint64_t dimension4 = 5000, length4 = 100, batch4 = 120;
     std::vector<double> data4;
 	data4.resize(dimension4* length4 * batch4);
     for (uint64_t i = 0; i < dimension4 * length4 * batch4; ++i) data4[i] = (i % 2 ? 0.1 : 0.5);
@@ -346,47 +346,47 @@ int main(int argc, char* argv[])
     double* res = (double*)malloc(batch4 * sizeof(double));
     //batchSigKernelDouble(data4.data(), data4.data(), res, batch4, dimension4, length4, length4, 2, 2);
 
-    timeFunction(10, batchSigKernelDouble, data4.data(), data4.data(), res, batch4, dimension4, length4, length4, 0,0);
+    timeFunction(1, batchSigKernelDouble, data4.data(), data4.data(), res, batch4, dimension4, length4, length4, 0,0, true, true);
 
     /*for (int i = 0; i < batch4; ++i)
         std::cout << res[i] << " done\n";*/
 
     free(res);
 
-    //////////////////////////////////////////////
-    // Example Signature Kernel
-    //////////////////////////////////////////////
+    ////////////////////////////////////////////////
+    //// Example Signature Kernel
+    ////////////////////////////////////////////////
 
-    printExample("Batch Signature Kernel");
+    //printExample("Batch Signature Kernel");
 
-    /*uint64_t dimension4 = 5, length4 = 1000;
-    std::vector<double> data4;
-    data4.resize(dimension4* length4);
-    for (uint64_t i = 0; i < dimension4 * length4; ++i) data4[i] = (i % 2 ? 0.1 : 0.5);*/
+    ///*uint64_t dimension4 = 5, length4 = 1000;
+    //std::vector<double> data4;
+    //data4.resize(dimension4* length4);
+    //for (uint64_t i = 0; i < dimension4 * length4; ++i) data4[i] = (i % 2 ? 0.1 : 0.5);*/
 
-    //double res;
-    
-    double* d_a;
-    double* d_out;
-    cudaMalloc(&d_a, sizeof(double) * data4.size());
-    cudaMalloc(&d_out, sizeof(double) * batch4);
+    ////double res;
+    //
+    //double* d_a;
+    //double* d_out;
+    //cudaMalloc(&d_a, sizeof(double) * data4.size());
+    //cudaMalloc(&d_out, sizeof(double) * batch4);
 
-    double* res2 = (double*)malloc(batch4 * sizeof(double));
+    //double* res2 = (double*)malloc(batch4 * sizeof(double));
 
-    // Copy data from the host to the device (CPU -> GPU)
-    cudaMemcpy(d_a, data4.data(), sizeof(double) * data4.size(), cudaMemcpyHostToDevice);
+    //// Copy data from the host to the device (CPU -> GPU)
+    //cudaMemcpy(d_a, data4.data(), sizeof(double) * data4.size(), cudaMemcpyHostToDevice);
 
-    timeFunction(10, batchSigKernelDoubleCUDA, d_a, d_a, d_out, batch4, dimension4, length4, length4, 0,0);
+    ////timeFunction(1, batchSigKernelDoubleCUDA, d_a, d_a, d_out, batch4, dimension4, length4, length4, 0,0);
 
-    cudaMemcpy(res2, d_out, sizeof(double) * batch4, cudaMemcpyDeviceToHost);
+    //cudaMemcpy(res2, d_out, sizeof(double) * batch4, cudaMemcpyDeviceToHost);
 
-    cudaFree(d_a);
-    cudaFree(d_out);
+    //cudaFree(d_a);
+    //cudaFree(d_out);
 
-    /*for (int i = 0; i < batch4; ++i)
-        std::cout << res2[i] << " done\n";*/
+    ///*for (int i = 0; i < batch4; ++i)
+    //    std::cout << res2[i] << " done\n";*/
 
-    free(res2);
+    //free(res2);
 
     return 0;
 }
