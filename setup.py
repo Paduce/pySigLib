@@ -4,7 +4,7 @@ from pathlib import Path
 import shutil
 import os
 import platform
-from b2_utils import get_b2, build_cpp
+from build_utils import get_b2, build_cpp
 
 GETDLL = True
 USE_CUDA = False

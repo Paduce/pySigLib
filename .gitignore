@@ -1,5 +1,6 @@
 /.venv
 /.idea
+/__pycache__
 /pysiglib/__pycache__
 /pysiglib/.idea
 /examples/__pycache__
@@ -16,3 +17,7 @@
 /dist
 /siglib/cuSigKernel.h
 /profile.ncu-rep
+/b2
+/b2-5.3.2
+/b2-5.3.2.zip
+*.pclprof
