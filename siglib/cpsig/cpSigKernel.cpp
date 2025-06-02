@@ -88,12 +88,6 @@ void sigKernel_(
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
 	getSigKernelPreferSpeed_(gram, length1, length2, dimension, out, dyadicOrder1, dyadicOrder2);
-	/*if (preferSpeedOverMemory) {
-		getSigKernelPreferSpeed_(path1, path2, gram, length1, length2, dimension, out, dyadicOrder1, dyadicOrder2);
-	}
-	else {
-		getSigKernelPreferMemory_(path1, path2, gram, length1, length2, dimension, out, dyadicOrder1, dyadicOrder2);
-	}*/
 }
 
 void batchSigKernel_(
@@ -134,78 +128,7 @@ void batchSigKernel_(
 	return;
 }
 
-//For convenience only
-//extern "C" CPSIG_API void gram_(
-//	double* path1,
-//	double* path2,
-//	double* out,
-//	uint64_t batchSize,
-//	uint64_t dimension,
-//	uint64_t length1,
-//	uint64_t length2
-//) {
-//	double* outPtr = out;
-//
-//	uint64_t flatPath1Length = length1 * dimension;
-//	uint64_t flatPath2Length = length2 * dimension;
-//
-//	double* path1Start = path1;
-//	double* path1End = path1 + flatPath1Length;
-//
-//	double* path2Start = path2;
-//	double* path2End = path2 + flatPath2Length;
-//
-//	for (uint64_t b = 0; b < batchSize; ++b) {
-//
-//		for (double* path1Ptr = path1Start; path1Ptr < path1End - dimension; path1Ptr += dimension) {
-//			for (double* path2Ptr = path2Start; path2Ptr < path2End - dimension; path2Ptr += dimension) {
-//				*(outPtr++) = dot_product(path1Ptr + dimension, path2Ptr + dimension, dimension)
-//					- dot_product(path1Ptr + dimension, path2Ptr, dimension)
-//					- dot_product(path1Ptr, path2Ptr + dimension, dimension)
-//					+ dot_product(path1Ptr, path2Ptr, dimension);
-//			}
-//		}
-//
-//		path1Start += flatPath1Length;
-//		path1End += flatPath1Length;
-//		path2Start += flatPath2Length;
-//		path2End += flatPath2Length;
-//	}
-//}
-
 extern "C" {
-
-	/*CPSIG_API int sigKernelFloat(float* path1, float* path2, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool preferSpeedOverMemory) noexcept {
-		SAFE_CALL(sigKernel_<float>(path1, path2, out, dimension, length1, length2, dyadicOrder1, dyadicOrder2, preferSpeedOverMemory));
-	}
-
-	CPSIG_API int sigKernelDouble(double* path1, double* path2, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool preferSpeedOverMemory) noexcept {
-		SAFE_CALL(sigKernel_<double>(path1, path2, out, dimension, length1, length2, dyadicOrder1, dyadicOrder2, preferSpeedOverMemory));
-	}
-
-	CPSIG_API int sigKernelInt32(int32_t* path1, int32_t* path2, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool preferSpeedOverMemory) noexcept {
-		SAFE_CALL(sigKernel_<int32_t>(path1, path2, out, dimension, length1, length2, dyadicOrder1, dyadicOrder2, preferSpeedOverMemory));
-	}
-
-	CPSIG_API int sigKernelInt64(int64_t* path1, int64_t* path2, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool preferSpeedOverMemory) noexcept {
-		SAFE_CALL(sigKernel_<int64_t>(path1, path2, out, dimension, length1, length2, dyadicOrder1, dyadicOrder2, preferSpeedOverMemory));
-	}
-
-	CPSIG_API int batchSigKernelFloat(float* path1, float* path2, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool parallel, bool preferSpeedOverMemory) noexcept {
-		SAFE_CALL(batchSigKernel_<float>(path1, path2, out, batchSize, dimension, length1, length2, dyadicOrder1, dyadicOrder2, parallel, preferSpeedOverMemory));
-	}
-
-	CPSIG_API int batchSigKernelDouble(double* path1, double* path2, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool parallel, bool preferSpeedOverMemory) noexcept {
-		SAFE_CALL(batchSigKernel_<double>(path1, path2, out, batchSize, dimension, length1, length2, dyadicOrder1, dyadicOrder2, parallel, preferSpeedOverMemory));
-	}
-
-	CPSIG_API int batchSigKernelInt32(int32_t* path1, int32_t* path2, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool parallel, bool preferSpeedOverMemory) noexcept {
-		SAFE_CALL(batchSigKernel_<int32_t>(path1, path2, out, batchSize, dimension, length1, length2, dyadicOrder1, dyadicOrder2, parallel, preferSpeedOverMemory));
-	}
-
-	CPSIG_API int batchSigKernelInt64(int64_t* path1, int64_t* path2, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool parallel, bool preferSpeedOverMemory) noexcept {
-		SAFE_CALL(batchSigKernel_<int64_t>(path1, path2, out, batchSize, dimension, length1, length2, dyadicOrder1, dyadicOrder2, parallel, preferSpeedOverMemory));
-	}*/
 
 	CPSIG_API int sigKernel(double* gram, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2) noexcept {
 		SAFE_CALL(sigKernel_(gram, out, dimension, length1, length2, dyadicOrder1, dyadicOrder2));

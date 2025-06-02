@@ -7,7 +7,7 @@ import platform
 from build_utils import get_b2, build_cpp, build_cusig
 
 GETDLL = True
-USE_CUDA = False
+USE_CUDA = True
 
 SYSTEM = platform.system()
 if SYSTEM == 'Darwin':
@@ -27,13 +27,13 @@ class CustomInstall(install):
             dir_ = parent_dir / 'pysiglib'
 
             if SYSTEM == "Windows":
-                cpsig_dll_path = parent_dir / 'siglib' / 'dist' / 'release' / 'cpsig.dll'
+                cpsig_dll_path = parent_dir / 'siglib' / 'x64' / 'Release' / 'cpsig.dll'
                 shutil.copy(cpsig_dll_path, dir_)
                 if USE_CUDA:
-                    cusig_dll_path = parent_dir / 'siglib' / 'dist' / 'release' / 'cusig.dll'
+                    cusig_dll_path = parent_dir / 'siglib' / 'x64' / 'Release' / 'cusig.dll'
                     shutil.copy(cusig_dll_path, dir_)
             elif SYSTEM == "Darwin":
-                cpsig_dll_path = parent_dir / 'siglib' / 'dist' / 'release' / 'libcpsig.dylib'
+                cpsig_dll_path = parent_dir / 'siglib' / 'x64' / 'Release' / 'libcpsig.dylib'
                 shutil.copy(cpsig_dll_path, dir_)
             else:
                 raise Exception("Unsupported OS during setup.py")

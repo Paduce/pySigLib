@@ -330,32 +330,38 @@ def sigKernel_(data, gram):
         raise Exception(errMsg[errCode] + " in sigKernel")
     return data.out
 
-def sigKernelCUDA_(data):
-    errCode = 0
-    if data.dtype == "int32":
-        cusig.batchSigKernelInt32CUDA.argtypes = (
-        POINTER(c_int32), POINTER(c_int32), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
-        cusig.batchSigKernelInt32CUDA.restype = c_int64
-        errCode = cusig.batchSigKernelInt32CUDA(data.dataPtr1, data.dataPtr2, data.outPtr, data.batchSize, data.dimension,
-                                       data.length1, data.length2, data.dyadicOrder1, data.dyadicOrder2)
-    elif data.dtype == "int64":
-        cusig.batchSigKernelInt64CUDA.argtypes = (
-        POINTER(c_int64), POINTER(c_int64), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
-        cusig.batchSigKernelInt64CUDA.restype = c_int64
-        errCode = cusig.batchSigKernelInt64CUDA(data.dataPtr1, data.dataPtr2, data.outPtr, data.batchSize, data.dimension,
-                                       data.length1, data.length2, data.dyadicOrder1, data.dyadicOrder2)
-    elif data.dtype == "float32":
-        cusig.batchSigKernelFloatCUDA.argtypes = (
-        POINTER(c_float), POINTER(c_float), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
-        cusig.batchSigKernelFloatCUDA.restype = c_int64
-        errCode = cusig.batchSigKernelFloatCUDA(data.dataPtr1, data.dataPtr2, data.outPtr, data.batchSize, data.dimension,
-                                       data.length1, data.length2, data.dyadicOrder1, data.dyadicOrder2)
-    elif data.dtype == "float64":
-        cusig.batchSigKernelDoubleCUDA.argtypes = (
-        POINTER(c_double), POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
-        cusig.batchSigKernelDoubleCUDA.restype = c_int64
-        errCode = cusig.batchSigKernelDoubleCUDA(data.dataPtr1, data.dataPtr2, data.outPtr, data.batchSize, data.dimension,
-                                       data.length1, data.length2, data.dyadicOrder1, data.dyadicOrder2)
+def sigKernelCUDA_(data, gram):
+    # errCode = 0
+    # if data.dtype == "int32":
+    #     cusig.batchSigKernelInt32CUDA.argtypes = (
+    #     POINTER(c_int32), POINTER(c_int32), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
+    #     cusig.batchSigKernelInt32CUDA.restype = c_int64
+    #     errCode = cusig.batchSigKernelInt32CUDA(data.dataPtr1, data.dataPtr2, data.outPtr, data.batchSize, data.dimension,
+    #                                    data.length1, data.length2, data.dyadicOrder1, data.dyadicOrder2)
+    # elif data.dtype == "int64":
+    #     cusig.batchSigKernelInt64CUDA.argtypes = (
+    #     POINTER(c_int64), POINTER(c_int64), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
+    #     cusig.batchSigKernelInt64CUDA.restype = c_int64
+    #     errCode = cusig.batchSigKernelInt64CUDA(data.dataPtr1, data.dataPtr2, data.outPtr, data.batchSize, data.dimension,
+    #                                    data.length1, data.length2, data.dyadicOrder1, data.dyadicOrder2)
+    # elif data.dtype == "float32":
+    #     cusig.batchSigKernelFloatCUDA.argtypes = (
+    #     POINTER(c_float), POINTER(c_float), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
+    #     cusig.batchSigKernelFloatCUDA.restype = c_int64
+    #     errCode = cusig.batchSigKernelFloatCUDA(data.dataPtr1, data.dataPtr2, data.outPtr, data.batchSize, data.dimension,
+    #                                    data.length1, data.length2, data.dyadicOrder1, data.dyadicOrder2)
+    # elif data.dtype == "float64":
+    #     cusig.batchSigKernelDoubleCUDA.argtypes = (
+    #     POINTER(c_double), POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
+    #     cusig.batchSigKernelDoubleCUDA.restype = c_int64
+    #     errCode = cusig.batchSigKernelDoubleCUDA(data.dataPtr1, data.dataPtr2, data.outPtr, data.batchSize, data.dimension,
+    #                                    data.length1, data.length2, data.dyadicOrder1, data.dyadicOrder2)
+
+    cusig.batchSigKernelCUDA.argtypes = (
+    POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
+    cusig.batchSigKernelCUDA.restype = c_int64
+    errCode = cusig.batchSigKernelCUDA(cast(gram.data_ptr(), POINTER(c_double)), data.outPtr, data.batchSize, data.dimension,
+                                   data.length1, data.length2, data.dyadicOrder1, data.dyadicOrder2)
 
     if errCode:
         raise Exception(errMsg[errCode] + " in sigKernel")
@@ -370,7 +376,14 @@ def sigKernel(path1, path2, dyadicOrder):
         gram = torch.bmm(x1, y1.permute(0,2,1))
         return sigKernel_(data, gram)
     else:
-        return sigKernelCUDA_(data)
+        x1 = path1[:, 1:, :] - path1[:, :-1, :]
+        y1 = path2[:, 1:, :] - path2[:, :-1, :]
+        gram = torch.bmm(x1, y1.permute(0, 2, 1)).to("cuda")
+        return sigKernelCUDA_(data, gram)
+
+#TODO: Loop through, sending a gram matrix of size (32,L) at a time. Every iteration re-populates an
+#TODO: initial condition vector with the final row of the result. This effectively means taking the
+#TODO: loop in goursatPde out into python, and only running one call of goursatPde32 at a time in cpp.
 
 #https://stackoverflow.com/questions/64478880/how-to-pass-this-numpy-array-to-c-with-ctypes
 
