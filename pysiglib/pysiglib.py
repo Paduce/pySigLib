@@ -1,3 +1,4 @@
+from typing import Union
 import numpy as np
 import torch
 import ctypes
@@ -30,7 +31,23 @@ elif SYSTEM == 'Darwin':
 else:
     raise Exception("Unsupported OS during pysiglib.py")
 
-def polyLength(dimension, degree):
+def polyLength(dimension : int, degree : int) -> int:
+    """
+    Returns the length of a truncated signature,
+
+    .. math::
+        \\sum_{i=0}^N d^i = \\frac{d^{N+1} - 1}{d - 1},
+
+    where :math:`d` is the dimension of the underlying path and :math:`N`
+    is the truncation level of the signature.
+
+    :param dimension: Dimension of the undelying path, :math:`d`
+    :type dimension: int
+    :param degree: Truncation level of the signature, :math:`N`
+    :type degree: int
+    :return: Length of a truncated signature
+    :rtype: int
+    """
     cpsig.polyLength.argtypes = (c_int64, c_int64)
     cpsig.polyLength.restype = c_int64
     out = cpsig.polyLength(dimension, degree)
@@ -172,7 +189,41 @@ def batchSignature_(data, timeAug = False, leadLag = False, horner = True, paral
         raise Exception(errMsg[errCode] + " in signature")
     return data.out
 
-def signature(path, degree, timeAug = False, leadLag = False, horner = True, parallel = True):
+def signature(
+        path : Union[np.ndarray, torch.tensor],
+        degree : int,
+        timeAug : bool = False,
+        leadLag : bool = False,
+        horner : bool = True,
+        parallel : bool = True #TODO: change to n_jobs
+) -> Union[np.ndarray, torch.tensor]:
+    """
+    Computes the truncated signature of single path or a batch of paths.
+     For a single path :math:`x`, the signature is given by
+
+    .. math::
+        S(x)_{[s,t]} := \\left( 1, S(x)^{(1)}_{[s,t]}, \\ldots, S(x)^{(N)}_{[s,t]}\\right) \\in T((\\mathbb{R}^d)),
+    .. math::
+        S(x)^{(k)}_{[s,t]} := \\int_{s < t_1 < \\cdots < t_k < t} dx_{t_1} \\otimes dx_{t_2} \\otimes \\cdots \\otimes dx_{t_k} \\in \\left(\\mathbb{R}^d\\right)^{\\otimes k}.
+
+    :param path: The underlying path or batch of paths, given as a `numpy.ndarray` or `torch.tensor`.
+        For a single path, this must be of shape (length, dimension). For a batch of paths, this must
+        be of shape (batch size, length, dimension).
+    :type path: numpy.ndarray | torch.tensor
+    :param degree: The truncation level of the signature, :math:`N`.
+    :type degree: int
+    :param timeAug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
+        defined as the original path with an extra channel set to time, :math:`t`.
+    :type timeAug: bool
+    :param leadLag: If set to True, will compute the signatue of the path after applying the lead-lag transformation.
+    :type leadLag: bool
+    :param horner: If True, will use Horner's algorithm for polynomial multiplication.
+    :type horner: bool
+    :param parallel: If True, will parallelise the computation.
+    :type parallel: bool
+    :return: Truncated signature, or a batch of truncated signatures.
+    :rtype: numpy.ndarray | torch.tensor
+    """
     data = sigDataHandler(path, degree, timeAug, leadLag)
     if data.isBatch:
         return batchSignature_(data, timeAug, leadLag, horner, parallel)
@@ -255,7 +306,39 @@ def sigKernelCUDA_(data, gram):
     return data.out
 
 # @profile
-def sigKernel(path1, path2, dyadicOrder):
+def sigKernel(
+        path1 : Union[np.ndarray, torch.tensor],
+        path2 : Union[np.ndarray, torch.tensor],
+        dyadicOrder : Union[int, tuple] #TODO: add n_jobs
+) -> Union[np.ndarray, torch.tensor]: #TODO: add time-aug and lead-lag
+    """
+    Computes a single signature kernel or a batch of signature kernels.
+    The signature kernel of two :math:`d`-dimensional paths :math:`x,y`
+    is defined as
+
+    .. math::
+        k_{x,y}(s,t) := \\left< S(x)_{[0,s]}, S(y)_{[0, t]} \\right>_{T((\\mathbb{R}^d))}
+
+    where the inner product is defined as
+
+    .. math::
+        \\left< A, B \\right> := \\sum_{k=0}^{\\infty} \\left< A_k, B_k \\right>_{\\left(\\mathbb{R}^d\\right)^{\\otimes k}}
+    .. math::
+        \\left< u, v \\right>_{\\left(\\mathbb{R}^d\\right)^{\\otimes k}} := \\prod_{i=1}^k \\left< u_i, v_i \\right>_{\\mathbb{R}^d}
+
+    :param path1: The first underlying path or batch of paths, given as a `numpy.ndarray` or `torch.tensor`.
+        For a single path, this must be of shape (length, dimension). For a batch of paths, this must
+        be of shape (batch size, length, dimension).
+    :type path1: numpy.ndarray | torch.tensor
+    :param path2: The second underlying path or batch of paths, given as a `numpy.ndarray` or `torch.tensor`.
+        For a single path, this must be of shape (length, dimension). For a batch of paths, this must
+        be of shape (batch size, length, dimension).
+    :type path2: numpy.ndarray | torch.tensor
+    :param dyadicOrder: If set to a positive integer :math:`\\lambda`, will refine the PDE grid by a factor of :math:`2^\\lambda`.
+    :type dyadicOrder: int | tuple
+    :return: Single signature kernel or batch of signature kernels
+    :rtype: numpy.ndarray | torch.tensor
+    """
     data = sigKernelDataHandler(path1, path2, dyadicOrder)
     x1 = path1[:, 1:, :] - path1[:, :-1, :]
     y1 = path2[:, 1:, :] - path2[:, :-1, :]
@@ -265,10 +348,6 @@ def sigKernel(path1, path2, dyadicOrder):
         return sigKernel_(data, gram)
     else:
         return sigKernelCUDA_(data, gram)
-
-#TODO: Loop through, sending a gram matrix of size (32,L) at a time. Every iteration re-populates an
-#TODO: initial condition vector with the final row of the result. This effectively means taking the
-#TODO: loop in goursatPde out into python, and only running one call of goursatPde32 at a time in cpp.
 
 #https://stackoverflow.com/questions/64478880/how-to-pass-this-numpy-array-to-c-with-ctypes
 

@@ -21,3 +21,5 @@
 /b2-5.3.2
 /b2-5.3.2.zip
 *.pclprof
+/docs/_build
+/docs/_templates
