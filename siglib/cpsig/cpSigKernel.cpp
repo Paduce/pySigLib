@@ -3,7 +3,7 @@
 #include "cpSigKernel.h"
 #include "macros.h"
 
-void getSigKernelPreferSpeed_(
+void getSigKernel_(
 	double* gram,
 	const uint64_t length1,
 	const uint64_t length2,
@@ -87,7 +87,7 @@ void sigKernel_(
 	uint64_t dyadicOrder2
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
-	getSigKernelPreferSpeed_(gram, length1, length2, dimension, out, dyadicOrder1, dyadicOrder2);
+	getSigKernel_(gram, length1, length2, dimension, out, dyadicOrder1, dyadicOrder2);
 }
 
 void batchSigKernel_(
@@ -109,7 +109,7 @@ void batchSigKernel_(
 	std::function<void(double*, double*)> sigKernelFunc;
 
 	sigKernelFunc = [&](double* gramPtr, double* outPtr) {
-		getSigKernelPreferSpeed_(gramPtr, length1, length2, dimension, outPtr, dyadicOrder1, dyadicOrder2);
+		getSigKernel_(gramPtr, length1, length2, dimension, outPtr, dyadicOrder1, dyadicOrder2);
 		};
 
 	if (parallel) {
