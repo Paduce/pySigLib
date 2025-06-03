@@ -1,51 +1,59 @@
+from numba.cuda.cudadrv.runtime import Runtime
 from setuptools import find_packages, setup, Extension
 from setuptools.command.install import install
 from pathlib import Path
 import shutil
 import os
 import platform
-from build_utils import get_b2, build_cpp, build_cusig
-
-GETDLL = True
+from build_utils import get_b2, build_cpsig, build_cusig
+#TODO: pass flag during install which controls if cusig is built
+REBUILD = True
 USE_CUDA = True
 
+# Only support Windows, Linux and MacOS
 SYSTEM = platform.system()
+if SYSTEM not in ['Windows', 'Linux', 'Darwin']:
+    raise RuntimeError("Error while installing pySigLib: unsupported system '" + SYSTEM + "'")
+
+# Don't support CUDA on MacOS
 if SYSTEM == 'Darwin':
-    DATA = ['libcpsig.dylib']
+    USE_CUDA = False
+
+# Get lib extension
+if SYSTEM == 'Windows':
+    LIB_EXT = '.dll'
+elif SYSTEM == 'Linux':
+    LIB_EXT = '.so'
 else:
-    DATA = ['cpsig.dll']
-    if USE_CUDA:
-        DATA += ['cusig.dll']
+    LIB_EXT = '.dylib'
+
+# Get lib names
+LIBS = ['cpsig' + LIB_EXT]
+if USE_CUDA:
+    LIBS += ['cusig' + LIB_EXT]
 
 class CustomInstall(install):
     def run(self):
-        if GETDLL:
+        if REBUILD:
             get_b2(SYSTEM)
-            build_cpp()
-            build_cusig()
+            build_cpsig(SYSTEM)
+            if USE_CUDA:
+                build_cusig(SYSTEM)
             parent_dir = Path(__file__).parent
             dir_ = parent_dir / 'pysiglib'
 
-            if SYSTEM == "Windows":
-                cpsig_dll_path = parent_dir / 'siglib' / 'x64' / 'Release' / 'cpsig.dll'
-                shutil.copy(cpsig_dll_path, dir_)
-                if USE_CUDA:
-                    cusig_dll_path = parent_dir / 'siglib' / 'x64' / 'Release' / 'cusig.dll'
-                    shutil.copy(cusig_dll_path, dir_)
-            elif SYSTEM == "Darwin":
-                cpsig_dll_path = parent_dir / 'siglib' / 'x64' / 'Release' / 'libcpsig.dylib'
-                shutil.copy(cpsig_dll_path, dir_)
-            else:
-                raise Exception("Unsupported OS during setup.py")
+            for file in LIBS:
+                path = parent_dir / 'siglib' / 'x64' / 'Release' / file
+                shutil.copy(path, dir_)
 
         super().run()
 
 setup(
     name='pysiglib',
-    version="1.0",
+    version="0.1.0",
     packages=['pysiglib'],
     include_package_data=True,
-    package_data={'': DATA},
+    package_data={'': LIBS},
     cmdclass={
         'install': CustomInstall,
     },
