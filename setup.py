@@ -20,7 +20,7 @@ else:
 class CustomInstall(install):
     def run(self):
         if GETDLL:
-            get_b2()
+            get_b2(SYSTEM)
             build_cpp()
             build_cusig()
             parent_dir = Path(__file__).parent

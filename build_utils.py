@@ -34,7 +34,7 @@ def get_paths():
     DIR = os.getcwd()
     return DIR, VCTOOLSINSTALLDIR, CL_PATH, CUDA_PATH, INCLUDE
 
-def get_b2():
+def get_b2(SYSTEM):
     response = requests.get(b2_url)
     with open(zip_filename, 'wb') as f:
         f.write(response.content)
@@ -45,12 +45,16 @@ def get_b2():
         zip_ref.extractall('.')
 
     os.chdir(zip_foldername)
-    subprocess.run([".\\bootstrap.bat"])
+    if SYSTEM == 'Darwin':
+        subprocess.run(["chmod", "-R", "755", "."])
+        subprocess.run(["./bootstrap.sh"])
+    else:
+        subprocess.run([".\\bootstrap.bat"])
     os.chdir(r'..')
 
     b2_path = os.getcwd() + "\\b2"
     os.chdir(zip_foldername)
-    subprocess.run(["b2", "install", "--prefix=" + b2_path])
+    subprocess.run(["./b2", "install", "--prefix=" + b2_path])
     sys.path.append(b2_path)
 
     os.chdir(r'..')
