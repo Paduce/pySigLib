@@ -11,7 +11,7 @@ from build_utils import get_b2, build_cpsig, build_cusig, get_paths
 #TODO: AVX flag
 USE_AVX = False
 
-REBUILD = False
+REBUILD = True
 USE_CUDA = 'CUDA_PATH' in os.environ
 if 'CUSIG' in os.environ and os.environ['CUSIG'] == 0:
     USE_CUDA = False

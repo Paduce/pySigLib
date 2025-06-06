@@ -6,13 +6,22 @@ from ctypes import c_float, c_double, c_int32, c_int64, c_bool, POINTER, cast
 import os
 import sys
 import platform
+
 from .errorCodes import errMsg
 import warnings
 
 # from line_profiler_pycharm import profile
 
-SYSTEM = platform.system()
-USE_CUDA = True
+try:
+    from ._config import SYSTEM, BUILT_WITH_CUDA, BUILT_WITH_AVX
+except ImportError:
+    SYSTEM = None
+    BUILT_WITH_CUDA = None
+    BUILT_WITH_AVX = None
+    raise RuntimeError("Could not import configuration properties from _config.py - package may not have been built correctly.")
+
+if SYSTEM != platform.system():
+    raise RuntimeError("System on which pySigLib was built does not match the current system - package may not have been built correctly.")
 
 dir_ = os.path.dirname(sys.modules['pysiglib'].__file__)
 print(dir_)
@@ -22,7 +31,7 @@ if SYSTEM == 'Windows':
     #https://github.com/NVIDIA/warp/issues/24
     cpsig = ctypes.CDLL(cpsig_path, winmode = 0)
 
-    if USE_CUDA:
+    if BUILT_WITH_CUDA:
         cusig_path = os.path.join(dir_, 'cusig.dll')
         cusig = ctypes.CDLL(cusig_path, winmode=0)
 elif SYSTEM == 'Darwin':
@@ -347,6 +356,8 @@ def sigKernel(
     if data.device.type == "cpu":
         return sigKernel_(data, gram)
     else:
+        if not BUILT_WITH_CUDA:
+            raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")
         return sigKernelCUDA_(data, gram)
 
 #https://stackoverflow.com/questions/64478880/how-to-pass-this-numpy-array-to-c-with-ctypes
