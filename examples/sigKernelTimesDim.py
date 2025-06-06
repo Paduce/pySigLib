@@ -28,7 +28,7 @@ if __name__ == '__main__':
                 X = dimArr,
                 Ys = [sigkerneltime, pysiglibtime],
                 legend = ["sigkernel", "pysiglib"],
-                title = "Times " + device,
+                title = "Signature Kernels " + device,
                 xlabel = "Path Dimension",
                 ylabel = "Elapsed Time (s)",
                 scale = scale,
