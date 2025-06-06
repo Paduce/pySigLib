@@ -19,6 +19,35 @@
 
 #include "cuda_runtime.h"
 
+const double EPSILON = 1e-5;
+
+template<typename FN, typename T, typename... Args>
+void check_result(FN f, std::vector<T>& path, std::vector<double>& true_, Args... args) {
+    std::vector<double> out;
+    out.resize(true_.size() + 1); //+1 at the end just to check we don't write more than expected
+    out[true_.size()] = -1.;
+
+    T* d_a;
+    double* d_out;
+    cudaMalloc(&d_a, sizeof(T) * path.size());
+    cudaMalloc(&d_out, sizeof(double) * out.size());
+
+    // Copy data from the host to the device (CPU -> GPU)
+    cudaMemcpy(d_a, path.data(), sizeof(T) * path.size(), cudaMemcpyHostToDevice);
+
+    f(d_a, d_out, args...);
+
+    cudaMemcpy(out.data(), d_out, sizeof(double) * true_.size(), cudaMemcpyDeviceToHost);
+
+    cudaFree(d_a);
+    cudaFree(d_out);
+
+    for (uint64_t i = 0; i < true_.size(); ++i)
+        std::cout << true_[i] << " " << out[i] << std::endl;
+
+    std::cout << -1. << " " << out[true_.size()] << std::endl;
+}
+
 double dot_product_(double* a, double* b, int n) {
     double res = 0;
     for (int i = 0; i < n; ++i) {
@@ -31,41 +60,41 @@ void gram_(
     double* path1,
     double* path2,
     double* out,
-    uint64_t batchSize,
+    uint64_t batch_size,
     uint64_t dimension,
     uint64_t length1,
     uint64_t length2
 ) {
-    double* outPtr = out;
+    double* out_ptr = out;
 
-    uint64_t flatPath1Length = length1 * dimension;
-    uint64_t flatPath2Length = length2 * dimension;
+    uint64_t flat_path1_length = length1 * dimension;
+    uint64_t flat_path2_length = length2 * dimension;
 
-    double* path1Start = path1;
-    double* path1End = path1 + flatPath1Length;
+    double* path1_start = path1;
+    double* path1_end = path1 + flat_path1_length;
 
-    double* path2Start = path2;
-    double* path2End = path2 + flatPath2Length;
+    double* path2_start = path2;
+    double* path2_end = path2 + flat_path2_length;
 
-    for (uint64_t b = 0; b < batchSize; ++b) {
+    for (uint64_t b = 0; b < batch_size; ++b) {
 
-        for (double* path1Ptr = path1Start; path1Ptr < path1End - dimension; path1Ptr += dimension) {
-            for (double* path2Ptr = path2Start; path2Ptr < path2End - dimension; path2Ptr += dimension) {
-                *(outPtr++) = dot_product_(path1Ptr + dimension, path2Ptr + dimension, dimension)
-                    - dot_product_(path1Ptr + dimension, path2Ptr, dimension)
-                    - dot_product_(path1Ptr, path2Ptr + dimension, dimension)
-                    + dot_product_(path1Ptr, path2Ptr, dimension);
+        for (double* path1_ptr = path1_start; path1_ptr < path1_end - dimension; path1_ptr += dimension) {
+            for (double* path2_ptr = path2_start; path2_ptr < path2_end - dimension; path2_ptr += dimension) {
+                *(out_ptr++) = dot_product_(path1_ptr + dimension, path2_ptr + dimension, dimension)
+                    - dot_product_(path1_ptr + dimension, path2_ptr, dimension)
+                    - dot_product_(path1_ptr, path2_ptr + dimension, dimension)
+                    + dot_product_(path1_ptr, path2_ptr, dimension);
             }
         }
 
-        path1Start += flatPath1Length;
-        path1End += flatPath1Length;
-        path2Start += flatPath2Length;
-        path2End += flatPath2Length;
+        path1_start += flat_path1_length;
+        path1_end += flat_path1_length;
+        path2_start += flat_path2_length;
+        path2_end += flat_path2_length;
     }
 }
 
-std::vector<double> testData(uint64_t dimension, uint64_t length) {
+std::vector<double> test_data(uint64_t dimension, uint64_t length) {
     std::vector<double> data;
     uint64_t data_size = dimension * length;
     data.reserve(data_size);
@@ -76,7 +105,7 @@ std::vector<double> testData(uint64_t dimension, uint64_t length) {
     return data;
 }
 
-std::vector<int> testDataInt(uint64_t dimension, uint64_t length) {
+std::vector<int> test_data_int(uint64_t dimension, uint64_t length) {
     std::vector<int> data;
     uint64_t data_size = dimension * length;
     data.reserve(data_size);
@@ -94,7 +123,7 @@ void printExample(std::string name) {
 }
 
 template<typename FN, typename... Args>
-void timeFunction(int numRuns, FN f, Args... args) {
+void time_function(int numRuns, FN f, Args... args) {
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
     using std::chrono::duration;
@@ -234,16 +263,16 @@ int main(int argc, char* argv[])
 #define CDECL_
 #endif
 
-    using polyLengthFN              = uint64_t(CDECL_*)(uint64_t, uint64_t);
-    using signatureDoubleFN         = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, bool, bool, bool);
-    using signatureInt32FN          = void(CDECL_*)(int*, double*, uint64_t, uint64_t, uint64_t, bool, bool, bool);
-    using batchSignatureDoubleFN    = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
-    using batchSignatureInt32FN     = void(CDECL_*)(int*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
+    using poly_length_FN              = uint64_t(CDECL_*)(uint64_t, uint64_t);
+    using signature_double_FN         = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, bool, bool, bool);
+    using signature_int32_FN          = void(CDECL_*)(int*, double*, uint64_t, uint64_t, uint64_t, bool, bool, bool);
+    using batch_signature_double_FN   = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
+    using batch_signature_int32_FN    = void(CDECL_*)(int*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
 
-    using sigKernelFN = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, bool);
-    using batchSigKernelFN = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, bool);
-    //using sigKernelDoubleCUDAFN = void(CDECL_*)(double*, double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
-    //using batchSigKernelDoubleCUDAFN = void(CDECL_*)(double*, double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+    using sig_kernel_FN               = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, bool);
+    using batch_sig_kernel_FN         = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, bool);
+    using sig_kernel_cuda_FN          = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+    using batch_sig_kernel_cuda_FN    = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
 #if defined(_WIN32)
 #define GET_FN_PTR ::GetProcAddress
@@ -251,20 +280,19 @@ int main(int argc, char* argv[])
 #define GET_FN_PTR dlsym
 #endif
 
-#define GET_FN(NAME, LIBNAME) NAME ## FN NAME = reinterpret_cast<NAME ## FN>(GET_FN_PTR(LIBNAME, #NAME)); \
+#define GET_FN(NAME, LIBNAME) NAME ## _FN NAME = reinterpret_cast<NAME ## _FN>(GET_FN_PTR(LIBNAME, #NAME)); \
     if (!NAME) { std::cerr << "Failed to get the address of function " #NAME "\n"; return 2; }
 
-    GET_FN(polyLength, cpsig);
-    GET_FN(signatureDouble, cpsig);
-    GET_FN(signatureInt32, cpsig);
-    GET_FN(batchSignatureDouble, cpsig);
-    GET_FN(batchSignatureInt32, cpsig);
-    GET_FN(sigKernel, cpsig);
-    GET_FN(batchSigKernel, cpsig);
-    /*GET_FN(batchSigKernelDouble, cpsig);
+    GET_FN(poly_length, cpsig);
+    GET_FN(signature_double, cpsig);
+    GET_FN(signature_int32, cpsig);
+    GET_FN(batch_signature_double, cpsig);
+    GET_FN(batch_signature_int32, cpsig);
+    GET_FN(sig_kernel, cpsig);
+    GET_FN(batch_sig_kernel, cpsig);
 
-    GET_FN(sigKernelDoubleCUDA, cusig);
-    GET_FN(batchSigKernelDoubleCUDA, cusig);*/
+    GET_FN(sig_kernel_cuda, cusig);
+    GET_FN(batch_sig_kernel_cuda, cusig);
 
     ////////////////////////////////////////////////
     //// Example Signature
@@ -273,17 +301,17 @@ int main(int argc, char* argv[])
     //printExample("Signature");
 
     //uint64_t dimension1 = 5, length1 = 10000, degree1 = 4;
-    //std::vector<double> path1 = testData(dimension1, length1);
+    //std::vector<double> path1 = test_data(dimension1, length1);
 
     //std::vector<double> out1;
-    //uint64_t data_size1 = polyLength(dimension1, degree1);
+    //uint64_t data_size1 = poly_length(dimension1, degree1);
     //out1.reserve(data_size1);
 
     //for (int i = 0; i < data_size1; i++) {
     //    out1.push_back(0.);
     //}
 
-    //timeFunction(1000, signatureDouble, path1.data(), out1.data(), dimension1, length1, degree1, false, false, true);
+    //time_function(1000, signature_double, path1.data(), out1.data(), dimension1, length1, degree1, false, false, true);
 
     //std::cout << "done\n";
 
@@ -294,17 +322,17 @@ int main(int argc, char* argv[])
     //printExample("Signature Int");
 
     //uint64_t dimension2 = dimension1, length2 = length1, degree2 = degree1;
-    //std::vector<int> path2 = testDataInt(dimension2, length2);
+    //std::vector<int> path2 = test_data_int(dimension2, length2);
 
     //std::vector<double> out2;
-    //uint64_t data_size2 = polyLength(dimension2, degree2);
+    //uint64_t data_size2 = poly_length(dimension2, degree2);
     //out2.reserve(data_size2);
 
     //for (int i = 0; i < data_size2; i++) {
     //    out2.push_back(0);
     //}
 
-    //timeFunction(100, signatureInt32, path2.data(), out2.data(), dimension2, length2, degree2, false, false, true);
+    //time_function(100, signature_int32, path2.data(), out2.data(), dimension2, length2, degree2, false, false, true);
 
     //std::cout << "done\n";
 
@@ -321,14 +349,14 @@ int main(int argc, char* argv[])
 
 
     std::vector<double> result3;
-    uint64_t data_size3 = polyLength(dimension3, degree3) * batch3;
+    uint64_t data_size3 = poly_length(dimension3, degree3) * batch3;
     result3.reserve(data_size3);
 
     for (int i = 0; i < data_size3; i++) {
         result3.push_back(0.);
     }
 
-    timeFunction(10, batchSignatureDouble, data3.data(), result3.data(), batch3, dimension3, length3, degree3, false, false, true, false);
+    time_function(10, batch_signature_double, data3.data(), result3.data(), batch3, dimension3, length3, degree3, false, false, true, false);
 
     std::cout << "done\n";*/
 
@@ -344,7 +372,7 @@ int main(int argc, char* argv[])
     for (uint64_t i = 0; i < sz5; ++i) data5.push_back((double)i);
 
     std::vector<double> result5;
-    uint64_t data_size5 = polyLength(dimension5, degree5) * batch5;
+    uint64_t data_size5 = poly_length(dimension5, degree5) * batch5;
 
     result5.reserve(data_size5);
 
@@ -352,7 +380,7 @@ int main(int argc, char* argv[])
         result5.push_back(0.);
     }
 
-    timeFunction(10, batchSignatureDouble, data5.data(), result5.data(), batch5, dimension5, length5, degree5, false, false, true, true);
+    time_function(10, batch_signature_double, data5.data(), result5.data(), batch5, dimension5, length5, degree5, false, false, true, true);
 
     std::cout << "done\n";*/
 
@@ -368,41 +396,41 @@ int main(int argc, char* argv[])
     //    0, 0, 1, 2, 4, 4, 6, 8 };
 
     //std::vector<double> result4;
-    //uint64_t data_size4 = polyLength(dimension4, degree4) * 2;
+    //uint64_t data_size4 = poly_length(dimension4, degree4) * 2;
     //result4.reserve(data_size4);
 
     //for (int i = 0; i < data_size4; i++) {
     //    result4.push_back(0);
     //}
 
-    //timeFunction(1, batchSignatureInt32, data4.data(), result4.data(), 2, dimension4, length4, degree4, false, false, true);
+    //time_function(1, batch_signature_int32, data4.data(), result4.data(), 2, dimension4, length4, degree4, false, false, true);
 
     //std::cout << "done\n";
 
-    //////////////////////////////////////////////
-    // Example Signature Kernel
-    //////////////////////////////////////////////
+ //   //////////////////////////////////////////////
+ //   // Example Signature Kernel
+ //   //////////////////////////////////////////////
 
-    printExample("Batch Signature Kernel");
+ //   printExample("Batch Signature Kernel");
 
-    uint64_t dimension4 = 1000, length4 = 10000, batch4 = 1;
-    std::vector<double> data4;
-	data4.resize(dimension4* length4 * batch4);
-    for (uint64_t i = 0; i < dimension4 * length4 * batch4; ++i) data4[i] = (i % 2 ? 0.1 : 0.5);
+ //   uint64_t dimension4 = 1000, length4 = 10000, batch4 = 1;
+ //   std::vector<double> data4;
+	//data4.resize(dimension4* length4 * batch4);
+ //   for (uint64_t i = 0; i < dimension4 * length4 * batch4; ++i) data4[i] = (i % 2 ? 0.1 : 0.5);
 
-    double* res = (double*)malloc(batch4 * sizeof(double));
-    //batchSigKernelDouble(data4.data(), data4.data(), res, batch4, dimension4, length4, length4, 2, 2);
+ //   double* res = (double*)malloc(batch4 * sizeof(double));
+ //   //batchSigKernelDouble(data4.data(), data4.data(), res, batch4, dimension4, length4, length4, 2, 2);
 
-    std::vector<double> gram(length4 * length4);
+ //   std::vector<double> gram(length4 * length4);
 
-    //gram_(data4.data(), data4.data(), gram.data(), batch4, dimension4, length4, length4);
+ //   //gram_(data4.data(), data4.data(), gram.data(), batch4, dimension4, length4, length4);
 
-    timeFunction(1, batchSigKernel, gram.data(), res, batch4, dimension4, length4, length4, 0,0, true);
+ //   time_function(1, batch_sig_kernel, gram.data(), res, batch4, dimension4, length4, length4, 0,0, true);
 
-    /*for (int i = 0; i < batch4; ++i)
-        std::cout << res[i] << " done\n";*/
+ //   /*for (int i = 0; i < batch4; ++i)
+ //       std::cout << res[i] << " done\n";*/
 
-    free(res);
+ //   free(res);
 
     ////////////////////////////////////////////////
     //// Example Signature Kernel
@@ -410,10 +438,10 @@ int main(int argc, char* argv[])
 
     //printExample("Batch Signature Kernel");
 
-    ///*uint64_t dimension4 = 5, length4 = 1000;
+    //uint64_t dimension4 = 100, length4 = 1000, batch4 = 10;
     //std::vector<double> data4;
     //data4.resize(dimension4* length4);
-    //for (uint64_t i = 0; i < dimension4 * length4; ++i) data4[i] = (i % 2 ? 0.1 : 0.5);*/
+    //for (uint64_t i = 0; i < dimension4 * length4; ++i) data4[i] = (i % 2 ? 0.1 : 0.5);
 
     ////double res;
     //
@@ -427,17 +455,25 @@ int main(int argc, char* argv[])
     //// Copy data from the host to the device (CPU -> GPU)
     //cudaMemcpy(d_a, data4.data(), sizeof(double) * data4.size(), cudaMemcpyHostToDevice);
 
-    ////timeFunction(1, batchSigKernelDoubleCUDA, d_a, d_a, d_out, batch4, dimension4, length4, length4, 0,0);
+    //time_function(1, batch_sig_kernel_cuda, d_a, d_a, d_out, batch4, dimension4, length4, length4, 0,0);
 
     //cudaMemcpy(res2, d_out, sizeof(double) * batch4, cudaMemcpyDeviceToHost);
 
     //cudaFree(d_a);
     //cudaFree(d_out);
 
-    ///*for (int i = 0; i < batch4; ++i)
-    //    std::cout << res2[i] << " done\n";*/
+    //for (int i = 0; i < batch4; ++i)
+    //    std::cout << res2[i] << " done\n";
 
     //free(res2);
+
+    auto f = sig_kernel_cuda;
+    uint64_t dimension = 2, length = 3;
+    std::vector<double> path = { 0., 0., 0.5, 0.5, 1.,1. };
+    std::vector<double> true_sig = { 4.256702149748847 };
+    std::vector<double> gram(length* length);
+    gram_(path.data(), path.data(), gram.data(), 1, dimension, length, length);
+    check_result(f, gram, true_sig, dimension, length, length, 2, 2);
 
     return 0;
 }

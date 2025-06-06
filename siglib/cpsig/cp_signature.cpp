@@ -1,0 +1,53 @@
+#include "cppch.h"
+#include "cpsig.h"
+#include "cp_signature.h"
+#include "macros.h"
+
+
+template<typename T>
+PointImpl<T>* Path<T>::point_impl_factory(uint64_t index) const {
+	if (!_time_aug && !_lead_lag)
+		return new PointImpl(this, index);
+	else if (_time_aug && !_lead_lag)
+		return new PointImplTimeAug(this, index);
+	else if (!_time_aug && _lead_lag)
+		return new PointImplLeadLag(this, index);
+	else
+		return new PointImplTimeAugLeadLag(this, index);
+}
+
+extern "C" {
+
+	CPSIG_API int signature_float(float* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, bool horner) noexcept {
+		SAFE_CALL(signature_<float>(path, out, dimension, length, degree, time_aug, lead_lag, horner));
+	}
+
+	CPSIG_API int signature_double(double* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, bool horner) noexcept {
+		SAFE_CALL(signature_<double>(path, out, dimension, length, degree, time_aug, lead_lag, horner));
+	}
+
+	CPSIG_API int signature_int32(int32_t* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, bool horner) noexcept {
+		SAFE_CALL(signature_<int32_t>(path, out, dimension, length, degree, time_aug, lead_lag, horner));
+	}
+
+	CPSIG_API int signature_int64(int64_t* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, bool horner) noexcept {
+		SAFE_CALL(signature_<int64_t>(path, out, dimension, length, degree, time_aug, lead_lag, horner));
+	}
+
+	CPSIG_API int batch_signature_float(float* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, bool horner, bool parallel) noexcept {
+		SAFE_CALL(batch_signature_<float>(path, out, batch_size, dimension, length, degree, time_aug, lead_lag, horner, parallel));
+	}
+
+	CPSIG_API int batch_signature_double(double* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, bool horner, bool parallel) noexcept {
+		SAFE_CALL(batch_signature_<double>(path, out, batch_size, dimension, length, degree, time_aug, lead_lag, horner, parallel));
+	}
+
+	CPSIG_API int batch_signature_int32(int32_t* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, bool horner, bool parallel) noexcept {
+		SAFE_CALL(batch_signature_<int32_t>(path, out, batch_size, dimension, length, degree, time_aug, lead_lag, horner, parallel));
+	}
+
+	CPSIG_API int batch_signature_int64(int64_t* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, bool horner, bool parallel) noexcept {
+		SAFE_CALL(batch_signature_<int64_t>(path, out, batch_size, dimension, length, degree, time_aug, lead_lag, horner, parallel));
+	}
+
+}

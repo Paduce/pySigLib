@@ -103,7 +103,9 @@ def build_cusig(system):
         raise RuntimeError("Unknown error while building pysiglib: unexpected system '" + system + "' in build_cusig()")
 
 def get_msvc_path():
-    output = subprocess.run(["b2", "toolset=msvc", "--debug-configuration"], capture_output=True, text=True, check=True)
+    os.chdir('siglib')
+    output = subprocess.run(["b2", "toolset=msvc", "--debug-configuration", "-n"], capture_output=True, text=True, check=True)
+    os.chdir('..')
     output = output.stdout
     idx = output.find("[msvc-cfg] msvc-")
     output = output[idx:]

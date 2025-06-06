@@ -55,11 +55,11 @@ def poly_length(dimension : int, degree : int) -> int:
     :return: Length of a truncated signature
     :rtype: int
     """
-    cpsig.polyLength.argtypes = (c_int64, c_int64)
-    cpsig.polyLength.restype = c_int64
-    out = cpsig.polyLength(dimension, degree)
+    cpsig.poly_length.argtypes = (c_int64, c_int64)
+    cpsig.poly_length.restype = c_int64
+    out = cpsig.poly_length(dimension, degree)
     if out == 0:
-        raise Exception("Integer overflow encountered in polyLength")
+        raise Exception("Integer overflow encountered in poly_length")
     return out
 
 class SigDataHandler:
@@ -162,21 +162,21 @@ class SigDataHandler:
 def signature_(data, time_aug = False, lead_lag = False, horner = True):
     err_code = 0
     if data.dtype == "int32":
-        cpsig.signatureInt32.argtypes = (POINTER(c_int32), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
-        cpsig.signatureInt32.restype = c_int64
-        err_code = cpsig.signatureInt32(data.data_ptr, data.out_ptr, data.dimension, data.length, data.degree, time_aug, lead_lag, horner)
+        cpsig.signature_int32.argtypes = (POINTER(c_int32), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
+        cpsig.signature_int32.restype = c_int64
+        err_code = cpsig.signature_int32(data.data_ptr, data.out_ptr, data.dimension, data.length, data.degree, time_aug, lead_lag, horner)
     elif data.dtype == "int64":
-        cpsig.signatureInt64.argtypes = (POINTER(c_int64), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
-        cpsig.signatureInt64.restype = c_int64
-        err_code = cpsig.signatureInt64(data.data_ptr, data.out_ptr, data.dimension, data.length, data.degree, time_aug, lead_lag, horner)
+        cpsig.signature_int64.argtypes = (POINTER(c_int64), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
+        cpsig.signature_int64.restype = c_int64
+        err_code = cpsig.signature_int64(data.data_ptr, data.out_ptr, data.dimension, data.length, data.degree, time_aug, lead_lag, horner)
     elif data.dtype == "float32":
-        cpsig.signatureFloat.argtypes = (POINTER(c_float), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
-        cpsig.signatureFloat.restype = c_int64
-        err_code = cpsig.signatureFloat(data.data_ptr, data.out_ptr, data.dimension, data.length, data.degree, time_aug, lead_lag, horner)
+        cpsig.signature_float.argtypes = (POINTER(c_float), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
+        cpsig.signature_float.restype = c_int64
+        err_code = cpsig.signature_float(data.data_ptr, data.out_ptr, data.dimension, data.length, data.degree, time_aug, lead_lag, horner)
     elif data.dtype == "float64":
-        cpsig.signatureDouble.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
-        cpsig.signatureDouble.restype = c_int64
-        err_code = cpsig.signatureDouble(data.data_ptr, data.out_ptr, data.dimension, data.length, data.degree, time_aug, lead_lag, horner)
+        cpsig.signature_double.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
+        cpsig.signature_double.restype = c_int64
+        err_code = cpsig.signature_double(data.data_ptr, data.out_ptr, data.dimension, data.length, data.degree, time_aug, lead_lag, horner)
 
     if err_code:
         raise Exception(err_msg[err_code] + " in signature")
@@ -185,21 +185,21 @@ def signature_(data, time_aug = False, lead_lag = False, horner = True):
 def batch_signature_(data, time_aug = False, lead_lag = False, horner = True, parallel = True):
     err_code = 0
     if data.dtype == "int32":
-        cpsig.batchSignatureInt32.argtypes = (POINTER(c_int32), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
-        cpsig.batchSignatureInt32.restype = c_int64
-        err_code = cpsig.batchSignatureInt32(data.data_ptr, data.out_ptr, data.batch_size, data.dimension, data.length, data.degree, time_aug, lead_lag, horner, parallel)
+        cpsig.batch_signature_int32.argtypes = (POINTER(c_int32), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
+        cpsig.batch_signature_int32.restype = c_int64
+        err_code = cpsig.batch_signature_int32(data.data_ptr, data.out_ptr, data.batch_size, data.dimension, data.length, data.degree, time_aug, lead_lag, horner, parallel)
     elif data.dtype == "int64":
-        cpsig.batchSignatureInt64.argtypes = (POINTER(c_int64), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
-        cpsig.batchSignatureInt64.restype = c_int64
-        err_code = cpsig.batchSignatureInt64(data.data_ptr, data.out_ptr, data.batch_size, data.dimension, data.length, data.degree, time_aug, lead_lag, horner, parallel)
+        cpsig.batch_signature_int64.argtypes = (POINTER(c_int64), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
+        cpsig.batch_signature_int64.restype = c_int64
+        err_code = cpsig.batch_signature_int64(data.data_ptr, data.out_ptr, data.batch_size, data.dimension, data.length, data.degree, time_aug, lead_lag, horner, parallel)
     elif data.dtype == "float32":
-        cpsig.batchSignatureFloat.argtypes = (POINTER(c_float), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
-        cpsig.batchSignatureFloat.restype = c_int64
-        err_code = cpsig.batchSignatureFloat(data.data_ptr, data.out_ptr, data.batch_size, data.dimension, data.length, data.degree, time_aug, lead_lag, horner, parallel)
+        cpsig.batch_signature_float.argtypes = (POINTER(c_float), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
+        cpsig.batch_signature_float.restype = c_int64
+        err_code = cpsig.batch_signature_float(data.data_ptr, data.out_ptr, data.batch_size, data.dimension, data.length, data.degree, time_aug, lead_lag, horner, parallel)
     elif data.dtype == "float64":
-        cpsig.batchSignatureDouble.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
-        cpsig.batchSignatureDouble.restype = c_int64
-        err_code = cpsig.batchSignatureDouble(data.data_ptr, data.out_ptr, data.batch_size, data.dimension, data.length, data.degree, time_aug, lead_lag, horner, parallel)
+        cpsig.batch_signature_double.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
+        cpsig.batch_signature_double.restype = c_int64
+        err_code = cpsig.batch_signature_double(data.data_ptr, data.out_ptr, data.batch_size, data.dimension, data.length, data.degree, time_aug, lead_lag, horner, parallel)
 
     if err_code:
         raise Exception(err_msg[err_code] + " in signature")
@@ -298,11 +298,11 @@ class SigKernelDataHandler:
             raise ValueError("path1, path2 must both be numpy arrays or both torch arrays on the same device")
 
 def sig_kernel_(data, gram):
-    cpsig.batchSigKernel.argtypes = (
+    cpsig.batch_sig_kernel.argtypes = (
     POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
-    cpsig.batchSigKernel.restype = c_int64
+    cpsig.batch_sig_kernel.restype = c_int64
 
-    err_code = cpsig.batchSigKernel(
+    err_code = cpsig.batch_sig_kernel(
         cast(gram.data_ptr(), POINTER(c_double)),
         data.out_ptr,
         data.batch_size,
@@ -314,14 +314,14 @@ def sig_kernel_(data, gram):
     )
 
     if err_code:
-        raise Exception(err_msg[err_code] + " in sigKernel")
+        raise Exception(err_msg[err_code] + " in sig_kernel")
     return data.out
 
 def sig_kernel_cuda_(data, gram):
-    cusig.batchSigKernelCUDA.argtypes = (
+    cusig.batch_sig_kernel_cuda.argtypes = (
     POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
-    cusig.batchSigKernelCUDA.restype = c_int64
-    err_code = cusig.batchSigKernelCUDA(
+    cusig.batch_sig_kernel_cuda.restype = c_int64
+    err_code = cusig.batch_sig_kernel_cuda(
         cast(gram.data_ptr(), POINTER(c_double)),
         data.out_ptr, data.batch_size,
         data.dimension,
@@ -332,7 +332,7 @@ def sig_kernel_cuda_(data, gram):
     )
 
     if err_code:
-        raise Exception(err_msg[err_code] + " in sigKernel")
+        raise Exception(err_msg[err_code] + " in sig_kernel")
     return data.out
 
 # @profile

@@ -12,20 +12,20 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cpsig\cpframework.h" />
-    <ClInclude Include="..\cpsig\cpPath.h" />
     <ClInclude Include="..\cpsig\cppch.h" />
     <ClInclude Include="..\cpsig\cpsig.h" />
-    <ClInclude Include="..\cpsig\cpSigKernel.h" />
-    <ClInclude Include="..\cpsig\cpSignature.h" />
-    <ClInclude Include="..\cpsig\cpTensorPoly.h" />
+    <ClInclude Include="..\cpsig\cp_path.h" />
+    <ClInclude Include="..\cpsig\cp_signature.h" />
+    <ClInclude Include="..\cpsig\cp_sig_kernel.h" />
+    <ClInclude Include="..\cpsig\cp_tensor_poly.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\cpsig\cppch.cpp" />
     <ClCompile Include="..\cpsig\cpsig.cpp" />
-    <ClCompile Include="..\cpsig\cpSigKernel.cpp" />
-    <ClCompile Include="..\cpsig\cpSignature.cpp" />
-    <ClCompile Include="..\cpsig\cpTensorPoly.cpp" />
-    <ClCompile Include="..\cpsig\cpUnitTests.cpp" />
+    <ClCompile Include="..\cpsig\cp_signature.cpp" />
+    <ClCompile Include="..\cpsig\cp_sig_kernel.cpp" />
+    <ClCompile Include="..\cpsig\cp_tensor_poly.cpp" />
+    <ClCompile Include="..\cpsig\cp_unit_tests.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

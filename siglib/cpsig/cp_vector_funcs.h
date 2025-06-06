@@ -3,9 +3,9 @@
 #include "macros.h"
 
 #ifdef AVX
-FORCE_INLINE void vecMultAdd(double* out, double* other, double scalar, uint64_t size)
+FORCE_INLINE void vec_mult_add(double* out, double* other, double scalar, uint64_t size)
 {
-	uint64_t firstLoopRemainder = size % 4UL;
+	uint64_t first_loop_remainder = size % 4UL;
 
 	__m256d a, b;
 	__m256d scalar_256 = _mm256_set1_pd(scalar);
@@ -13,38 +13,38 @@ FORCE_INLINE void vecMultAdd(double* out, double* other, double scalar, uint64_t
 	__m128d c, d;
 	__m128d scalar_128 = _mm_set1_pd(scalar);
 
-	double* otherPtr = other, * outPtr = out;
-	double* outEnd = out + size;
+	double* other_ptr = other, * out_ptr = out;
+	double* out_end = out + size;
 
-	double* firstLoopEnd = outEnd - firstLoopRemainder;
+	double* first_loop_end = out_end - first_loop_remainder;
 
-	for (; outPtr != firstLoopEnd; otherPtr += 4, outPtr += 4) {
-		a = _mm256_loadu_pd(otherPtr);
+	for (; out_ptr != first_loop_end; other_ptr += 4, out_ptr += 4) {
+		a = _mm256_loadu_pd(other_ptr);
 		a = _mm256_mul_pd(a, scalar_256);
-		b = _mm256_loadu_pd(outPtr);
+		b = _mm256_loadu_pd(out_ptr);
 		b = _mm256_add_pd(a, b);
-		_mm256_storeu_pd(outPtr, b);
+		_mm256_storeu_pd(out_ptr, b);
 	}
 	if (size & 2UL) {
-		c = _mm_loadu_pd(otherPtr);
+		c = _mm_loadu_pd(other_ptr);
 		c = _mm_mul_pd(c, scalar_128);
-		d = _mm_load_pd(outPtr);
+		d = _mm_load_pd(out_ptr);
 		d = _mm_add_pd(c, d);
-		_mm_storeu_pd(outPtr, d);
-		otherPtr += 2;
-		outPtr += 2;
+		_mm_storeu_pd(out_ptr, d);
+		other_ptr += 2;
+		out_ptr += 2;
 	}
 	if (size & 1UL) { //For some reason intrinsics are quicker than a normal loop here
-		c = _mm_load_sd(otherPtr);
+		c = _mm_load_sd(other_ptr);
 		c = _mm_mul_sd(c, scalar_128);
-		d = _mm_load_sd(outPtr);
+		d = _mm_load_sd(out_ptr);
 		d = _mm_add_sd(c, d);
-		_mm_store_sd(outPtr, d);
+		_mm_store_sd(out_ptr, d);
 	}
 }
 
-FORCE_INLINE void vecMultAssign(double* out, double* other, double scalar, uint64_t size) {
-	uint64_t firstLoopRemainder = size % 4UL;
+FORCE_INLINE void vec_mult_assign(double* out, double* other, double scalar, uint64_t size) {
+	uint64_t first_loop_remainder = size % 4UL;
 
 	__m256d a;
 	__m256d scalar_ = _mm256_set1_pd(scalar);
@@ -52,27 +52,27 @@ FORCE_INLINE void vecMultAssign(double* out, double* other, double scalar, uint6
 	__m128d c;
 	__m128d scalar_128 = _mm_set1_pd(scalar);
 
-	double* otherPtr = other, * outPtr = out;
-	double* outEnd = out + size;
+	double* other_ptr = other, * out_ptr = out;
+	double* out_end = out + size;
 
-	double* firstLoopEnd = outEnd - firstLoopRemainder;
+	double* first_loop_end = out_end - first_loop_remainder;
 
-	for (; outPtr != firstLoopEnd; otherPtr += 4, outPtr += 4) {
-		a = _mm256_loadu_pd(otherPtr);
+	for (; out_ptr != first_loop_end; other_ptr += 4, out_ptr += 4) {
+		a = _mm256_loadu_pd(other_ptr);
 		a = _mm256_mul_pd(a, scalar_);
-		_mm256_storeu_pd(outPtr, a);
+		_mm256_storeu_pd(out_ptr, a);
 	}
 	if(size & 2UL) {
-		c = _mm_loadu_pd(otherPtr);
+		c = _mm_loadu_pd(other_ptr);
 		c = _mm_mul_pd(c, scalar_128);
-		_mm_storeu_pd(outPtr, c);
-		otherPtr += 2;
-		outPtr += 2;
+		_mm_storeu_pd(out_ptr, c);
+		other_ptr += 2;
+		out_ptr += 2;
 	}
 	if (size & 1UL) { //For some reason intrinsics are quicker than a normal loop here
-		c = _mm_load_sd(otherPtr);
+		c = _mm_load_sd(other_ptr);
 		c = _mm_mul_sd(c, scalar_128);
-		_mm_store_sd(outPtr, c);
+		_mm_store_sd(out_ptr, c);
 	}
 }
 

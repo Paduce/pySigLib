@@ -100,25 +100,25 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="cpsig.h" />
-    <ClInclude Include="cpPath.h" />
+    <ClInclude Include="cp_path.h" />
     <ClInclude Include="cppch.h" />
-    <ClInclude Include="cpSigKernel.h" />
-    <ClInclude Include="cpSignature.h" />
-    <ClInclude Include="cpTensorPoly.h" />
-    <ClInclude Include="cpVectorFuncs.h" />
+    <ClInclude Include="cp_sig_kernel.h" />
+    <ClInclude Include="cp_signature.h" />
+    <ClInclude Include="cp_tensor_poly.h" />
+    <ClInclude Include="cp_vector_funcs.h" />
     <ClInclude Include="macros.h" />
     <ClInclude Include="multithreading.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cpPathTransforms.cpp" />
+    <ClCompile Include="cp_path_transforms.cpp" />
     <ClCompile Include="cpsig.cpp" />
-    <ClCompile Include="cpSigKernel.cpp" />
-    <ClCompile Include="cpSignature.cpp" />
+    <ClCompile Include="cp_sig_kernel.cpp" />
+    <ClCompile Include="cp_signature.cpp" />
     <ClCompile Include="cppch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="cpTensorPoly.cpp" />
+    <ClCompile Include="cp_tensor_poly.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />

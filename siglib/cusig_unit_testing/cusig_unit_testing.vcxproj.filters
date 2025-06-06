@@ -30,30 +30,21 @@
     <ClInclude Include="..\cusig\cusig.h">
       <Filter>Header Files\cusig</Filter>
     </ClInclude>
-    <ClInclude Include="..\cusig\vectoradd.h">
+    <ClInclude Include="..\cusig\cu_sig_kernel.h">
       <Filter>Header Files\cusig</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="..\cusig\vectoradd.cu">
-      <Filter>Source Files\cusig</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\cusig\cuSigKernel.cu">
-      <Filter>Source Files\cusig</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\cusig\cuSigKernel.h">
-      <Filter>Header Files\cusig</Filter>
-    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\cusig\cupch.cpp">
       <Filter>Source Files\cusig</Filter>
     </ClCompile>
-    <ClCompile Include="..\cusig\cusig.cpp">
-      <Filter>Source Files\cusig</Filter>
-    </ClCompile>
-    <ClCompile Include="..\cusig\cuUnitTests.cpp">
+    <ClCompile Include="..\cusig\cu_unit_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\cusig\cu_sig_kernel.cu">
+      <Filter>Source Files\cusig</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

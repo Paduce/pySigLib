@@ -22,31 +22,21 @@
 
 extern "C" {
 
-	CPSIG_API uint64_t polyLength(uint64_t dimension, uint64_t degree) noexcept;
-	CPSIG_API double getPathElement(double* dataPtr, int dataLength, int dataDimension, int lengthIndex, int dimIndex);
+	CPSIG_API uint64_t poly_length(uint64_t dimension, uint64_t degree) noexcept;
+	CPSIG_API double get_path_element(double* data_ptr, int data_length, int data_dimension, int length_index, int dim_index);
 
-	CPSIG_API int signatureFloat(float* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug, bool leadLag, bool horner) noexcept; //bool timeAug = false, bool leadLag = false, bool horner = true);
-	CPSIG_API int signatureDouble(double* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true) noexcept;
-	CPSIG_API int signatureInt32(int32_t* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true) noexcept;
-	CPSIG_API int signatureInt64(int64_t* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true) noexcept;
+	CPSIG_API int signature_float(float* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, bool horner) noexcept; //bool time_aug = false, bool lead_lag = false, bool horner = true);
+	CPSIG_API int signature_double(double* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, bool horner = true) noexcept;
+	CPSIG_API int signature_int32(int32_t* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, bool horner = true) noexcept;
+	CPSIG_API int signature_int64(int64_t* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, bool horner = true) noexcept;
 
-	CPSIG_API int batchSignatureFloat(float* path, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true, bool parallel = true) noexcept;
-	CPSIG_API int batchSignatureDouble(double* path, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true, bool parallel = true) noexcept;
-	CPSIG_API int batchSignatureInt32(int32_t* path, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true, bool parallel = true) noexcept;
-	CPSIG_API int batchSignatureInt64(int64_t* path, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length, uint64_t degree, bool timeAug = false, bool leadLag = false, bool horner = true, bool parallel = true) noexcept;
+	CPSIG_API int batch_signature_float(float* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, bool horner = true, bool parallel = true) noexcept;
+	CPSIG_API int batch_signature_double(double* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, bool horner = true, bool parallel = true) noexcept;
+	CPSIG_API int batch_signature_int32(int32_t* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, bool horner = true, bool parallel = true) noexcept;
+	CPSIG_API int batch_signature_int64(int64_t* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, bool horner = true, bool parallel = true) noexcept;
 
-	/*CPSIG_API int sigKernelFloat(float* path1, float* path2, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool preferSpeedOverMemory = true) noexcept;
-	CPSIG_API int sigKernelDouble(double* path1, double* path2, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool preferSpeedOverMemory = true) noexcept;
-	CPSIG_API int sigKernelInt32(int32_t* path1, int32_t* path2, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool preferSpeedOverMemory = true) noexcept;
-	CPSIG_API int sigKernelInt64(int64_t* path1, int64_t* path2, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool preferSpeedOverMemory = true) noexcept;
-
-	CPSIG_API int batchSigKernelFloat(float* path1, float* path2, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool parallel = true, bool preferSpeedOverMemory = true) noexcept;
-	CPSIG_API int batchSigKernelDouble(double* path1, double* path2, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool parallel = true, bool preferSpeedOverMemory = true) noexcept;
-	CPSIG_API int batchSigKernelInt32(int32_t* path1, int32_t* path2, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool parallel = true, bool preferSpeedOverMemory = true) noexcept;
-	CPSIG_API int batchSigKernelInt64(int64_t* path1, int64_t* path2, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool parallel = true, bool preferSpeedOverMemory = true) noexcept;*/
-
-	CPSIG_API int sigKernel(double* gram, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2) noexcept;
-	CPSIG_API int batchSigKernel(double* gram, double* out, uint64_t batchSize, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadicOrder1, uint64_t dyadicOrder2, bool parallel = true) noexcept;
+	CPSIG_API int sig_kernel(double* gram, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2) noexcept;
+	CPSIG_API int batch_sig_kernel(double* gram, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2, bool parallel = true) noexcept;
 
 }
 

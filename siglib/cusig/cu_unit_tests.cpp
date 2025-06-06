@@ -20,42 +20,42 @@ void gram_(
     double* path1,
     double* path2,
     double* out,
-    uint64_t batchSize,
+    uint64_t batch_size,
     uint64_t dimension,
     uint64_t length1,
     uint64_t length2
 ) {
-    double* outPtr = out;
+    double* out_ptr = out;
 
-    uint64_t flatPath1Length = length1 * dimension;
-    uint64_t flatPath2Length = length2 * dimension;
+    uint64_t flat_path1_length = length1 * dimension;
+    uint64_t flat_path2_length = length2 * dimension;
 
-    double* path1Start = path1;
-    double* path1End = path1 + flatPath1Length;
+    double* path1_start = path1;
+    double* path1_end = path1 + flat_path1_length;
 
-    double* path2Start = path2;
-    double* path2End = path2 + flatPath2Length;
+    double* path2_start = path2;
+    double* path2_end = path2 + flat_path2_length;
 
-    for (uint64_t b = 0; b < batchSize; ++b) {
+    for (uint64_t b = 0; b < batch_size; ++b) {
 
-        for (double* path1Ptr = path1Start; path1Ptr < path1End - dimension; path1Ptr += dimension) {
-            for (double* path2Ptr = path2Start; path2Ptr < path2End - dimension; path2Ptr += dimension) {
-                *(outPtr++) = dot_product(path1Ptr + dimension, path2Ptr + dimension, dimension)
-                    - dot_product(path1Ptr + dimension, path2Ptr, dimension)
-                    - dot_product(path1Ptr, path2Ptr + dimension, dimension)
-                    + dot_product(path1Ptr, path2Ptr, dimension);
+        for (double* path1_ptr = path1_start; path1_ptr < path1_end - dimension; path1_ptr += dimension) {
+            for (double* path2_ptr = path2_start; path2_ptr < path2_end - dimension; path2_ptr += dimension) {
+                *(out_ptr++) = dot_product(path1_ptr + dimension, path2_ptr + dimension, dimension)
+                    - dot_product(path1_ptr + dimension, path2_ptr, dimension)
+                    - dot_product(path1_ptr, path2_ptr + dimension, dimension)
+                    + dot_product(path1_ptr, path2_ptr, dimension);
             }
         }
 
-        path1Start += flatPath1Length;
-        path1End += flatPath1Length;
-        path2Start += flatPath2Length;
-        path2End += flatPath2Length;
+        path1_start += flat_path1_length;
+        path1_end += flat_path1_length;
+        path2_start += flat_path2_length;
+        path2_end += flat_path2_length;
     }
 }
 
 
-std::vector<int> intTestData(uint64_t dimension, uint64_t length) {
+std::vector<int> int_test_data(uint64_t dimension, uint64_t length) {
     std::vector<int> data;
     uint64_t data_size = dimension * length;
     data.reserve(data_size);
@@ -67,7 +67,7 @@ std::vector<int> intTestData(uint64_t dimension, uint64_t length) {
 }
 
 template<typename FN, typename T, typename... Args>
-void checkResult(FN f, std::vector<T>& path, std::vector<double>& true_, Args... args) {
+void check_result(FN f, std::vector<T>& path, std::vector<double>& true_, Args... args) {
     std::vector<double> out;
     out.resize(true_.size() + 1); //+1 at the end just to check we don't write more than expected
     out[true_.size()] = -1.;
@@ -94,7 +94,7 @@ void checkResult(FN f, std::vector<T>& path, std::vector<double>& true_, Args...
 }
 
 template<typename FN, typename T, typename... Args>
-void checkResult2(FN f, std::vector<T>& path1, std::vector<T>& path2, std::vector<double>& true_, Args... args) {
+void check_result_2(FN f, std::vector<T>& path1, std::vector<T>& path2, std::vector<double>& true_, Args... args) {
     std::vector<double> out;
     out.resize(true_.size() + 1); //+1 at the end just to check we don't write more than expected
     out[true_.size()] = -1.;
@@ -128,23 +128,23 @@ namespace MyTest
     TEST_CLASS(sigKernelTest) {
 public:
     TEST_METHOD(LinearPathTest) {
-        auto f = sigKernelCUDA;
+        auto f = sig_kernel_cuda;
         uint64_t dimension = 2, length = 3;
         std::vector<double> path = { 0., 0., 0.5, 0.5, 1.,1. };
-        std::vector<double> trueSig = { 4.256702149748847 };
+        std::vector<double> true_sig = { 4.256702149748847 };
         std::vector<double> gram(length * length);
         gram_(path.data(), path.data(), gram.data(), 1, dimension, length, length);
-        checkResult(f, gram, trueSig, dimension, length, length, 2, 2);
+        check_result(f, gram, true_sig, dimension, length, length, 2, 2);
     }
 
     TEST_METHOD(ManualTest) {
-        auto f = sigKernelCUDA;
+        auto f = sig_kernel_cuda;
         uint64_t dimension = 3, length = 4;
         std::vector<double> path = { .9, .5, .8, .5, .3, .0, .0, .2, .6, .4, .0, .2 };
-        std::vector<double> trueSig = { 2.1529809076880486 };
+        std::vector<double> true_sig = { 2.1529809076880486 };
         std::vector<double> gram(length * length);
         gram_(path.data(), path.data(), gram.data(), 1, dimension, length, length);
-        checkResult(f, gram, trueSig, dimension, length, length, 2, 2);
+        check_result(f, gram, true_sig, dimension, length, length, 2, 2);
     }
     };
 }

@@ -2,38 +2,38 @@
 #include "cppch.h"
 
 
-inline unsigned int getMaxThreads() {
-	static const unsigned int maxThreads = std::thread::hardware_concurrency();
-	return maxThreads;
+inline unsigned int get_max_threads() {
+	static const unsigned int max_threads = std::thread::hardware_concurrency();
+	return max_threads;
 }
 
 template<typename T, typename FN>
-void multiThreadedBatch(FN& threadFunc, T* path, double* out, uint64_t batchSize, uint64_t flatPathLength, uint64_t resultLength) {
-	const unsigned int maxThreads = getMaxThreads();
-	const uint64_t threadPathStep = flatPathLength * maxThreads;
-	const uint64_t threadResultStep = resultLength * maxThreads;
-	T* const dataEnd = path + flatPathLength * batchSize;
+void multi_threaded_batch(FN& thread_func, T* path, double* out, uint64_t batch_size, uint64_t flat_path_length, uint64_t result_length) {
+	const unsigned int max_threads = get_max_threads();
+	const uint64_t thread_path_step = flat_path_length * max_threads;
+	const uint64_t thread_result_step = result_length * max_threads;
+	T* const data_end = path + flat_path_length * batch_size;
 
 	std::vector<std::thread> workers;
 
-	auto batchThreadFunc = [&](T* pathPtr, double* outPtr) {
-		double* outPtr_ = outPtr;
-		for (T* pathPtr_ = pathPtr;
-			pathPtr_ < dataEnd;
-			pathPtr_ += threadPathStep, outPtr_ += threadResultStep) {
+	auto batch_thread_func = [&](T* path_ptr, double* out_ptr) {
+		double* out_ptr_ = out_ptr;
+		for (T* path_ptr_ = path_ptr;
+			path_ptr_ < data_end;
+			path_ptr_ += thread_path_step, out_ptr_ += thread_result_step) {
 
-			threadFunc(pathPtr_, outPtr_);
+			thread_func(path_ptr_, out_ptr_);
 		}
 		};
 
-	unsigned int numThreads = 0;
-	double* outPtr = out;
-	for (T* pathPtr = path;
-		(numThreads < maxThreads) && (pathPtr < dataEnd);
-		pathPtr += flatPathLength, outPtr += resultLength) {
+	unsigned int num_threads = 0;
+	double* out_ptr = out;
+	for (T* path_ptr = path;
+		(num_threads < max_threads) && (path_ptr < data_end);
+		path_ptr += flat_path_length, out_ptr += result_length) {
 
-		workers.emplace_back(batchThreadFunc, pathPtr, outPtr);
-		++numThreads;
+		workers.emplace_back(batch_thread_func, path_ptr, out_ptr);
+		++num_threads;
 	}
 
 	for (auto& w : workers)
@@ -42,33 +42,33 @@ void multiThreadedBatch(FN& threadFunc, T* path, double* out, uint64_t batchSize
 
 
 template<typename T, typename FN>
-void multiThreadedBatch2(FN& threadFunc, T* path1, T* path2, double* out, uint64_t batchSize, uint64_t flatPathLength1, uint64_t flatPathLength2, uint64_t resultLength) {
-	const unsigned int maxThreads = getMaxThreads();
-	const uint64_t threadPathStep1 = flatPathLength1 * maxThreads;
-	const uint64_t threadPathStep2 = flatPathLength2 * maxThreads;
-	const uint64_t threadResultStep = resultLength * maxThreads;
-	T* const dataEnd1 = path1 + flatPathLength1 * batchSize;
+void multi_threaded_batch_2(FN& thread_func, T* path1, T* path2, double* out, uint64_t batch_size, uint64_t flat_path_length_1, uint64_t flat_path_length_2, uint64_t result_length) {
+	const unsigned int max_threads = get_max_threads();
+	const uint64_t thread_path_step_1 = flat_path_length_1 * max_threads;
+	const uint64_t thread_path_step_2 = flat_path_length_2 * max_threads;
+	const uint64_t thread_result_step = result_length * max_threads;
+	T* const data_end_1 = path1 + flat_path_length_1 * batch_size;
 
 	std::vector<std::thread> workers;
 
-	auto batchThreadFunc = [&](T* pathPtr1, T* pathPtr2, double* outPtr) {
-		double* outPtr_ = outPtr;
-		for (T* path1Ptr_ = pathPtr1, *path2Ptr_ = pathPtr2;
-			path1Ptr_ < dataEnd1;
-			path1Ptr_ += threadPathStep1, path2Ptr_ += threadPathStep2, outPtr_ += threadResultStep) {
+	auto batch_thread_func = [&](T* path_ptr_1, T* path_ptr_2, double* out_ptr) {
+		double* out_ptr_ = out_ptr;
+		for (T* path1_ptr_ = path_ptr_1, *path2_ptr_ = path_ptr_2;
+			path1_ptr_ < data_end_1;
+			path1_ptr_ += thread_path_step_1, path2_ptr_ += thread_path_step_2, out_ptr_ += thread_result_step) {
 
-			threadFunc(path1Ptr_, path2Ptr_, outPtr_);
+			thread_func(path1_ptr_, path2_ptr_, out_ptr_);
 		}
 		};
 
-	unsigned int numThreads = 0;
-	double* outPtr = out;
-	for (T* path1Ptr = path1, *path2Ptr = path2;
-		(numThreads < maxThreads) && (path1Ptr < dataEnd1);
-		path1Ptr += flatPathLength1, path2Ptr += flatPathLength2, outPtr += resultLength) {
+	unsigned int num_threads = 0;
+	double* out_ptr = out;
+	for (T* path1_ptr = path1, *path2_ptr = path2;
+		(num_threads < max_threads) && (path1_ptr < data_end_1);
+		path1_ptr += flat_path_length_1, path2_ptr += flat_path_length_2, out_ptr += result_length) {
 
-		workers.emplace_back(batchThreadFunc, path1Ptr, path2Ptr, outPtr);
-		++numThreads;
+		workers.emplace_back(batch_thread_func, path1_ptr, path2_ptr, out_ptr);
+		++num_threads;
 	}
 
 	for (auto& w : workers)

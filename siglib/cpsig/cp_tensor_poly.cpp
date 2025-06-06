@@ -1,5 +1,5 @@
 #include "cppch.h"
-#include "cpTensorPoly.h"
+#include "cp_tensor_poly.h"
 
 uint64_t power(uint64_t base, uint64_t exp) noexcept {
     uint64_t result = 1;
@@ -19,7 +19,7 @@ uint64_t power(uint64_t base, uint64_t exp) noexcept {
     return result;
 }
 
-extern "C" CPSIG_API uint64_t polyLength(uint64_t dimension, uint64_t degree) noexcept {
+extern "C" CPSIG_API uint64_t poly_length(uint64_t dimension, uint64_t degree) noexcept {
     if (dimension == 0UL) {
         return 1UL;
     }

@@ -21,16 +21,16 @@
     <ClInclude Include="cpsig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cpPath.h">
+    <ClInclude Include="cp_path.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cpTensorPoly.h">
+    <ClInclude Include="cp_tensor_poly.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cpSignature.h">
+    <ClInclude Include="cp_signature.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cpVectorFuncs.h">
+    <ClInclude Include="cp_vector_funcs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="multithreading.h">
@@ -39,7 +39,7 @@
     <ClInclude Include="macros.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cpSigKernel.h">
+    <ClInclude Include="cp_sig_kernel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -50,16 +50,16 @@
     <ClCompile Include="cpsig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cpTensorPoly.cpp">
+    <ClCompile Include="cp_tensor_poly.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cpPathTransforms.cpp">
+    <ClCompile Include="cp_path_transforms.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cpSignature.cpp">
+    <ClCompile Include="cp_signature.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cpSigKernel.cpp">
+    <ClCompile Include="cp_sig_kernel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -105,15 +105,13 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="cudaConstants.h" />
+    <ClInclude Include="cuda_constants.h" />
     <ClInclude Include="cusig.h" />
     <ClInclude Include="cuframework.h" />
     <ClInclude Include="cupch.h" />
-    <CudaCompile Include="cuSigKernel.h" />
-    <CudaCompile Include="vectoradd.h" />
+    <CudaCompile Include="cu_sig_kernel.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cusig.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="cupch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -121,8 +119,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="cuSigKernel.cu" />
-    <CudaCompile Include="vectoradd.cu" />
+    <CudaCompile Include="cu_sig_kernel.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

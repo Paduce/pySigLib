@@ -24,22 +24,25 @@
     <ClInclude Include="..\cpsig\cpframework.h">
       <Filter>Header Files\cpsig</Filter>
     </ClInclude>
-    <ClInclude Include="..\cpsig\cpPath.h">
-      <Filter>Header Files\cpsig</Filter>
-    </ClInclude>
     <ClInclude Include="..\cpsig\cppch.h">
       <Filter>Header Files\cpsig</Filter>
     </ClInclude>
     <ClInclude Include="..\cpsig\cpsig.h">
       <Filter>Header Files\cpsig</Filter>
     </ClInclude>
-    <ClInclude Include="..\cpsig\cpSignature.h">
+    <ClInclude Include="..\cpsig\cpPath.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cpsig\cp_tensor_poly.h">
       <Filter>Header Files\cpsig</Filter>
     </ClInclude>
-    <ClInclude Include="..\cpsig\cpTensorPoly.h">
+    <ClInclude Include="..\cpsig\cp_path.h">
       <Filter>Header Files\cpsig</Filter>
     </ClInclude>
-    <ClInclude Include="..\cpsig\cpSigKernel.h">
+    <ClInclude Include="..\cpsig\cp_sig_kernel.h">
+      <Filter>Header Files\cpsig</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cpsig\cp_signature.h">
       <Filter>Header Files\cpsig</Filter>
     </ClInclude>
   </ItemGroup>
@@ -50,16 +53,16 @@
     <ClCompile Include="..\cpsig\cpsig.cpp">
       <Filter>Source Files\cpsig</Filter>
     </ClCompile>
-    <ClCompile Include="..\cpsig\cpSignature.cpp">
-      <Filter>Source Files\cpsig</Filter>
-    </ClCompile>
-    <ClCompile Include="..\cpsig\cpTensorPoly.cpp">
-      <Filter>Source Files\cpsig</Filter>
-    </ClCompile>
-    <ClCompile Include="..\cpsig\cpUnitTests.cpp">
+    <ClCompile Include="..\cpsig\cp_unit_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\cpsig\cpSigKernel.cpp">
+    <ClCompile Include="..\cpsig\cp_sig_kernel.cpp">
+      <Filter>Source Files\cpsig</Filter>
+    </ClCompile>
+    <ClCompile Include="..\cpsig\cp_signature.cpp">
+      <Filter>Source Files\cpsig</Filter>
+    </ClCompile>
+    <ClCompile Include="..\cpsig\cp_tensor_poly.cpp">
       <Filter>Source Files\cpsig</Filter>
     </ClCompile>
   </ItemGroup>

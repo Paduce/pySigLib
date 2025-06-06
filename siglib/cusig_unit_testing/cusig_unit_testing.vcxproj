@@ -14,17 +14,14 @@
     <ClInclude Include="..\cusig\cuframework.h" />
     <ClInclude Include="..\cusig\cupch.h" />
     <ClInclude Include="..\cusig\cusig.h" />
-    <CudaCompile Include="..\cusig\cuSigKernel.h" />
-    <ClInclude Include="..\cusig\vectoradd.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="..\cusig\cuSigKernel.cu" />
-    <CudaCompile Include="..\cusig\vectoradd.cu" />
+    <ClInclude Include="..\cusig\cu_sig_kernel.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\cusig\cupch.cpp" />
-    <ClCompile Include="..\cusig\cusig.cpp" />
-    <ClCompile Include="..\cusig\cuUnitTests.cpp" />
+    <ClCompile Include="..\cusig\cu_unit_tests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\cusig\cu_sig_kernel.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

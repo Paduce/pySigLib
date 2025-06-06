@@ -24,7 +24,7 @@
     <ClInclude Include="cupch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cudaConstants.h">
+    <ClInclude Include="cuda_constants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -32,24 +32,15 @@
     <ClCompile Include="cupch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cusig.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="vectoradd.cu">
+    <CudaCompile Include="cu_sig_kernel.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
-    <CudaCompile Include="cuSigKernel.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
-    <CudaCompile Include="cuSigKernel.h">
-      <Filter>Header Files</Filter>
-    </CudaCompile>
-    <CudaCompile Include="vectoradd.h">
+    <CudaCompile Include="cu_sig_kernel.h">
       <Filter>Header Files</Filter>
     </CudaCompile>
   </ItemGroup>
