@@ -10,8 +10,6 @@ import platform
 from .errorCodes import errMsg
 import warnings
 
-# from line_profiler_pycharm import profile
-
 try:
     from ._config import SYSTEM, BUILT_WITH_CUDA, BUILT_WITH_AVX
 except ImportError:
@@ -359,7 +357,3 @@ def sigKernel(
         if not BUILT_WITH_CUDA:
             raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")
         return sigKernelCUDA_(data, gram)
-
-#https://stackoverflow.com/questions/64478880/how-to-pass-this-numpy-array-to-c-with-ctypes
-
-#gpu ptr might have to be c_void_p

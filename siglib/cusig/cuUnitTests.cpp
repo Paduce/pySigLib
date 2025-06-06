@@ -9,7 +9,7 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-double dot_product(double* a, double* b, int N) {
+double dot_product(double* a, double* b, uint64_t N) {
     double out = 0;
     for (int i = 0; i < N; ++i)
         out += a[i] * b[i];

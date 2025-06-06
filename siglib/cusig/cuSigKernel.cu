@@ -52,8 +52,6 @@ __device__ void goursatPde32(
 		diagonals[prevDiagIdx] = initialCondition[1];
 	}
 
-	uint64_t path2Start = (iteration * 32) >> dyadicOrder2;
-
 	__syncthreads();
 
 	for (uint64_t p = 2; p < numAntiDiag; ++p) { // First two antidiagonals are initialised to 1
@@ -146,7 +144,7 @@ void sigKernelCUDA_(//TODO: doesn't work with non-zero dyadics, e.g. 2,2
 	cudaMemcpy(initialCondition, ones, dyadicLength1_ * batchSize_ * sizeof(double), cudaMemcpyHostToDevice);
 	free(ones);
 
-	goursatPde << <batchSize_, 32 >> > (initialCondition, gram);
+	goursatPde << <static_cast<unsigned int>(batchSize_), 32U >> > (initialCondition, gram);
 
 	for (uint64_t i = 0; i < batchSize_; ++i)
 		cudaMemcpy(out + i, initialCondition + (i + 1) * dyadicLength1_ - 1, sizeof(double), cudaMemcpyDeviceToDevice);

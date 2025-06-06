@@ -1,12 +1,11 @@
-from numba.cuda.cudadrv.runtime import Runtime
-from setuptools import find_packages, setup, Extension
+from setuptools import setup
 from setuptools.command.install import install
 from setuptools.command.build_py import build_py as _build_py
 from pathlib import Path
 import shutil
 import os
 import platform
-from build_utils import get_b2, build_cpsig, build_cusig, get_paths
+from build_utils import get_b2, build_cpsig, build_cusig
 
 #TODO: AVX flag
 USE_AVX = False
@@ -86,10 +85,45 @@ class CustomInstall(install):
 
         super().run()
 
+this_directory = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
+    long_description = f.read()
+
 setup(
     name='pysiglib',
     version="0.1.0",
+    description="Signature Computations on CPU and GPU",
     packages=['pysiglib'],
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    classifiers=[
+            "Development Status :: 4 - Beta",
+            "Environment :: Win32 (MS Windows)",
+            "Intended Audience :: Developers",
+            "Intended Audience :: Financial and Insurance Industry",
+            "Intended Audience :: Healthcare Industry",
+            "Intended Audience :: Information Technology",
+            "Intended Audience :: Science/Research",
+            "License :: OSI Approved :: Apache Software License",
+            "Natural Language :: English",
+            "Operating System :: MacOS",
+            "Operating System :: Microsoft :: Windows",
+            "Operating System :: Unix",
+            "Operating System :: POSIX :: Linux",
+            "Programming Language :: Python",
+            "Programming Language :: C++",#
+            "Topic :: Scientific/Engineering :: Artificial Intelligence",
+            "Topic :: Scientific/Engineering :: Information Analysis",
+            "Topic :: Scientific/Engineering :: Mathematics",
+        ],
+    url="https://github.com/daniil-shmelev/pySigLib",
+    author="Daniil Shmelev",
+    author_email="daniil.shmelev23@imperial.ac.uk",
+    install_requires=["Requests",
+        "setuptools",
+        "numpy",
+        "torch"
+        ],
     include_package_data=True,
     package_data={'': LIBS},
     cmdclass={

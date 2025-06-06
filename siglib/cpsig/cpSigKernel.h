@@ -13,7 +13,6 @@ void getSigKernel_(
 	double* gram,
 	const uint64_t length1,
 	const uint64_t length2,
-	const uint64_t dimension,
 	double* out,
 	const uint64_t dyadicOrder1,
 	const uint64_t dyadicOrder2
