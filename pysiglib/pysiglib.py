@@ -106,7 +106,7 @@ class SigDataHandler:
         if path.dtype == torch.int32:
             self.dtype = "int32"
             self.data_ptr = cast(path.data_ptr(), POINTER(c_int32))
-        if path.dtype == torch.int64:
+        elif path.dtype == torch.int64:
             self.dtype = "int64"
             self.data_ptr = cast(path.data_ptr(), POINTER(c_int64))
         elif path.dtype == torch.float32:

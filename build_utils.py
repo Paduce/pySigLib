@@ -11,31 +11,31 @@ ZIP_FOLDERNAME = 'b2-' + B2_VERSION
 ZIP_FILENAME = ZIP_FOLDERNAME + '.zip'
 B2_URL = 'https://github.com/bfgroup/b2/releases/download/' + B2_VERSION + '/b2-' + B2_VERSION + '.zip'
 
-def get_paths(SYSTEM):
+def get_paths(system):
     if 'CUDA_PATH' not in os.environ:
         raise RuntimeError("Error while compiling pysiglib: CUDA_PATH environment variable not set")
 
-    CUDA_PATH = os.environ['CUDA_PATH']
+    cuda_path = os.environ['CUDA_PATH']
 
-    VCTOOLSINSTALLDIR = get_msvc_path()
-    CL_PATH = os.path.join(VCTOOLSINSTALLDIR, 'bin', 'HostX64', 'x64')
-    os.environ["PATH"] += os.pathsep + CL_PATH
+    vctoolsinstalldir = get_msvc_path()
+    cl_path = os.path.join(vctoolsinstalldir, 'bin', 'HostX64', 'x64')
+    os.environ["PATH"] += os.pathsep + cl_path
 
-    idx = VCTOOLSINSTALLDIR.find("VC")
-    path = VCTOOLSINSTALLDIR[:idx]
+    idx = vctoolsinstalldir.find("VC")
+    path = vctoolsinstalldir[:idx]
 
     output = subprocess.run([os.path.join(path, 'Common7', 'Tools', 'VsDevCmd.bat'), '&&', 'set'], capture_output=True,
-                            text=True, shell=True)
+                            text=True, shell=True, check=True)
     output = output.stdout
     start = output.find('INCLUDE') + 8
     end = output[start:].find('\n')
-    INCLUDE = output[start: start + end]
+    include = output[start: start + end]
 
-    DIR = os.getcwd()
-    return DIR, VCTOOLSINSTALLDIR, CL_PATH, CUDA_PATH, INCLUDE
+    dir_ = os.getcwd()
+    return dir_, vctoolsinstalldir, cl_path, cuda_path, include
 
-def get_b2(SYSTEM):
-    response = requests.get(B2_URL)
+def get_b2(system):
+    response = requests.get(B2_URL, timeout=(5, 60), stream=True)
     with open(ZIP_FILENAME, 'wb') as f:
         f.write(response.content)
 
@@ -45,22 +45,22 @@ def get_b2(SYSTEM):
         zip_ref.extractall('.')
 
     os.chdir(ZIP_FOLDERNAME)
-    if SYSTEM == 'Windows':
-        subprocess.run([".\\bootstrap.bat"])
-    elif SYSTEM == 'Linux':
+    if system == 'Windows':
+        subprocess.run([".\\bootstrap.bat"], check=True)
+    elif system == 'Linux':
         raise #TODO
-    elif SYSTEM == 'Darwin':
-        subprocess.run(["chmod", "-R", "755", "."])
-        subprocess.run(["./bootstrap.sh"])
+    elif system == 'Darwin':
+        subprocess.run(["chmod", "-R", "755", "."], check=True)
+        subprocess.run(["./bootstrap.sh"], check=True)
     else:
         # Shouldn't really end up here, but just in case
-        raise RuntimeError("Unknown error while building pysiglib: unexpected system '" + SYSTEM + "' in get_b2()")
+        raise RuntimeError("Unknown error while building pysiglib: unexpected system '" + system + "' in get_b2()")
 
     os.chdir(r'..')
 
 
     os.chdir(ZIP_FOLDERNAME)
-    subprocess.run(["./b2", "install", "--prefix=../b2"])
+    subprocess.run(["./b2", "install", "--prefix=../b2"], check=True)
     os.chdir(r'..')
     # b2_path = os.getcwd() + "\\b2\\bin"
     # sys.path.append(b2_path)
@@ -74,36 +74,36 @@ def get_b2(SYSTEM):
         shutil.rmtree(ZIP_FOLDERNAME)
 
 
-def build_cpsig(SYSTEM):
+def build_cpsig(system):
     os.chdir(r'siglib')
-    if SYSTEM == 'Windows':
-        subprocess.run(["../b2/b2", "--toolset=msvc", "--build-type=complete", "architecture=x86", "address-model=64", "release"])
-    elif SYSTEM == 'Linux':
+    if system == 'Windows':
+        subprocess.run(["../b2/b2", "--toolset=msvc", "--build-type=complete", "architecture=x86", "address-model=64", "release"], check=True)
+    elif system == 'Linux':
         raise #TODO
-    elif SYSTEM == 'Darwin':
-        subprocess.run(["chmod", "755", "../b2"])
+    elif system == 'Darwin':
+        subprocess.run(["chmod", "755", "../b2"], check=True)
         subprocess.run(
-            ["../b2/bin/b2", "--build-type=complete", "release"])
+            ["../b2/bin/b2", "--build-type=complete", "release"], check=True)
     else:
         # Shouldn't really end up here, but just in case
-        raise RuntimeError("Unknown error while building pysiglib: unexpected system '" + SYSTEM + "' in build_cpsig()")
+        raise RuntimeError("Unknown error while building pysiglib: unexpected system '" + system + "' in build_cpsig()")
     os.chdir(r'..')
 
-def build_cusig(SYSTEM):
-    DIR, VCTOOLSINSTALLDIR, CL_PATH, CUDA_PATH, INCLUDE = get_paths(SYSTEM)
-    VC0 = VCTOOLSINSTALLDIR[:VCTOOLSINSTALLDIR.find(r'\Tools')]
-    if SYSTEM == 'Windows':
-        subprocess.run(["C:\\Users\\Shmelev\\source\\repos\\pySigLib\\build_cusig.bat", VC0, VCTOOLSINSTALLDIR])
-    elif SYSTEM == 'Linux':
+def build_cusig(system):
+    _, vctoolsinstalldir, _, _, _ = get_paths(system)
+    vc0 = vctoolsinstalldir[:vctoolsinstalldir.find(r'\Tools')]
+    if system == 'Windows':
+        subprocess.run(["C:\\Users\\Shmelev\\source\\repos\\pySigLib\\build_cusig.bat", vc0, vctoolsinstalldir], check=True)
+    elif system == 'Linux':
         raise #TODO
-    elif SYSTEM == 'Darwin':
+    elif system == 'Darwin':
         raise #TODO
     else:
         # Shouldn't really end up here, but just in case
-        raise RuntimeError("Unknown error while building pysiglib: unexpected system '" + SYSTEM + "' in build_cusig()")
+        raise RuntimeError("Unknown error while building pysiglib: unexpected system '" + system + "' in build_cusig()")
 
 def get_msvc_path():
-    output = subprocess.run(["b2", "toolset=msvc", "--debug-configuration"], capture_output=True, text=True)
+    output = subprocess.run(["b2", "toolset=msvc", "--debug-configuration"], capture_output=True, text=True, check=True)
     output = output.stdout
     idx = output.find("[msvc-cfg] msvc-")
     output = output[idx:]
@@ -115,32 +115,32 @@ def get_msvc_path():
 
     return output[start: end]
 
-def nvcc_compile_and_link(files, DIR, CL_PATH, CUDA_PATH, INCLUDE):
+def nvcc_compile_and_link(files, dir_, cl_path, cuda_path, include):
 
     for filename in files:
-        nvcc_compile_file_(filename, DIR, CL_PATH, CUDA_PATH, INCLUDE)
+        nvcc_compile_file_(filename, dir_, cl_path, cuda_path, include)
 
-    nvcc_link(files, DIR, CUDA_PATH)
+    nvcc_link(files, dir_, cuda_path)
 
 
-def nvcc_compile_file_(filename, DIR, CL_PATH, CUDA_PATH, INCLUDE):
+def nvcc_compile_file_(filename, dir_, cl_path, cuda_path, include):
 
     commands = [
-        os.path.join(CUDA_PATH, 'bin', 'nvcc.exe'),
+        os.path.join(cuda_path, 'bin', 'nvcc.exe'),
         '-gencode=arch=compute_52,code=\"sm_52,compute_52\"',
         '--use-local-env',
-        '-ccbin', CL_PATH,
+        '-ccbin', cl_path,
         '-x', 'cu', '-rdc=true',
         # f'-I{CUDA_PATH}\\include',
         # f'-I{VCTOOLSINSTALLDIR}\\include'
     ]
 
-    commands += ['-I' + x for x in INCLUDE.split(';')]
+    commands += ['-I' + x for x in include.split(';')]
 
     commands += [
         '-diag-suppress', '108',
         '-diag-suppress', '174',
-        '--keep-dir', 'x64\\Release',
+        '--keep-dir_', 'x64\\Release',
         '-maxrregcount=0',
         '--machine', '64',
         '--compile', '-cudart', 'static', '-lineinfo',
@@ -148,32 +148,32 @@ def nvcc_compile_file_(filename, DIR, CL_PATH, CUDA_PATH, INCLUDE):
         '-D_UNICODE', '-DUNICODE',
         '-Xcompiler', '"/EHsc /W3 /nologo /O2 /FS /MT"',
         '-Xcompiler', '/Fdx64\\Release\\vc143.pdb',
-        '-o', f'{DIR}\\siglib\\cusig\\{filename}.obj',
-        f'{DIR}\\siglib\\cusig\\{filename}'
+        '-o', f'{dir_}\\siglib\\cusig\\{filename}.obj',
+        f'{dir_}\\siglib\\cusig\\{filename}'
     ]
 
-    subprocess.run(commands)
+    subprocess.run(commands, check=True)
 
-def nvcc_link(files, DIR, CUDA_PATH):
+def nvcc_link(files, dir_, cuda_path):
 
-    print(os.path.join(CUDA_PATH, 'bin', 'crt'), "<--")
-    print(os.path.join(CUDA_PATH, 'lib', 'x64'))
+    print(os.path.join(cuda_path, 'bin', 'crt'), "<--")
+    print(os.path.join(cuda_path, 'lib', 'x64'))
 
     commands = [
-        os.path.join(CUDA_PATH, 'bin', 'nvcc.exe'),
+        os.path.join(cuda_path, 'bin', 'nvcc.exe'),
         # '--verbose',
         '-dlink',
         '-o', 'siglib\\cusig\\cusig.device-link.obj',
         '-Xcompiler', '"/EHsc /W3 /nologo /O2 /MT"',
         # '-Xcompiler' '/Fdx64\Release/vc143.pdb',
-        '-L' + os.path.join(CUDA_PATH, 'bin', 'crt'),
-        '-L' + os.path.join(CUDA_PATH, 'lib', 'x64'),
+        '-L' + os.path.join(cuda_path, 'bin', 'crt'),
+        '-L' + os.path.join(cuda_path, 'lib', 'x64'),
         'kernel32.lib', 'user32.lib', 'gdi32.lib', 'winspool.lib',
         'comdlg32.lib', 'advapi32.lib', 'shell32.lib', 'ole32.lib',
         'oleaut32.lib', 'uuid.lib', 'odbc32.lib', 'odbccp32.lib',
         'cudart.lib', 'cudadevrt.lib',
         '-gencode=arch=compute_52,code=sm_52'
     ]
-    commands += [f'{DIR}\\siglib\\cusig\\{filename}.obj' for filename in files]
+    commands += [f'{dir_}\\siglib\\cusig\\{filename}.obj' for filename in files]
 
-    subprocess.run(commands)
+    subprocess.run(commands, check=True)
