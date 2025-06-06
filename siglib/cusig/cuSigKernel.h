@@ -14,7 +14,7 @@ __device__ void goursatPde32(
 	int numThreads
 );
 
-void sigKernelCUDA_(//TODO: doesn't work with non-zero dyadics, e.g. 2,2
+void sigKernelCUDA_(
 	double* gram,
 	double* out,
 	uint64_t batchSize_,

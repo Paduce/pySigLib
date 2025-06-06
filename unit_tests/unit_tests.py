@@ -1,3 +1,4 @@
+import warnings
 import unittest
 import pysiglib
 import iisignature
@@ -99,7 +100,10 @@ class SigKernelTests(unittest.TestCase):
         self.run_random("cpu")
 
     def test_random_cuda(self):
-        self.run_random("cuda")
+        if pysiglib.BUILT_WITH_CUDA:
+            self.run_random("cuda")
+        else:
+            warnings.warn("Package built without CUDA, skipping test...")
 
 
 
