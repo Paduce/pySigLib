@@ -2,7 +2,7 @@
 #include <iostream>
 
 #ifndef __APPLE__
-	#define AVX
+	//#define AVX
 	#define ALIGNMENT 64
 
 	#if ALIGNMENT>0

@@ -28,3 +28,4 @@
 *.dll
 *.dylib
 *.so
+*.jam

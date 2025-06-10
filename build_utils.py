@@ -119,8 +119,8 @@ def build_cpsig(system, log_file):
 def build_cusig(system, log_file):
     _, vctoolsinstalldir, _, _, _ = get_paths(system, log_file)
     vc0 = vctoolsinstalldir[:vctoolsinstalldir.find(r'\Tools')]
-    if system == 'Windows':#TODO: correct path
-        _run(["C:\\Users\\Shmelev\\source\\repos\\pySigLib\\build_cusig.bat", vc0, vctoolsinstalldir], log_file)
+    if system == 'Windows':
+        _run(["build_cusig.bat", vc0, vctoolsinstalldir], log_file)
     elif system == 'Linux':
         raise #TODO
     elif system == 'Darwin':
@@ -145,69 +145,6 @@ def get_msvc_path(log_file):
 
     return output[start: end]
 
-# def nvcc_compile_and_link(files, dir_, cl_path, cuda_path, include, log_file):
-#
-#     for filename in files:
-#         nvcc_compile_file_(filename, dir_, cl_path, cuda_path, include, log_file)
-#
-#     nvcc_link(files, dir_, cuda_path, log_file)
-#
-#
-# def nvcc_compile_file_(filename, dir_, cl_path, cuda_path, include, log_file):
-#
-#     commands = [
-#         os.path.join(cuda_path, 'bin', 'nvcc.exe'),
-#         '-gencode=arch=compute_52,code=\"sm_52,compute_52\"',
-#         '--use-local-env',
-#         '-ccbin', cl_path,
-#         '-x', 'cu', '-rdc=true',
-#         # f'-I{CUDA_PATH}\\include',
-#         # f'-I{VCTOOLSINSTALLDIR}\\include'
-#     ]
-#
-#     commands += ['-I' + x for x in include.split(';')]
-#
-#     commands += [
-#         '-diag-suppress', '108',
-#         '-diag-suppress', '174',
-#         '--keep-dir_', 'x64\\Release',
-#         '-maxrregcount=0',
-#         '--machine', '64',
-#         '--compile', '-cudart', 'static', '-lineinfo',
-#         '-DNDEBUG', '-DCUSIG_EXPORTS', '-D_WINDOWS', '-D_USRDLL', '-D_WINDLL',
-#         '-D_UNICODE', '-DUNICODE',
-#         '-Xcompiler', '"/EHsc /W3 /nologo /O2 /FS /MT"',
-#         '-Xcompiler', '/Fdx64\\Release\\vc143.pdb',
-#         '-o', f'{dir_}\\siglib\\cusig\\{filename}.obj',
-#         f'{dir_}\\siglib\\cusig\\{filename}'
-#     ]
-#
-#     _run(commands, log_file)
-#
-# def nvcc_link(files, dir_, cuda_path, log_file):
-#
-#     print(os.path.join(cuda_path, 'bin', 'crt'), "<--")
-#     print(os.path.join(cuda_path, 'lib', 'x64'))
-#
-#     commands = [
-#         os.path.join(cuda_path, 'bin', 'nvcc.exe'),
-#         # '--verbose',
-#         '-dlink',
-#         '-o', 'siglib\\cusig\\cusig.device-link.obj',
-#         '-Xcompiler', '"/EHsc /W3 /nologo /O2 /MT"',
-#         # '-Xcompiler' '/Fdx64\Release/vc143.pdb',
-#         '-L' + os.path.join(cuda_path, 'bin', 'crt'),
-#         '-L' + os.path.join(cuda_path, 'lib', 'x64'),
-#         'kernel32.lib', 'user32.lib', 'gdi32.lib', 'winspool.lib',
-#         'comdlg32.lib', 'advapi32.lib', 'shell32.lib', 'ole32.lib',
-#         'oleaut32.lib', 'uuid.lib', 'odbc32.lib', 'odbccp32.lib',
-#         'cudart.lib', 'cudadevrt.lib',
-#         '-gencode=arch=compute_52,code=sm_52'
-#     ]
-#     commands += [f'{dir_}\\siglib\\cusig\\{filename}.obj' for filename in files]
-#
-#     _run(commands, log_file)
-
 def get_avx_info(log_file):
     os.chdir('avx_info')
 
@@ -216,49 +153,95 @@ def get_avx_info(log_file):
         os.remove(file_path)
 
     with open(file_path, "w") as file:
-        file.write('exe avx_info : avx_info.cpp ;\n')
-        file.write('install dist : avx_info :\n')
-        file.write('   <variant>release:<location>x64/Release\n')
-        file.write('   <variant>debug:<location>x64/Debug\n')
-        file.write('   ;')
+        file.write(
+    """
+exe avx_info : avx_info.cpp ;
+install dist : avx_info :
+   <variant>release:<location>x64/Release
+   <variant>debug:<location>x64/Debug
+   ;
+"""
+)
 
     _run(["b2", "release"], log_file)
     output = _run(["x64/Release/avx_info.exe"], log_file, check = False)
-    print(output.returncode, "<" + "=" * 20)
-    os.chdir('..')
 
-def make_jamfiles():
+    instructions = []
+
+    rc = output.returncode
+    if rc & 1:
+        instructions.append('avx')
+    rc = rc >> 1
+    if rc & 1:
+        instructions.append('avx2')
+    rc = rc >> 1
+    if rc & 1:
+        instructions.append('avx512f')
+    rc = rc >> 1
+    if rc & 1:
+        instructions.append('avx512pf')
+    rc = rc >> 1
+    if rc & 1:
+        instructions.append('avx512er')
+    rc = rc >> 1
+    if rc & 1:
+        instructions.append('avx512cd')
+
+    print("Found supported instruction sets: ", instructions)
+
+    os.chdir('..')
+    return instructions
+
+def make_jamfiles(instructions):
     #siglib/Jamroot.jam
     file_path = "siglib/Jamroot.jam"
     if os.path.exists(file_path):
         os.remove(file_path)
 
     with open(file_path, "w") as file:
-        file.write('build-project cpsig ;\n')
-        file.write('install dist : cpsig ./cpsig/cpsig.h :\n')
-        file.write('   <variant>release:<location>x64/Release\n')
-        file.write('   <variant>debug:<location>dist/debug\n')
-        file.write('   ;')
+        file.write(
+    """
+build-project cpsig ;
+install dist : cpsig ./cpsig/cpsig.h :
+   <variant>release:<location>x64/Release
+   <variant>debug:<location>dist/debug
+   ;
+"""
+)
 
     # siglib/cpsig/Jamfile.jam
     file_path = "siglib/cpsig/Jamfile.jam"
     if os.path.exists(file_path):
         os.remove(file_path)
 
+    # Get a list of cpp files to compile
+    cpp_files = os.listdir("siglib/cpsig")
+    cpp_files.remove("cp_unit_tests.cpp")
+    cpp_files = [x for x in cpp_files if x[-4:] == ".cpp"]
+    cpp_files_str = ' '.join(cpp_files)
+
+    # Get AVX info
+    if 'avx2' in instructions:
+        define_avx = '<define>AVX'
+        print("AVX2 supported, defining macro AVX in cpsig...")
+    else:
+        define_avx = ''
+
+    if 'avx512f' in instructions:
+        arch_flag = '<toolset>msvc:<cxxflags>"/arch:AVX512"'
+    elif 'avx2' in instructions:
+        arch_flag = '<toolset>msvc:<cxxflags>"/arch:AVX2"'
+    elif 'avx' in instructions:
+        arch_flag = '<toolset>msvc:<cxxflags>"/arch:AVX"'
+    else:
+        arch_flag = ''
+
     with open(file_path, "w") as file:
-        file.write('lib cpsig : cpsig.cpp cp_path_transforms.cpp cp_signature.cpp cp_tensor_poly.cpp cppch.cpp cp_sig_kernel.cpp\n')
-        file.write('	: <define>CPSIG_EXPORTS <cxxstd>20 <threading>multi \n')
-        file.write('	<toolset>msvc:<cxxflags>"/arch:AVX2"\n')
-        file.write('	;\n')
-
-    # siglib/cusig/Jamfile.jam
-    file_path = "siglib/cusig/Jamfile.jam"
-    if os.path.exists(file_path):
-        os.remove(file_path)
-
-    with open(file_path, "w") as file:
-        file.write('lib cusig : dllmain.cpp cupch.cpp cusig.device-link.obj cu_sig_kernel.cu.obj cu_sig_kernel.h.obj "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/cudart.lib" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/cudadevrt.lib"\n')
-        file.write('	: <include>"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/include" <define>CUSIG_EXPORTS <cxxstd>20 <threading>multi \n')
-        file.write('	<toolset>msvc:<cxxflags>"/arch:AVX2"\n')
-        file.write('	;\n')
-
+        file.write(
+    f"""
+lib cpsig : {cpp_files_str}
+        : <define>CPSIG_EXPORTS {define_avx} <cxxstd>20 <threading>multi 
+        {arch_flag}
+        ;
+"""
+        )

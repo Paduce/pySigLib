@@ -83,8 +83,8 @@ class CustomInstall(install):
 
             with open(log_path, "w") as log_file:
                 get_b2(SYSTEM, log_file)
-                get_avx_info(log_file)
-                make_jamfiles()
+                instructions = get_avx_info(log_file)
+                make_jamfiles(instructions)
                 build_cpsig(SYSTEM, log_file)
                 if USE_CUDA:
                     build_cusig(SYSTEM, log_file)
