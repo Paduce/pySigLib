@@ -131,7 +131,7 @@ def build_cusig(system, log_file):
 
 def get_msvc_path(log_file):
     os.chdir('siglib')
-    output = _run(["b2", "toolset=msvc", "--debug-configuration", "-n"], log_file)
+    output = _run(["../b2/b2", "toolset=msvc", "--debug-configuration", "-n"], log_file)
     os.chdir('..')
     output = output.stdout
     log_file.write(output + "\n")
@@ -163,7 +163,7 @@ install dist : avx_info :
 """
 )
 
-    _run(["b2", "release"], log_file)
+    _run(["../b2/b2", "release"], log_file)
     output = _run(["x64/Release/avx_info.exe"], log_file, check = False)
 
     instructions = []
