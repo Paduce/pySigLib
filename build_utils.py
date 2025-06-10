@@ -237,8 +237,8 @@ install dist : cpsig ./cpsig/cpsig.h :
     # Get AVX info
     if 'avx2' in instructions:
         define_avx = '<define>AVX'
-        log_file.write("\nAVX2 supported, defining macro AVX in cpsig...\n")
-        print("AVX2 supported, defining macro AVX in cpsig...")
+        log_file.write("\nAVX2 supported, defining macro AVX in cpsig\n")
+        print("AVX2 supported, defining macro AVX in cpsig")
     else:
         define_avx = ''
 
