@@ -94,7 +94,6 @@ private:
 		int nIds = info[0];
 
 		cpuid(info, 0x80000000, 0);
-		uint32_t nExIds = info[0];
 
 		//  Detect Features
 		if (nIds >= 0x00000001) {

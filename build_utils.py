@@ -13,7 +13,13 @@ ZIP_FILENAME = ZIP_FOLDERNAME + '.zip'
 B2_URL = 'https://github.com/bfgroup/b2/releases/download/' + B2_VERSION + '/b2-' + B2_VERSION + '.zip'
 
 def _run(cmd, log_file, shell = False, check = True):
+    cmd_str = ""
+    for c in cmd:
+        cmd_str += c + " "
+
     try:
+        log_file.write("\n" + "=" * 10 + " Running Command " + "=" * 10 + "\n")
+        log_file.write(cmd_str + "\n\n")
         output = subprocess.run(cmd, capture_output=True, check=check, text=True, shell = shell)
         log_file.write(output.stdout)
         log_file.write(output.stderr)
@@ -21,9 +27,6 @@ def _run(cmd, log_file, shell = False, check = True):
     except subprocess.CalledProcessError as e:
         log_file.write("\n" + "=" * 10 + " Exception occurred " + "=" * 10 + "\n")
         log_file.write("Exception occured whilst processing the command:\n\n")
-        cmd_str = ""
-        for c in cmd:
-            cmd_str += c + " "
         log_file.write(cmd_str + "\n")
         log_file.write(repr(e.stdout))
         log_file.write(repr(e.stderr))
@@ -31,9 +34,6 @@ def _run(cmd, log_file, shell = False, check = True):
     except Exception as e:
         log_file.write("\n" + "=" * 10 + " Exception occurred " + "=" * 10 + "\n")
         log_file.write("Exception occured whilst processing the command:\n\n")
-        cmd_str = ""
-        for c in cmd:
-            cmd_str += c + " "
         log_file.write(cmd_str + "\n")
         traceback.print_exc(file=log_file)
         raise e
@@ -165,7 +165,6 @@ def get_avx_info(system, log_file):
 exe avx_info : avx_info.cpp ;
 install dist : avx_info :
    <variant>release:<location>x64/Release
-   <variant>debug:<location>x64/Debug
    ;
 """
 )
@@ -218,7 +217,6 @@ def make_jamfiles(system, instructions, log_file):
 build-project cpsig ;
 install dist : cpsig ./cpsig/cpsig.h :
    <variant>release:<location>x64/Release
-   <variant>debug:<location>dist/debug
    ;
 """
 )
@@ -263,6 +261,7 @@ install dist : cpsig ./cpsig/cpsig.h :
 lib cpsig : {cpp_files_str}
         : <define>CPSIG_EXPORTS {define_avx} <cxxstd>20 <threading>multi 
         {toolset}
+        : <variant>release
         ;
 """
         )
