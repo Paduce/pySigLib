@@ -150,6 +150,9 @@ def get_msvc_path(system, log_file):
     return output[start: end]
 
 def get_avx_info(system, log_file):
+    if system == "Darwin":
+        return []
+
     os.chdir('avx_info')
 
     file_path = "jamroot.jam"
@@ -169,9 +172,12 @@ install dist : avx_info :
     if system == "Windows":
         _run(["../b2/b2", "release"], log_file)
         output = _run(["x64/Release/avx_info.exe"], log_file, check=False)
-    elif system == "Linux":
+    elif system == "Linux" or system == "Darwin":
         _run(["../b2/bin/b2", "release"], log_file)
         output = _run(["x64/Release/avx_info"], log_file, check=False)
+    else:
+        # Shouldn't really end up here, but just in case
+        raise RuntimeError("Unknown error while building pysiglib: unexpected system '" + system + "' in get_avx_info()")
 
     instructions = []
 
@@ -245,8 +251,11 @@ install dist : cpsig ./cpsig/cpsig.h :
             toolset = '<toolset>msvc:<cxxflags>"/arch:AVX"'
         else:
             toolset = '<toolset>msvc'
-    elif system=="Linux":
+    elif system=="Linux" or system=="Darwin":
         toolset = '<toolset>gcc:<cxxflags>"-march=native"'
+    else:
+        # Shouldn't really end up here, but just in case
+        raise RuntimeError("Unknown error while building pysiglib: unexpected system '" + system + "' in make_jamfiles()")
 
     with open(file_path, "w") as file:
         file.write(

@@ -1,3 +1,4 @@
+import os.path
 import timeit
 
 # import signatory
@@ -23,6 +24,9 @@ def plot_times(
         scale,
         filename
 ):
+    if not os.path.exists("plots"):
+        os.makedirs("plots")
+
     plt.figure(figsize=(4, 3))
     plt.title(title)
     plt.xlabel(xlabel)
