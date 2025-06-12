@@ -115,6 +115,73 @@ class SigKernelTests(unittest.TestCase):
         x = np.array([[[0,1],[3,2]]])
         pysiglib.sig_kernel(x,x,0)
 
+class InvalidParameterTests(unittest.TestCase):
+    def test_poly_length_value_error(self):
+        with self.assertRaises(ValueError):
+            pysiglib.poly_length(-1, 2)
+
+        with self.assertRaises(ValueError):
+            pysiglib.poly_length(1, -2)
+
+
+    def test_signature_type_error(self):
+        with self.assertRaises(TypeError):
+            pysiglib.signature('a', 2, False, False, False, False)
+
+        with self.assertRaises(TypeError):
+            pysiglib.signature(np.array(['a', 'b']), 2, False, False, False, False)
+
+        with self.assertRaises(TypeError):
+            pysiglib.signature(np.array([[0], [1]]), 'a', False, False, False, False)
+
+        with self.assertRaises(TypeError):
+            pysiglib.signature(np.array([[0], [1]]), 2, 'a', False, False, False)
+
+        with self.assertRaises(TypeError):
+            pysiglib.signature(np.array([[0], [1]]), 2, False, 'a', False, False)
+
+        with self.assertRaises(TypeError):
+            pysiglib.signature(np.array([[0], [1]]), 2, False, False, 'a', False)
+
+        with self.assertRaises(TypeError):
+            pysiglib.signature(np.array([[[0], [1]]]), 2, False, False, False, 'a')
+
+    def test_signature_value_error(self):
+        with self.assertRaises(ValueError):
+            pysiglib.signature(np.array([0, 1]), 2)
+
+        with self.assertRaises(ValueError):
+            pysiglib.signature(np.array([[[[0]]], [[[1]]]]), 2)
+
+        with self.assertRaises(ValueError):
+            pysiglib.signature(np.array([[0], [1]]), -1)
+
+    def test_sig_kernel_type_error(self):
+        with self.assertRaises(TypeError):
+            pysiglib.sig_kernel('a', np.array([[0], [1]]), 2)
+
+        with self.assertRaises(TypeError):
+            pysiglib.sig_kernel(np.array([[0], [1]]), 'a', 2)
+
+        with self.assertRaises(TypeError):
+            pysiglib.sig_kernel(np.array([[0], [1]]), np.array([[0], [1]]), 'a')
+
+    def test_sig_kernel_value_error(self):
+        with self.assertRaises(ValueError):
+            pysiglib.sig_kernel(np.array([0, 1]), np.array([[0], [1]]), 2)
+
+        with self.assertRaises(ValueError):
+            pysiglib.sig_kernel(np.array([[0], [1]]), np.array([0, 1]), 2)
+
+        with self.assertRaises(ValueError):
+            pysiglib.sig_kernel(np.array([[[[0]]], [[[1]]]]), np.array([[0], [1]]), 2)
+
+        with self.assertRaises(ValueError):
+            pysiglib.sig_kernel(np.array([[0], [1]]), np.array([[[[0]]], [[[1]]]]), 2)
+
+        with self.assertRaises(ValueError):
+            pysiglib.sig_kernel(np.array([[0], [1]]), np.array([[0], [1]]), -2)
+
 
 
 if __name__ == '__main__':

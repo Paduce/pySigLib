@@ -10,23 +10,30 @@ import torch
 
 from .error_codes import err_msg
 
+######################################################
+# Figure out how pysiglib was built, in particular
+# whether CUDA is being used
+######################################################
+
 try:
     from ._config import SYSTEM, BUILT_WITH_CUDA, BUILT_WITH_AVX
 except ImportError as exc:
-    SYSTEM = None
-    BUILT_WITH_CUDA = None
-    BUILT_WITH_AVX = None
     raise RuntimeError("Could not import configuration properties from _config.py - package may not have been built correctly.") from exc
 
 if SYSTEM != platform.system():
     raise RuntimeError("System on which pySigLib was built does not match the current system - package may not have been built correctly.")
 
+######################################################
+# Load the cpsig and cusig libraries
+######################################################
+
+# winmode = 0 is necessary here
+# https://github.com/NVIDIA/warp/issues/24
+
 dir_ = os.path.dirname(sys.modules['pysiglib'].__file__)
-print(dir_)
 
 if SYSTEM == 'Windows':
     cpsig_path = os.path.join(dir_, 'cpsig.dll')
-    #https://github.com/NVIDIA/warp/issues/24
     cpsig = ctypes.CDLL(cpsig_path, winmode = 0)
 
     if BUILT_WITH_CUDA:
@@ -44,6 +51,81 @@ elif SYSTEM == 'Darwin':
     cpsig = ctypes.CDLL(cpsig_path)
 else:
     raise Exception("Unsupported OS during pysiglib.py")
+
+######################################################
+# Set argtypes and restypes for all imported functions
+######################################################
+
+cpsig.signature_int32.argtypes = (POINTER(c_int32), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
+cpsig.signature_int32.restype = c_int64
+
+cpsig.signature_int64.argtypes = (POINTER(c_int64), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
+cpsig.signature_int64.restype = c_int64
+
+cpsig.signature_float.argtypes = (POINTER(c_float), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
+cpsig.signature_float.restype = c_int64
+
+cpsig.signature_double.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
+cpsig.signature_double.restype = c_int64
+
+cpsig.batch_signature_int32.argtypes = (POINTER(c_int32), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
+cpsig.batch_signature_int32.restype = c_int64
+
+cpsig.batch_signature_int64.argtypes = (POINTER(c_int64), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
+cpsig.batch_signature_int64.restype = c_int64
+
+cpsig.batch_signature_float.argtypes = (POINTER(c_float), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
+cpsig.batch_signature_float.restype = c_int64
+
+cpsig.batch_signature_double.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
+cpsig.batch_signature_double.restype = c_int64
+
+cpsig.batch_sig_kernel.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
+cpsig.batch_sig_kernel.restype = c_int64
+
+if BUILT_WITH_CUDA:
+    cusig.batch_sig_kernel_cuda.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
+    cusig.batch_sig_kernel_cuda.restype = c_int64
+
+######################################################
+# Some dicts to simplify dtype cases
+######################################################
+
+SUPPORTED_DTYPES = [
+    np.int32,
+    np.int64,
+    np.float32,
+    np.float64,
+    torch.int32,
+    torch.int64,
+    torch.float32,
+    torch.float64
+]
+
+DTYPES = {
+    "int32": c_int32,
+    "int64": c_int64,
+    "float32": c_float,
+    "float64": c_double
+}
+
+CPSIG_SIGNATURE = {
+    "int32": cpsig.signature_int32,
+    "int64": cpsig.signature_int64,
+    "float32": cpsig.signature_float,
+    "float64": cpsig.signature_double
+}
+
+CPSIG_BATCH_SIGNATURE = {
+    "int32": cpsig.batch_signature_int32,
+    "int64": cpsig.batch_signature_int64,
+    "float32": cpsig.batch_signature_float,
+    "float64": cpsig.batch_signature_double
+}
+
+######################################################
+# Python wrappers
+######################################################
 
 def poly_length(dimension : int, degree : int) -> int:
     """
@@ -63,15 +145,38 @@ def poly_length(dimension : int, degree : int) -> int:
     :return: Length of a truncated signature
     :rtype: int
     """
+    if not isinstance(dimension, int):
+        raise TypeError("dimension must be of type int, got " + str(type(dimension)) + " instead")
+    if not isinstance(degree, int):
+        raise TypeError("degree must be of type int, got " + str(degree) + " instead")
+    if dimension < 0:
+        raise ValueError("dimension must be a non-negative integer, got dimension = " + str(dimension))
+    if degree < 0:
+        raise ValueError("degree must be a non-negative integer, got degree = " + str(degree))
+
     cpsig.poly_length.argtypes = (c_int64, c_int64)
     cpsig.poly_length.restype = c_int64
     out = cpsig.poly_length(dimension, degree)
     if out == 0:
-        raise Exception("Integer overflow encountered in poly_length")
+        raise ValueError("Integer overflow encountered in poly_length")
     return out
 
 class SigDataHandler:
     def __init__(self, path, degree, time_aug, lead_lag):
+
+        if not isinstance(path, (np.ndarray, torch.Tensor)):
+            raise TypeError("path must be a numpy array or torch tensor, got " + str(type(path)) + " instead")
+        if path.dtype not in SUPPORTED_DTYPES:
+            raise TypeError("path.dtype must be int32, int64, float32 or float64, got " + str(path.dtype) + " instead")
+        if not isinstance(degree, int):
+            raise TypeError("degree must be of type int, got " + str(type(degree)) + " instead")
+        if degree < 0:
+            raise ValueError("degree must be non-negative, got degree = " + str(degree))
+        if not isinstance(time_aug, bool):
+            raise TypeError("time_aug must be of type bool, got " + str(type(time_aug)) + " instead")
+        if not isinstance(lead_lag, bool):
+            raise TypeError("lead_lag must be of type bool, got " + str(type(lead_lag)) + " instead")
+
         self.degree = degree
         self.time_aug = time_aug
         self.lead_lag = lead_lag
@@ -80,25 +185,18 @@ class SigDataHandler:
 
         if isinstance(path, np.ndarray):
             self.init_numpy(path)
-
-        if isinstance(path, torch.Tensor):
+        elif isinstance(path, torch.Tensor):
             self.init_torch(path)
 
     def init_numpy(self, path):
-        if path.dtype == np.int32:
-            self.dtype = "int32"
-            self.data_ptr = path.ctypes.data_as(POINTER(c_int32))
-        elif path.dtype == np.int64:
-            self.dtype = "int64"
-            self.data_ptr = path.ctypes.data_as(POINTER(c_int64))
-        elif path.dtype == np.float32:
-            self.dtype = "float32"
-            self.data_ptr = path.ctypes.data_as(POINTER(c_float))
-        elif path.dtype == np.float64:
-            self.dtype = "float64"
-            self.data_ptr = path.ctypes.data_as(POINTER(c_double))
+
+        self.dtype = str(path.dtype)
+
+        if self.dtype in DTYPES:
+            self.data_ptr = path.ctypes.data_as(POINTER(DTYPES[self.dtype]))
         else:
-            raise ValueError("path.dtype must be int32, int64, float32 or float64. Got " + str(path.dtype) + " instead.")
+            raise ValueError(
+                "path.dtype must be one of int32, int64, float32 or float64. Got " + str(path.dtype) + " instead.")
 
         _, dimension_ = self.transformed_dims()
         if self.is_batch:
@@ -107,24 +205,20 @@ class SigDataHandler:
                 dtype=np.float64
             )
         else:
-            self.out = np.empty(shape=poly_length(dimension_, self.degree), dtype=np.float64)
+            self.out = np.empty(
+                shape=poly_length(dimension_, self.degree),
+                dtype=np.float64
+            )
         self.out_ptr = self.out.ctypes.data_as(POINTER(c_double))
 
     def init_torch(self, path):
-        if path.dtype == torch.int32:
-            self.dtype = "int32"
-            self.data_ptr = cast(path.data_ptr(), POINTER(c_int32))
-        elif path.dtype == torch.int64:
-            self.dtype = "int64"
-            self.data_ptr = cast(path.data_ptr(), POINTER(c_int64))
-        elif path.dtype == torch.float32:
-            self.dtype = "float32"
-            self.data_ptr = cast(path.data_ptr(), POINTER(c_float))
-        elif path.dtype == torch.float64:
-            self.dtype = "float64"
-            self.data_ptr = cast(path.data_ptr(), POINTER(c_double))
+
+        self.dtype = str(path.dtype)[6:]
+
+        if self.dtype in DTYPES:
+            self.data_ptr = cast(path.data_ptr(), POINTER(DTYPES[self.dtype]))
         else:
-            raise ValueError("path.dtype must be int32, int64, float32 or float64. Got " + str(path.dtype) + " instead.")
+            raise ValueError("path.dtype must be one of int32, int64, float32 or float64. Got " + str(path.dtype) + " instead.")
 
         _, dimension_ = self.transformed_dims()
         if self.is_batch:
@@ -168,46 +262,34 @@ class SigDataHandler:
 
 
 def signature_(data, time_aug = False, lead_lag = False, horner = True):
-    err_code = 0
-    if data.dtype == "int32":
-        cpsig.signature_int32.argtypes = (POINTER(c_int32), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
-        cpsig.signature_int32.restype = c_int64
-        err_code = cpsig.signature_int32(data.data_ptr, data.out_ptr, data.dimension, data.length, data.degree, time_aug, lead_lag, horner)
-    elif data.dtype == "int64":
-        cpsig.signature_int64.argtypes = (POINTER(c_int64), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
-        cpsig.signature_int64.restype = c_int64
-        err_code = cpsig.signature_int64(data.data_ptr, data.out_ptr, data.dimension, data.length, data.degree, time_aug, lead_lag, horner)
-    elif data.dtype == "float32":
-        cpsig.signature_float.argtypes = (POINTER(c_float), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
-        cpsig.signature_float.restype = c_int64
-        err_code = cpsig.signature_float(data.data_ptr, data.out_ptr, data.dimension, data.length, data.degree, time_aug, lead_lag, horner)
-    elif data.dtype == "float64":
-        cpsig.signature_double.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
-        cpsig.signature_double.restype = c_int64
-        err_code = cpsig.signature_double(data.data_ptr, data.out_ptr, data.dimension, data.length, data.degree, time_aug, lead_lag, horner)
+    err_code = CPSIG_SIGNATURE[data.dtype](
+        data.data_ptr,
+        data.out_ptr,
+        data.dimension,
+        data.length,
+        data.degree,
+        time_aug,
+        lead_lag,
+        horner
+    )
 
     if err_code:
         raise Exception(err_msg[err_code] + " in signature")
     return data.out
 
 def batch_signature_(data, time_aug = False, lead_lag = False, horner = True, parallel = True):
-    err_code = 0
-    if data.dtype == "int32":
-        cpsig.batch_signature_int32.argtypes = (POINTER(c_int32), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
-        cpsig.batch_signature_int32.restype = c_int64
-        err_code = cpsig.batch_signature_int32(data.data_ptr, data.out_ptr, data.batch_size, data.dimension, data.length, data.degree, time_aug, lead_lag, horner, parallel)
-    elif data.dtype == "int64":
-        cpsig.batch_signature_int64.argtypes = (POINTER(c_int64), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
-        cpsig.batch_signature_int64.restype = c_int64
-        err_code = cpsig.batch_signature_int64(data.data_ptr, data.out_ptr, data.batch_size, data.dimension, data.length, data.degree, time_aug, lead_lag, horner, parallel)
-    elif data.dtype == "float32":
-        cpsig.batch_signature_float.argtypes = (POINTER(c_float), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
-        cpsig.batch_signature_float.restype = c_int64
-        err_code = cpsig.batch_signature_float(data.data_ptr, data.out_ptr, data.batch_size, data.dimension, data.length, data.degree, time_aug, lead_lag, horner, parallel)
-    elif data.dtype == "float64":
-        cpsig.batch_signature_double.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
-        cpsig.batch_signature_double.restype = c_int64
-        err_code = cpsig.batch_signature_double(data.data_ptr, data.out_ptr, data.batch_size, data.dimension, data.length, data.degree, time_aug, lead_lag, horner, parallel)
+    err_code = CPSIG_BATCH_SIGNATURE[data.dtype](
+        data.data_ptr,
+        data.out_ptr,
+        data.batch_size,
+        data.dimension,
+        data.length,
+        data.degree,
+        time_aug,
+        lead_lag,
+        horner,
+        parallel
+    )
 
     if err_code:
         raise Exception(err_msg[err_code] + " in signature")
@@ -250,14 +332,29 @@ def signature(
     :return: Truncated signature, or a batch of truncated signatures.
     :rtype: numpy.ndarray | torch.tensor
     """
+    if not isinstance(horner, bool):
+        raise TypeError("horner must be of type bool, got " + str(type(horner)) + " instead")
+
     data = SigDataHandler(path, degree, time_aug, lead_lag)
     if data.is_batch:
+        if not isinstance(parallel, bool):
+            raise TypeError("parallel must be of type bool, got " + str(type(parallel)) + " instead")
         return batch_signature_(data, time_aug, lead_lag, horner, parallel)
     return signature_(data, time_aug, lead_lag, horner)
 
 
 class SigKernelDataHandler:
     def __init__(self, path1, path2, dyadic_order):
+
+        if not isinstance(path1, (np.ndarray, torch.Tensor)):
+            raise TypeError("path1 must be a numpy array or a torch tensor, got " + str(type(path1)) + " instead")
+        if path1.dtype not in SUPPORTED_DTYPES:
+            raise TypeError("path1.dtype must be int32, int64, float32 or float64, got " + str(path1.dtype) + " instead")
+        if not isinstance(path2, (np.ndarray, torch.Tensor)):
+            raise TypeError("path2 must be a numpy array or a torch tensor, got " + str(type(path1)) + " instead")
+        if path2.dtype not in SUPPORTED_DTYPES:
+            raise TypeError("path2.dtype must be int32, int64, float32 or float64, got " + str(path2.dtype) + " instead")
+
         if isinstance(dyadic_order, tuple) and len(dyadic_order) == 2:
             self.dyadic_order_1 = dyadic_order[0]
             self.dyadic_order_2 = dyadic_order[1]
@@ -265,7 +362,10 @@ class SigKernelDataHandler:
             self.dyadic_order_1 = dyadic_order
             self.dyadic_order_2 = dyadic_order
         else:
-            raise ValueError("dyadicOrder must be an integer or a tuple of length 2")
+            raise TypeError("dyadic_order must be an integer or a tuple of length 2")
+
+        if self.dyadic_order_1 < 0 or self.dyadic_order_2 < 0:
+            raise ValueError("dyadic_order must be a non-negative integer or tuple of non-negative integers")
 
         if len(path1.shape) == 2:
             self.is_batch = False
@@ -326,9 +426,6 @@ class SigKernelDataHandler:
             raise ValueError("path1, path2 must both be numpy arrays or both torch arrays on the same device")
 
 def sig_kernel_(data):
-    cpsig.batch_sig_kernel.argtypes = (
-    POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
-    cpsig.batch_sig_kernel.restype = c_int64
 
     err_code = cpsig.batch_sig_kernel(
         cast(data.gram.data_ptr(), POINTER(c_double)),
@@ -346,9 +443,6 @@ def sig_kernel_(data):
     return data.out
 
 def sig_kernel_cuda_(data):
-    cusig.batch_sig_kernel_cuda.argtypes = (
-    POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
-    cusig.batch_sig_kernel_cuda.restype = c_int64
     err_code = cusig.batch_sig_kernel_cuda(
         cast(data.gram.data_ptr(), POINTER(c_double)),
         data.out_ptr, data.batch_size,
