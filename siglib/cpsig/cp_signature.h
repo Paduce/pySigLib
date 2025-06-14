@@ -40,8 +40,9 @@ FORCE_INLINE void linear_signature_(Point<T>& start_pt, Point<T>& end_pt, double
 	for (uint64_t level = 2UL; level <= degree; ++level) {
 		one_over_level = 1. / static_cast<double>(level);
 		double* result_ptr = out + level_index[level];
+		const double* left_ptr_upper_bound = out + level_index[level];
 
-		for (double* left_ptr = out + level_index[level - 1]; left_ptr != out + level_index[level]; ++left_ptr) {
+		for (double* left_ptr = out + level_index[level - 1]; left_ptr != left_ptr_upper_bound; ++left_ptr) {
 			left_over_level = (*left_ptr) * one_over_level;
 			for (double* right_ptr = out + 1; right_ptr != out + dimension + 1; ++right_ptr) {
 				*(result_ptr++) = left_over_level * (*right_ptr);
@@ -59,27 +60,22 @@ void signature_naive_(Path<T>& path, double* out, uint64_t degree)
 	Point<T> next_pt(path.begin());
 	++next_pt;
 
-	uint64_t* level_index = (uint64_t*)malloc(sizeof(uint64_t) * (degree + 2));
-	if (!level_index) {
-		throw std::bad_alloc();
-		return;
-	}
+	std::unique_ptr<uint64_t> level_index_uptr( new uint64_t[degree + 2]);
+	uint64_t* level_index = level_index_uptr.get();
+
 	level_index[0] = 0UL;
 	for (uint64_t i = 1UL; i <= degree + 1UL; i++)
 		level_index[i] = level_index[i - 1UL] * dimension + 1;
 
 	linear_signature_(prev_pt, next_pt, out, dimension, degree, level_index); //Zeroth step
 
-	if (path.length() == 2UL) { free(level_index); return; }
+	if (path.length() == 2UL) { return; }
 
 	++prev_pt;
 	++next_pt;
 
-	double* linear_signature = (double*)malloc(sizeof(double) * ::poly_length(dimension, degree));
-	if (!linear_signature) {
-		throw std::bad_alloc();
-		return;
-	}
+	std::unique_ptr<double> linear_signature_uptr(new double[::poly_length(dimension, degree)]);
+	double* linear_signature = linear_signature_uptr.get();
 
 	Point<T> last_pt(path.end());
 
@@ -93,9 +89,10 @@ void signature_naive_(Path<T>& path, double* out, uint64_t degree)
 				--left_level, ++right_level) {
 
 				double* result_ptr = out + level_index[target_level];
-
-				for (double* left_ptr = out + level_index[left_level]; left_ptr != out + level_index[left_level + 1]; ++left_ptr) {
-					for (double* right_ptr = linear_signature + level_index[right_level]; right_ptr != linear_signature + level_index[right_level + 1]; ++right_ptr) {
+				const double* left_ptr_upper_bound = out + level_index[left_level + 1];
+				for (double* left_ptr = out + level_index[left_level]; left_ptr != left_ptr_upper_bound; ++left_ptr) {
+					const double* right_ptr_upper_bound = linear_signature + level_index[right_level + 1];
+					for (double* right_ptr = linear_signature + level_index[right_level]; right_ptr != right_ptr_upper_bound; ++right_ptr) {
 						*(result_ptr++) += (*left_ptr) * (*right_ptr);
 					}
 				}
@@ -104,14 +101,12 @@ void signature_naive_(Path<T>& path, double* out, uint64_t degree)
 
 			//left_level = 0
 			double* result_ptr = out + level_index[target_level];
-
-			for (double* right_ptr = linear_signature + level_index[target_level]; right_ptr != linear_signature + level_index[target_level + 1]; ++right_ptr) {
+			const double* right_ptr_upper_bound = linear_signature + level_index[target_level + 1];
+			for (double* right_ptr = linear_signature + level_index[target_level]; right_ptr != right_ptr_upper_bound; ++right_ptr) {
 				*(result_ptr++) += *right_ptr;
 			}
 		}
 	}
-	free(linear_signature);
-	free(level_index);
 }
 
 template<typename T>
@@ -123,32 +118,25 @@ void signature_horner_(Path<T>& path, double* out, uint64_t degree)
 	Point<T> next_pt = path.begin();
 	++next_pt;
 
-	uint64_t* level_index = (uint64_t*)ALIGNED_MALLOC(sizeof(uint64_t) * (degree + 2));
-	if (!level_index) {
-		throw std::bad_alloc();
-		return;
-	}
+	std::unique_ptr<uint64_t> level_index_uptr(new uint64_t[degree + 2]);
+	uint64_t* level_index = level_index_uptr.get();
+
 	level_index[0] = 0UL;
 	for (uint64_t i = 1UL; i <= degree + 1UL; i++)
 		level_index[i] = level_index[i - 1UL] * dimension + 1UL;
 
 	linear_signature_(prev_pt, next_pt, out, dimension, degree, level_index); //Zeroth step
 
-	if (path.length() == 2UL) { ALIGNED_FREE(level_index); return; }
+	if (path.length() == 2UL) { return; }
 
 	++prev_pt;
 	++next_pt;
+	
+	std::unique_ptr<double> horner_step_uptr(new double[level_index[degree + 1UL] - level_index[degree]]);
+	double* horner_step = horner_step_uptr.get();
 
-	double* horner_step = (double*)ALIGNED_MALLOC(sizeof(double) * (level_index[degree + 1UL] - level_index[degree])); //This will hold intermediary computations
-	if (!horner_step) {
-		throw std::bad_alloc();
-		return;
-	}
-	double* increments = (double*)ALIGNED_MALLOC(sizeof(double) * dimension);
-	if (!increments) {
-		throw std::bad_alloc();
-		return;
-	}
+	std::unique_ptr<double> increments_uptr(new double[dimension]);
+	double* increments = increments_uptr.get();
 
 	Point<T> last_pt(path.end());
 
@@ -229,9 +217,6 @@ void signature_horner_(Path<T>& path, double* out, uint64_t degree)
 		for (uint64_t i = 0; i < dimension; ++i)
 			out[i + 1] += increments[i];
 	}
-	ALIGNED_FREE(increments);
-	ALIGNED_FREE(horner_step);
-	ALIGNED_FREE(level_index);
 }
 
 template<typename T>

@@ -164,13 +164,14 @@ void sig_kernel_cuda_(//TODO: doesn't work with non-zero dyadics, e.g. 2,2
 	cudaMemcpyToSymbol(gram_length, &gram_length_, sizeof(uint64_t));
 
 	// Allocate initial condition
-	double* ones = (double*)malloc(dyadic_length_1_ * batch_size_ * sizeof(double));
+	std::unique_ptr<double> ones_uptr(new double[dyadic_length_1_ * batch_size_]);
+	double* ones = ones_uptr.get();
 	std::fill(ones, ones + dyadic_length_1_ * batch_size_, 1.);
 
 	double* initial_condition;
 	cudaMalloc((void**)&initial_condition, dyadic_length_1_ * batch_size_ * sizeof(double));
 	cudaMemcpy(initial_condition, ones, dyadic_length_1_ * batch_size_ * sizeof(double), cudaMemcpyHostToDevice);
-	free(ones);
+	ones_uptr.reset();
 
 	goursat_pde << <static_cast<unsigned int>(batch_size_), 32U >> > (initial_condition, gram);
 
