@@ -70,9 +70,12 @@ class PolyTests(unittest.TestCase):
             self.check_close(sig, sig_mult)
 
     def test_poly_mult_cuda_err(self):
-        x = torch.tensor([[0.]], dtype = torch.float64, device = "cuda")
-        with self.assertRaises(ValueError):
-            pysiglib.poly_mult(x, x, 1, 0)
+        if torch.cuda.is_available():
+            x = torch.tensor([[0.]], dtype = torch.float64, device = "cuda")
+            with self.assertRaises(ValueError):
+                pysiglib.poly_mult(x, x, 1, 0)
+        else:
+            warnings.warn("Torch built without CUDA, skipping test...")
 
     def test_poly_mult_non_contiguous(self):
         # Make sure poly_mult works with any form of array
@@ -148,9 +151,12 @@ class SignatureTests(unittest.TestCase):
             self.check_close(iisig, sig[:, 1:])
 
     def test_cuda_err(self):
-        x = torch.tensor([[0.],[1.]], device = "cuda")
-        with self.assertRaises(ValueError):
-            pysiglib.signature(x, 2)
+        if torch.cuda.is_available():
+            x = torch.tensor([[0.],[1.]], device = "cuda")
+            with self.assertRaises(ValueError):
+                pysiglib.signature(x, 2)
+        else:
+            warnings.warn("Torch built without CUDA, skipping test...")
 
     def test_signature_non_contiguous(self):
         # Make sure signature works with any form of array
@@ -202,10 +208,10 @@ class SigKernelTests(unittest.TestCase):
         self.run_random("cpu")
 
     def test_random_cuda(self):
-        if pysiglib.BUILT_WITH_CUDA:
+        if pysiglib.BUILT_WITH_CUDA and torch.cuda.is_available():
             self.run_random("cuda")
         else:
-            warnings.warn("Package built without CUDA, skipping test...")
+            warnings.warn("Package or torch built without CUDA, skipping test...")
 
     def test_sig_kernel_numpy1(self):
         x = np.array([[0,1],[3,2]])

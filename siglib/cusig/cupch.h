@@ -34,5 +34,6 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <memory>
 
 #endif //PCH_H

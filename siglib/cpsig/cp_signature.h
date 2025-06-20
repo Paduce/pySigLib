@@ -61,7 +61,7 @@ void signature_naive_(Path<T>& path, double* out, uint64_t degree)
 	Point<T> next_pt(path.begin());
 	++next_pt;
 
-	std::unique_ptr<uint64_t> level_index_uptr( new uint64_t[degree + 2]);
+	auto level_index_uptr = std::make_unique<uint64_t[]>(degree + 2);
 	uint64_t* level_index = level_index_uptr.get();
 
 	level_index[0] = 0UL;
@@ -75,7 +75,7 @@ void signature_naive_(Path<T>& path, double* out, uint64_t degree)
 	++prev_pt;
 	++next_pt;
 
-	std::unique_ptr<double> linear_signature_uptr(new double[::poly_length(dimension, degree)]);
+	auto linear_signature_uptr = std::make_unique<double[]>(::poly_length(dimension, degree));
 	double* linear_signature = linear_signature_uptr.get();
 
 	Point<T> last_pt(path.end());
@@ -97,7 +97,7 @@ void signature_horner_(Path<T>& path, double* out, uint64_t degree)
 	Point<T> next_pt = path.begin();
 	++next_pt;
 
-	std::unique_ptr<uint64_t> level_index_uptr(new uint64_t[degree + 2]);
+	auto level_index_uptr = std::make_unique<uint64_t[]>(degree + 2);
 	uint64_t* level_index = level_index_uptr.get();
 
 	level_index[0] = 0UL;
@@ -111,10 +111,10 @@ void signature_horner_(Path<T>& path, double* out, uint64_t degree)
 	++prev_pt;
 	++next_pt;
 	
-	std::unique_ptr<double> horner_step_uptr(new double[level_index[degree + 1UL] - level_index[degree]]);
+	auto horner_step_uptr = std::make_unique<double[]>(level_index[degree + 1UL] - level_index[degree]);
 	double* horner_step = horner_step_uptr.get();
 
-	std::unique_ptr<double> increments_uptr(new double[dimension]);
+	auto increments_uptr = std::make_unique<double[]>(dimension);
 	double* increments = increments_uptr.get();
 
 	Point<T> last_pt(path.end());

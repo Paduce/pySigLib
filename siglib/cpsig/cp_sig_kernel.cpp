@@ -36,7 +36,7 @@ void get_sig_kernel_(
 	const uint64_t dyadic_length_2 = ((length2 - 1) << dyadic_order_2) + 1;
 
 	// Allocate(flattened) PDE grid
-	std::unique_ptr<double> pde_grid_uptr(new double[dyadic_length_1 * dyadic_length_2]);
+	auto pde_grid_uptr = std::make_unique<double[]>(dyadic_length_1 * dyadic_length_2);
 	double* pde_grid = pde_grid_uptr.get();
 
 	// Initialization of K array
@@ -46,10 +46,10 @@ void get_sig_kernel_(
 
 	std::fill(pde_grid, pde_grid + dyadic_length_2, 1.0); // Set K[0, j] = 1.0
 
-	std::unique_ptr<double> deriv_term_1_uptr(new double[length2 - 1]);
+	auto deriv_term_1_uptr = std::make_unique<double[]>(length2 - 1);
 	double* deriv_term_1 = deriv_term_1_uptr.get();
 
-	std::unique_ptr<double> deriv_term_2_uptr(new double[length2 - 1]);
+	auto deriv_term_2_uptr = std::make_unique<double[]>(length2 - 1);
 	double* deriv_term_2 = deriv_term_2_uptr.get();
 
 	double* k11 = pde_grid;

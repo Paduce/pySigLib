@@ -164,7 +164,7 @@ void sig_kernel_cuda_(//TODO: doesn't work with non-zero dyadics, e.g. 2,2
 	cudaMemcpyToSymbol(gram_length, &gram_length_, sizeof(uint64_t));
 
 	// Allocate initial condition
-	std::unique_ptr<double> ones_uptr(new double[dyadic_length_1_ * batch_size_]);
+	auto ones_uptr = std::make_unique<double[]>(dyadic_length_1_ * batch_size_);
 	double* ones = ones_uptr.get();
 	std::fill(ones, ones + dyadic_length_1_ * batch_size_, 1.);
 

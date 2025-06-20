@@ -58,7 +58,7 @@ void poly_mult_(double* poly1, double* poly2, double* out, uint64_t dimension, u
 {
 	if (dimension == 0) { throw std::invalid_argument("poly_mult received dimension 0"); }
 
-	std::unique_ptr<uint64_t> level_index_uptr(new uint64_t[degree + 2]);
+	auto level_index_uptr = std::make_unique<uint64_t[]>(degree + 2);
 	uint64_t* level_index = level_index_uptr.get();
 
 	level_index[0] = 0UL;
