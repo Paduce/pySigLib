@@ -70,7 +70,7 @@ void sig_combine_(double* sig1, double* sig2, double* out, uint64_t dimension, u
 	sig_combine_inplace_(out, sig2, degree, level_index);
 }
 
-void batch_sig_combine_(double* sig1, double* sig2, double* out, uint64_t batch_size, uint64_t dimension, uint64_t degree, bool parallel = true)
+void batch_sig_combine_(double* sig1, double* sig2, double* out, uint64_t batch_size, uint64_t dimension, uint64_t degree, int n_jobs = 1)
 {
 	if (dimension == 0) { throw std::invalid_argument("sig_combine received dimension 0"); }
 
@@ -83,8 +83,8 @@ void batch_sig_combine_(double* sig1, double* sig2, double* out, uint64_t batch_
 		sig_combine_(sig1_ptr, sig2_ptr, out_ptr, dimension, degree);
 		};
 
-	if (parallel) {
-		multi_threaded_batch_2(sig_combine_func, sig1, sig2, out, batch_size, siglength, siglength, siglength);
+	if (n_jobs != 1) {
+		multi_threaded_batch_2(sig_combine_func, sig1, sig2, out, batch_size, siglength, siglength, siglength, n_jobs);
 	}
 	else {
 		double* sig1_ptr = sig1;
@@ -108,7 +108,7 @@ extern "C" {
 		SAFE_CALL(sig_combine_(sig1, sig2, out, dimension, degree));
 	}
 
-	CPSIG_API int batch_sig_combine(double* sig1, double* sig2, double* out, uint64_t batch_size, uint64_t dimension, uint64_t degree, bool parallel) noexcept {
-		SAFE_CALL(batch_sig_combine_(sig1, sig2, out, batch_size, dimension, degree, parallel));
+	CPSIG_API int batch_sig_combine(double* sig1, double* sig2, double* out, uint64_t batch_size, uint64_t dimension, uint64_t degree, int n_jobs) noexcept {
+		SAFE_CALL(batch_sig_combine_(sig1, sig2, out, batch_size, dimension, degree, n_jobs));
 	}
 }

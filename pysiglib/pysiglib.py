@@ -21,7 +21,7 @@ import sys
 import platform
 from typing import Union
 import ctypes
-from ctypes import c_float, c_double, c_int32, c_int64, c_bool, POINTER, cast
+from ctypes import c_float, c_double, c_int, c_int32, c_int64, c_bool, POINTER, cast
 
 import numpy as np
 import torch
@@ -79,41 +79,41 @@ cpsig.sig_length.argtypes = (c_int64, c_int64)
 cpsig.sig_length.restype = c_int64
 
 cpsig.sig_combine.argtypes = (POINTER(c_double), POINTER(c_double), POINTER(c_double), c_int64, c_int64)
-cpsig.sig_combine.restype = c_int64
+cpsig.sig_combine.restype = c_int
 
-cpsig.batch_sig_combine.argtypes = (POINTER(c_double), POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_bool)
-cpsig.batch_sig_combine.restype = c_int64
+cpsig.batch_sig_combine.argtypes = (POINTER(c_double), POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int)
+cpsig.batch_sig_combine.restype = c_int
 
 cpsig.signature_int32.argtypes = (POINTER(c_int32), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
-cpsig.signature_int32.restype = c_int64
+cpsig.signature_int32.restype = c_int
 
 cpsig.signature_int64.argtypes = (POINTER(c_int64), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
-cpsig.signature_int64.restype = c_int64
+cpsig.signature_int64.restype = c_int
 
 cpsig.signature_float.argtypes = (POINTER(c_float), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
-cpsig.signature_float.restype = c_int64
+cpsig.signature_float.restype = c_int
 
 cpsig.signature_double.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_bool, c_bool, c_bool)
-cpsig.signature_double.restype = c_int64
+cpsig.signature_double.restype = c_int
 
-cpsig.batch_signature_int32.argtypes = (POINTER(c_int32), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
-cpsig.batch_signature_int32.restype = c_int64
+cpsig.batch_signature_int32.argtypes = (POINTER(c_int32), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_int)
+cpsig.batch_signature_int32.restype = c_int
 
-cpsig.batch_signature_int64.argtypes = (POINTER(c_int64), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
-cpsig.batch_signature_int64.restype = c_int64
+cpsig.batch_signature_int64.argtypes = (POINTER(c_int64), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_int)
+cpsig.batch_signature_int64.restype = c_int
 
-cpsig.batch_signature_float.argtypes = (POINTER(c_float), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
-cpsig.batch_signature_float.restype = c_int64
+cpsig.batch_signature_float.argtypes = (POINTER(c_float), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_int)
+cpsig.batch_signature_float.restype = c_int
 
-cpsig.batch_signature_double.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_bool)
-cpsig.batch_signature_double.restype = c_int64
+cpsig.batch_signature_double.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_bool, c_bool, c_bool, c_int)
+cpsig.batch_signature_double.restype = c_int
 
-cpsig.batch_sig_kernel.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
-cpsig.batch_sig_kernel.restype = c_int64
+cpsig.batch_sig_kernel.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64, c_int)
+cpsig.batch_sig_kernel.restype = c_int
 
 if BUILT_WITH_CUDA:
     cusig.batch_sig_kernel_cuda.argtypes = (POINTER(c_double), POINTER(c_double), c_int64, c_int64, c_int64, c_int64, c_int64, c_int64)
-    cusig.batch_sig_kernel_cuda.restype = c_int64
+    cusig.batch_sig_kernel_cuda.restype = c_int
 
 ######################################################
 # Some dicts to simplify dtype cases
@@ -247,11 +247,11 @@ class PolyDataHandler:
             raise ValueError("path1, path2 must both be numpy arrays or both torch arrays")
 
 def sig_combine(
-        poly1 : Union[np.ndarray, torch.tensor],
-        poly2 : Union[np.ndarray, torch.tensor],
+        sig1 : Union[np.ndarray, torch.tensor],
+        sig2 : Union[np.ndarray, torch.tensor],
         dimension : int,
         degree : int,
-        parallel : bool = True
+        n_jobs : int = 1
 ) -> Union[np.ndarray, torch.tensor]:
     """
     Combines two truncated signatures of the same degree and dimension into one signature. In particular, let :math:`x_1, x_2`
@@ -265,22 +265,26 @@ def sig_combine(
 
     where :math:`x_1 * x_2` is the concatenation of the two paths :math:`x_1, x_2`.
 
-    :param poly1: The first truncated tensor polynomial
-    :type poly1: numpy.ndarray | torch.tensor
-    :param poly2: The second truncated tensor polynomial. Must have the same degree and dimension as the first.
-    :type poly2: numpy.ndarray | torch.tensor
+    :param sig1: The first truncated tensor polynomial
+    :type sig1: numpy.ndarray | torch.tensor
+    :param sig2: The second truncated tensor polynomial. Must have the same degree and dimension as the first.
+    :type sig2: numpy.ndarray | torch.tensor
     :param dimension: Dimension of the underlying space, :math:`d`.
     :type dimension: int
     :param degree: Truncation level of the tensor polynomial, :math:`N`
     :type degree: int
+    :param n_jobs: Number of threads to run in parallel. If n_jobs = 1, the computation is run serially.
+        If set to -1, all available threads are used. For n_jobs below -1, (max_threads + 1 + n_jobs)
+        threads are used. For example if n_jobs = -2, all threads but one are used.
+    :type n_jobs: int
     :return: Tensor product of the truncated tensor polynomials
     :rtype: numpy.ndarray | torch.tensor
 
     .. note::
 
-        The flag ``parallel`` defaults to ``True``. However, if the workload is too small, it
-        may be beneficial to set this to ``False`` and run the computation serially,
-        due to parallelisation overhead.
+        Parallelising the computation by setting ``n_jobs != 1`` can be beneficial when the
+        workload is large. However, if the workload is too small, it may be faster to set this
+        to ``1`` and run the computation serially, due to parallelisation overhead.
 
     .. note::
 
@@ -316,9 +320,11 @@ def sig_combine(
     check_type(degree, "degree", int)
     check_non_neg(dimension, "dimension")
     check_non_neg(degree, "degree")
-    check_type(parallel, "parallel", bool)
+    check_type(n_jobs, "n_jobs", int)
+    if n_jobs == 0:
+        raise ValueError("n_jobs cannot be 0")
 
-    data = PolyDataHandler(poly1, poly2, dimension, degree)
+    data = PolyDataHandler(sig1, sig2, dimension, degree)
 
     if data.is_batch:
         err_code = cpsig.batch_sig_combine(
@@ -328,7 +334,7 @@ def sig_combine(
             data.batch_size,
             dimension,
             degree,
-            parallel
+            n_jobs
         )
     else:
         err_code = cpsig.sig_combine(
@@ -446,7 +452,7 @@ def signature_(data, time_aug = False, lead_lag = False, horner = True):
         raise Exception(err_msg[err_code] + " in signature")
     return data.out
 
-def batch_signature_(data, time_aug = False, lead_lag = False, horner = True, parallel = True):
+def batch_signature_(data, time_aug = False, lead_lag = False, horner = True, n_jobs = 1):
     err_code = CPSIG_BATCH_SIGNATURE[data.dtype](
         data.data_ptr,
         data.out_ptr,
@@ -457,7 +463,7 @@ def batch_signature_(data, time_aug = False, lead_lag = False, horner = True, pa
         time_aug,
         lead_lag,
         horner,
-        parallel
+        n_jobs
     )
 
     if err_code:
@@ -470,7 +476,7 @@ def signature(
         time_aug : bool = False,
         lead_lag : bool = False,
         horner : bool = True,
-        parallel : bool = True #TODO: change to n_jobs
+        n_jobs : int = 1
 ) -> Union[np.ndarray, torch.tensor]:
     """
     Computes the truncated signature of single path or a batch of paths. For
@@ -496,8 +502,10 @@ def signature(
     :type lead_lag: bool
     :param horner: If True, will use Horner's algorithm for polynomial multiplication.
     :type horner: bool
-    :param parallel: If True, will parallelise the computation.
-    :type parallel: bool
+    :param n_jobs: Number of threads to run in parallel. If n_jobs = 1, the computation is run serially.
+        If set to -1, all available threads are used. For n_jobs below -1, (max_threads + 1 + n_jobs)
+        threads are used. For example if n_jobs = -2, all threads but one are used.
+    :type n_jobs: int
     :return: Truncated signature, or a batch of truncated signatures.
     :rtype: numpy.ndarray | torch.tensor
 
@@ -512,8 +520,10 @@ def signature(
 
     data = SigDataHandler(path, degree, time_aug, lead_lag)
     if data.is_batch:
-        check_type(parallel, "parallel", bool)
-        return batch_signature_(data, time_aug, lead_lag, horner, parallel)
+        check_type(n_jobs, "n_jobs", int)
+        if n_jobs == 0:
+            raise ValueError("n_jobs cannot be 0")
+        return batch_signature_(data, time_aug, lead_lag, horner, n_jobs)
     return signature_(data, time_aug, lead_lag, horner)
 
 
@@ -590,7 +600,7 @@ class SigKernelDataHandler:
 
         self.gram = torch.bmm(x1, y1.permute(0, 2, 1))
 
-def sig_kernel_(data):
+def sig_kernel_(data, n_jobs):
 
     err_code = cpsig.batch_sig_kernel(
         cast(data.gram.data_ptr(), POINTER(c_double)),
@@ -600,7 +610,8 @@ def sig_kernel_(data):
         data.length_1,
         data.length_2,
         data.dyadic_order_1,
-        data.dyadic_order_2
+        data.dyadic_order_2,
+        n_jobs
     )
 
     if err_code:
@@ -625,7 +636,8 @@ def sig_kernel_cuda_(data):
 def sig_kernel(
         path1 : Union[np.ndarray, torch.tensor],
         path2 : Union[np.ndarray, torch.tensor],
-        dyadic_order : Union[int, tuple] #TODO: add n_jobs
+        dyadic_order : Union[int, tuple],
+        n_jobs : int = 1
 ) -> Union[np.ndarray, torch.tensor]: #TODO: add time-aug and lead-lag
     """
     Computes a single signature kernel or a batch of signature kernels.
@@ -656,6 +668,11 @@ def sig_kernel(
     :param dyadic_order: If set to a positive integer :math:`\\lambda`, will refine the
         PDE grid by a factor of :math:`2^\\lambda`.
     :type dyadic_order: int | tuple
+    :param n_jobs: (Only applicable to CPU computation) Number of threads to run in parallel.
+        If n_jobs = 1, the computation is run serially. If set to -1, all available threads
+        are used. For n_jobs below -1, (max_threads + 1 + n_jobs) threads are used. For example
+        if n_jobs = -2, all threads but one are used.
+    :type n_jobs: int
     :return: Single signature kernel or batch of signature kernels
     :rtype: numpy.ndarray | torch.tensor
 
@@ -665,10 +682,13 @@ def sig_kernel(
         If this is not the case, ``pysiglib.sig_kernel`` will internally create a contiguous copy, which may be
         inefficient.
     """
+    check_type(n_jobs, "n_jobs", int)
+    if n_jobs == 0:
+        raise ValueError("n_jobs cannot be 0")
     data = SigKernelDataHandler(path1, path2, dyadic_order)
 
     if data.device == "cpu":
-        return sig_kernel_(data)
+        return sig_kernel_(data, n_jobs)
 
     if not BUILT_WITH_CUDA:
         raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")

@@ -229,7 +229,7 @@ void signature_(T* path, double* out, uint64_t dimension, uint64_t length, uint6
 }
 
 template<typename T>
-void batch_signature_(T* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, bool horner = true, bool parallel = true)
+void batch_signature_(T* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, bool horner = true, int n_jobs = 1)
 {
 	//Deal with trivial cases
 	if (dimension == 0) { throw std::invalid_argument("signature received path of dimension 0"); }
@@ -286,8 +286,8 @@ void batch_signature_(T* path, double* out, uint64_t batch_size, uint64_t dimens
 	T* path_ptr;
 	double* out_ptr;
 
-	if (parallel) {
-		multi_threaded_batch(sig_func, path, out, batch_size, flat_path_length, result_length);
+	if (n_jobs != 1) {
+		multi_threaded_batch(sig_func, path, out, batch_size, flat_path_length, result_length, n_jobs);
 	}
 	else {
 		for (path_ptr = path, out_ptr = out;

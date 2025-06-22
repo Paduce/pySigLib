@@ -47,8 +47,8 @@ def test_signature_random(deg):
 def test_signature_random_batch(deg):
     X = np.random.uniform(size=(32, 100, 5))
     iisig = iisignature.sig(X, deg)
-    sig_serial = pysiglib.signature(X, deg, parallel=False)
-    sig_parallel = pysiglib.signature(X, deg, parallel=True)
+    sig_serial = pysiglib.signature(X, deg, n_jobs=1)
+    sig_parallel = pysiglib.signature(X, deg, n_jobs=-1)
     check_close(iisig, sig_serial[:, 1:])
     check_close(iisig, sig_parallel[:, 1:])
 
@@ -65,8 +65,8 @@ def test_signature_random_int(deg):
 def test_signature_random_int_batch(deg):
     X = np.random.randint(-2, 2, size=(32, 100, 5))
     iisig = iisignature.sig(X, deg)
-    sig_serial = pysiglib.signature(X, deg, parallel=False)
-    sig_parallel = pysiglib.signature(X, deg, parallel=True)
+    sig_serial = pysiglib.signature(X, deg, n_jobs=1)
+    sig_parallel = pysiglib.signature(X, deg, n_jobs=-1)
     check_close(iisig, sig_serial[:, 1:])
     check_close(iisig, sig_parallel[:, 1:])
 

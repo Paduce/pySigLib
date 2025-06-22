@@ -23,8 +23,12 @@ inline unsigned int get_max_threads() {
 }
 
 template<typename T, typename FN>
-void multi_threaded_batch(FN& thread_func, T* path, double* out, uint64_t batch_size, uint64_t flat_path_length, uint64_t result_length) {
-	const unsigned int max_threads = get_max_threads();
+void multi_threaded_batch(FN& thread_func, T* path, double* out, uint64_t batch_size, uint64_t flat_path_length, uint64_t result_length, int n_jobs) {
+	if (n_jobs == 0)
+		throw std::invalid_argument("n_jobs cannot be 0");
+	const int max_threads = n_jobs > 0 ? n_jobs : get_max_threads() + 1 + n_jobs;
+	if (max_threads < 1)
+		throw std::invalid_argument("received negative n_jobs which is less than max_threads + 1; n_jobs too low");
 	const uint64_t thread_path_step = flat_path_length * max_threads;
 	const uint64_t thread_result_step = result_length * max_threads;
 	T* const data_end = path + flat_path_length * batch_size;
@@ -57,8 +61,12 @@ void multi_threaded_batch(FN& thread_func, T* path, double* out, uint64_t batch_
 
 
 template<typename T, typename FN>
-void multi_threaded_batch_2(FN& thread_func, T* path1, T* path2, double* out, uint64_t batch_size, uint64_t flat_path_length_1, uint64_t flat_path_length_2, uint64_t result_length) {
-	const unsigned int max_threads = get_max_threads();
+void multi_threaded_batch_2(FN& thread_func, T* path1, T* path2, double* out, uint64_t batch_size, uint64_t flat_path_length_1, uint64_t flat_path_length_2, uint64_t result_length, int n_jobs) {
+	if (n_jobs == 0)
+		throw std::invalid_argument("n_jobs cannot be 0");
+	const int max_threads = n_jobs > 0 ? n_jobs : get_max_threads() + 1 + n_jobs;
+	if (max_threads < 1)
+		throw std::invalid_argument("received negative n_jobs which is less than max_threads + 1; n_jobs too low");
 	const uint64_t thread_path_step_1 = flat_path_length_1 * max_threads;
 	const uint64_t thread_path_step_2 = flat_path_length_2 * max_threads;
 	const uint64_t thread_result_step = result_length * max_threads;

@@ -106,7 +106,7 @@ void batch_sig_kernel_(
 	uint64_t length2,
 	uint64_t dyadic_order_1,
 	uint64_t dyadic_order_2,
-	bool parallel
+	int n_jobs
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
 
@@ -119,8 +119,8 @@ void batch_sig_kernel_(
 		get_sig_kernel_(gram_ptr, length1, length2, out_ptr, dyadic_order_1, dyadic_order_2);
 		};
 
-	if (parallel) {
-		multi_threaded_batch(sig_kernel_func, gram, out, batch_size, gram_length, 1);
+	if (n_jobs != 1) {
+		multi_threaded_batch(sig_kernel_func, gram, out, batch_size, gram_length, 1, n_jobs);
 	}
 	else {
 		double* gram_ptr = gram;
@@ -141,7 +141,7 @@ extern "C" {
 		SAFE_CALL(sig_kernel_(gram, out, dimension, length1, length2, dyadic_order_1, dyadic_order_2));
 	}
 
-	CPSIG_API int batch_sig_kernel(double* gram, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2, bool parallel) noexcept {
-		SAFE_CALL(batch_sig_kernel_(gram, out, batch_size, dimension, length1, length2, dyadic_order_1, dyadic_order_2, parallel));
+	CPSIG_API int batch_sig_kernel(double* gram, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2, int n_jobs) noexcept {
+		SAFE_CALL(batch_sig_kernel_(gram, out, batch_size, dimension, length1, length2, dyadic_order_1, dyadic_order_2, n_jobs));
 	}
 }

@@ -52,5 +52,5 @@ void batch_sig_kernel_(
 	uint64_t length2,
 	uint64_t dyadic_order_1,
 	uint64_t dyadic_order_2,
-	bool parallel = true
+	int n_jobs = 1
 );

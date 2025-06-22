@@ -195,8 +195,8 @@ namespace cpSigTests
             std::vector<double> true_sig;
             true_sig.resize(res_len_);
             batch_signature_double(path.data(), true_sig.data(), batch_size, dimension, 4, degree);
-            check_result_2(f, poly1, poly2, true_sig, batch_size, dimension, degree, false);
-            check_result_2(f, poly1, poly2, true_sig, batch_size, dimension, degree, true);
+            check_result_2(f, poly1, poly2, true_sig, batch_size, dimension, degree, 1);
+            check_result_2(f, poly1, poly2, true_sig, batch_size, dimension, degree, -1);
         }
 
         TEST_METHOD(BatchPolyMultStressTest)
@@ -210,7 +210,7 @@ namespace cpSigTests
             std::vector<double> out;
             out.resize(batch_size * sig_length(dimension, degree));
 
-            int err = batch_sig_combine(poly.data(), poly.data(), out.data(), batch_size, dimension, degree, true);
+            int err = batch_sig_combine(poly.data(), poly.data(), out.data(), batch_size, dimension, degree, -1);
             Assert::IsFalse(err);
         }
     };
@@ -592,8 +592,8 @@ namespace cpSigTests
                 1., 1., 1., 0.5, 0.5, 0.5, 0.5,
                 1., 0., 1., 0., 1., -1., 0.5 };
 
-            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, true, false);
-            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, true, true);
+            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, true, 1);
+            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, true, -1);
         }
 
         TEST_METHOD(BatchSigTestDegree1) {
@@ -607,8 +607,8 @@ namespace cpSigTests
                 1., 1., 1.,
                 1., 0., 1. };
 
-            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, true, false);
-            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, true, true);
+            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, true, 1);
+            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, true, -1);
         }
 
         TEST_METHOD(ManualTimeAugTest) {
@@ -635,7 +635,7 @@ namespace cpSigTests
             path.resize(batch * length * dimension);
             std::vector<double> out;
             out.resize(batch * sig_length(dimension * 2, degree));
-            f(path.data(), out.data(), batch, dimension, length, degree, false, true, true, false);
+            f(path.data(), out.data(), batch, dimension, length, degree, false, true, true, 1);
         }
     };
 

@@ -281,14 +281,14 @@ int main(int argc, char* argv[])
     using sig_length_FN              = uint64_t(CDECL_*)(uint64_t, uint64_t);
     using signature_double_FN         = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, bool, bool, bool);
     using signature_int32_FN          = void(CDECL_*)(int*, double*, uint64_t, uint64_t, uint64_t, bool, bool, bool);
-    using batch_signature_double_FN   = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
-    using batch_signature_int32_FN    = void(CDECL_*)(int*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, bool);
+    using batch_signature_double_FN   = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, int);
+    using batch_signature_int32_FN    = void(CDECL_*)(int*, double*, uint64_t, uint64_t, uint64_t, uint64_t, bool, bool, bool, int);
 
     using sig_kernel_FN               = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, bool);
-    using batch_sig_kernel_FN         = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, bool);
+    using batch_sig_kernel_FN         = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, int);
     using sig_kernel_cuda_FN          = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
     using batch_sig_kernel_cuda_FN    = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
-    using batch_sig_combine_FN          = void(CDECL_*)(double*, double*, double*, uint64_t, uint64_t, uint64_t, bool);
+    using batch_sig_combine_FN          = void(CDECL_*)(double*, double*, double*, uint64_t, uint64_t, uint64_t, int);
 
 #if defined(_WIN32)
 #define GET_FN_PTR ::GetProcAddress
@@ -397,7 +397,7 @@ int main(int argc, char* argv[])
         result5.push_back(0.);
     }
 
-    time_function(10, batch_signature_double, data5.data(), result5.data(), batch5, dimension5, length5, degree5, false, false, true, true);
+    time_function(10, batch_signature_double, data5.data(), result5.data(), batch5, dimension5, length5, degree5, false, false, true, -1);
 
     std::cout << "done\n";*/
 
@@ -420,7 +420,7 @@ int main(int argc, char* argv[])
     //    result4.push_back(0);
     //}
 
-    //time_function(1, batch_signature_int32, data4.data(), result4.data(), 2, dimension4, length4, degree4, false, false, true);
+    //time_function(1, batch_signature_int32, data4.data(), result4.data(), 2, dimension4, length4, degree4, false, false, -1);
 
     //std::cout << "done\n";
 
@@ -442,7 +442,7 @@ int main(int argc, char* argv[])
 
  //   //gram_(data4.data(), data4.data(), gram.data(), batch4, dimension4, length4, length4);
 
- //   time_function(1, batch_sig_kernel, gram.data(), res, batch4, dimension4, length4, length4, 0,0, true);
+ //   time_function(1, batch_sig_kernel, gram.data(), res, batch4, dimension4, length4, length4, 0,0, -1);
 
  //   /*for (int i = 0; i < batch4; ++i)
  //       std::cout << res[i] << " done\n";*/

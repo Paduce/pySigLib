@@ -73,3 +73,16 @@ def test_sig_kernel_type_error(x, y, d):
 def test_sig_kernel_value_error(x, y, d):
     with pytest.raises(ValueError):
         pysiglib.sig_kernel(x, y, d)
+
+def test_signature_n_jobs_zero():
+    with pytest.raises(ValueError):
+        pysiglib.signature(np.array([[[0], [1]]]), 2, n_jobs = 0)
+
+def test_sig_combine_n_jobs_zero():
+    sig = pysiglib.signature(np.array([[0], [1]]), 2)
+    with pytest.raises(ValueError):
+        pysiglib.sig_combine(sig, sig, 1, 2, n_jobs = 0)
+
+def test_sig_kernel_n_jobs_zero():
+    with pytest.raises(ValueError):
+        pysiglib.sig_kernel(np.array([[0], [1]]), np.array([[0], [1]]), 0, n_jobs = 0)
