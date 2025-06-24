@@ -13,9 +13,18 @@
 # limitations under the License.
 # =========================================================================
 
-err_msg = {
+cpp_err_msg = {
     1 : "Failed to allocate memory",
     2: "Invalid argument",
     3: "Out of range",
-    4: "Unknown exception"
+    4: "Runtime error",
+    5: "Unknown exception"
 }
+
+def err_msg(err_code):
+    if err_code < 100000:
+        return cpp_err_msg[err_code] + " (" + str(err_code) + ")"
+    elif err_code == 100500:
+        return "CUDA error: named symbol not found (500). pysiglib: This error may suggest your GPU's compute capability is currently not supported by pysiglib. Please contact the developer."
+    else:
+        return "CUDA error (" + str(err_code - 100000) + ")"

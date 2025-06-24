@@ -346,7 +346,7 @@ def sig_combine(
         )
 
     if err_code:
-        raise Exception(err_msg[err_code] + " in signature")
+        raise Exception("Error in pysiglib.signature: " + err_msg(err_code))
     return data.out
 
 
@@ -449,7 +449,7 @@ def signature_(data, time_aug = False, lead_lag = False, horner = True):
     )
 
     if err_code:
-        raise Exception(err_msg[err_code] + " in signature")
+        raise Exception("Error in pysiglib.signature: " + err_msg(err_code))
     return data.out
 
 def batch_signature_(data, time_aug = False, lead_lag = False, horner = True, n_jobs = 1):
@@ -467,7 +467,7 @@ def batch_signature_(data, time_aug = False, lead_lag = False, horner = True, n_
     )
 
     if err_code:
-        raise Exception(err_msg[err_code] + " in signature")
+        raise Exception("Error in pysiglib.signature: " + err_msg(err_code))
     return data.out
 
 def signature(
@@ -615,7 +615,7 @@ def sig_kernel_(data, n_jobs):
     )
 
     if err_code:
-        raise Exception(err_msg[err_code] + " in sig_kernel")
+        raise Exception("Error in pysiglib.sig_kernel: " + err_msg(err_code))
     return data.out
 
 def sig_kernel_cuda_(data):
@@ -630,7 +630,7 @@ def sig_kernel_cuda_(data):
     )
 
     if err_code:
-        raise Exception(err_msg[err_code] + " in sig_kernel")
+        raise Exception("Error in pysiglib.sig_kernel: " + err_msg(err_code))
     return data.out
 
 def sig_kernel(

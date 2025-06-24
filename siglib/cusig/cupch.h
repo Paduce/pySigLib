@@ -35,5 +35,7 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <string>
+#include <regex>
 
 #endif //PCH_H

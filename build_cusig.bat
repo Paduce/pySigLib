@@ -39,7 +39,8 @@ CD %SIGLIB_DIR%\cusig
 
 @echo *** Compiling cuda files with nvcc ***
 
-set NVCC_ARGS=-gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin %VS_PATH%\bin\HostX64\x64 -x cu -rdc=true  -I%CUDA_PATH%\include    --keep-dir x64\Release  -maxrregcount=0   --machine 64 --compile -cudart static -lineinfo   -DNDEBUG -DCUSIG_EXPORTS -D_WINDOWS -D_USRDLL -D_WINDLL -D_UNICODE -DUNICODE -Xcompiler "/EHsc /W3 /nologo /O2 /FS   /MT " -Xcompiler "/Fdx64\Release\vc143.pdb" --dopt on
+set NVCC_GENCODE= -arch=sm_50 -gencode=arch=compute_50,code=sm_50 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_60,code=sm_60 -gencode=arch=compute_61,code=sm_61 -gencode=arch=compute_70,code=sm_70 -gencode=arch=compute_75,code=sm_75 -gencode=arch=compute_75,code=compute_75
+set NVCC_ARGS= %NVCC_GENCODE% --use-local-env -ccbin %VS_PATH%\bin\HostX64\x64 -x cu -rdc=true  -I%CUDA_PATH%\include    --keep-dir x64\Release  -maxrregcount=0   --machine 64 --compile -cudart static -lineinfo   -DNDEBUG -DCUSIG_EXPORTS -D_WINDOWS -D_USRDLL -D_WINDLL -D_UNICODE -DUNICODE -Xcompiler "/EHsc /W3 /nologo /O2 /FS   /MT " -Xcompiler "/Fdx64\Release\vc143.pdb" --dopt on
 
 %NVCC_EXE% %NVCC_ARGS% -o %SIGLIB_DIR%\cusig\x64\Release\cu_sig_kernel.cu.obj %SIGLIB_DIR%\cusig\cu_sig_kernel.cu
 
@@ -50,7 +51,7 @@ set NVCC_ARGS=-gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env
 @echo ---------------------------------------------------------------------------------------
 @echo link cuda obj files
 REM link cuda obj files 
-%NVCC_EXE% -dlink  -o x64\Release\cusig.device-link.obj -Xcompiler "/EHsc /W3 /nologo /O2   /MT " -Xcompiler "/Fdx64\Release\vc143.pdb" -L%CUDA_PATH%\bin\crt -L%CUDA_PATH%\lib\x64 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib cudart.lib cudadevrt.lib  -gencode=arch=compute_52,code=sm_52   %SIGLIB_DIR%\cusig\x64\Release\cu_sig_kernel.h.obj %SIGLIB_DIR%\cusig\x64\Release\cu_sig_kernel.cu.obj
+%NVCC_EXE% -dlink  -o x64\Release\cusig.device-link.obj -Xcompiler "/EHsc /W3 /nologo /O2   /MT " -Xcompiler "/Fdx64\Release\vc143.pdb" -L%CUDA_PATH%\bin\crt -L%CUDA_PATH%\lib\x64 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib cudart.lib cudadevrt.lib  %NVCC_GENCODE%  %SIGLIB_DIR%\cusig\x64\Release\cu_sig_kernel.h.obj %SIGLIB_DIR%\cusig\x64\Release\cu_sig_kernel.cu.obj
 
 rem pause
 

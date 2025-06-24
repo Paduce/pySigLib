@@ -181,31 +181,42 @@ void sig_kernel_cuda_(//TODO: doesn't work with non-zero dyadics, e.g. 2,2
 
 	cudaError_t err = cudaGetLastError();
 	if (err != cudaSuccess) {
-		std::cerr << "CUDA Error: " << cudaGetErrorString(err) << std::endl;
-		return;
+		int error_code = static_cast<int>(err);
+        throw std::runtime_error("CUDA Error (" + std::to_string(error_code) + "): " + cudaGetErrorString(err));
 	}
 }
 
-#define SAFE_CALL(function_call)                 \
-    try {                                        \
-        function_call;                           \
-    }                                            \
-    catch (std::bad_alloc&) {					 \
-		std::cerr << "Failed to allocate memory";\
-        return 1;                                \
-    }                                            \
-    catch (std::invalid_argument& e) {           \
-		std::cerr << e.what();					 \
-        return 2;                                \
-    }                                            \
-	catch (std::out_of_range& e) {			     \
-		std::cerr << e.what();					 \
-		return 3;                                \
-	}  											 \
-    catch (...) {                                \
-		std::cerr << "Unknown exception";		 \
-        return 4;                                \
-    }                                            \
+#define SAFE_CALL(function_call)                            \
+    try {                                                   \
+        function_call;                                      \
+    }                                                       \
+    catch (std::bad_alloc&) {					            \
+		std::cerr << "Failed to allocate memory";           \
+        return 1;                                           \
+    }                                                       \
+    catch (std::invalid_argument& e) {                      \
+		std::cerr << e.what();					            \
+        return 2;                                           \
+    }                                                       \
+	catch (std::out_of_range& e) {			                \
+		std::cerr << e.what();					            \
+		return 3;                                           \
+	}  											            \
+	catch (std::runtime_error& e) {							\
+		std::string msg = e.what();							\
+		std::regex pattern(R"(CUDA Error \((\d+)\):)");		\
+		std::smatch match;									\
+		int ret_code = 4;									\
+		if (std::regex_search(msg, match, pattern)) {		\
+			ret_code = 100000 + std::stoi(match[1]);		\
+		}													\
+		std::cerr << e.what();								\
+		return ret_code;									\
+	}														\
+    catch (...) {                                           \
+		std::cerr << "Unknown exception";		            \
+        return 5;                                           \
+    }                                                       \
     return 0;
 
 
