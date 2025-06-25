@@ -27,7 +27,7 @@ if 'CUSIG' in os.environ and os.environ['CUSIG'] == 0:
     USE_CUDA = False
 
 USE_AVX = True
-if 'CPSIG_AVX' in os.environ and os.environ['CPSIG_AVX'] == 0:
+if 'SIGLIB_VEC' in os.environ and os.environ['SIGLIB_VEC'] == 0:
     USE_AVX = False
 
 # Only support Windows, Linux and MacOS

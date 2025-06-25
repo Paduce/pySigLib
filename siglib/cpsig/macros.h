@@ -17,7 +17,7 @@
 #include <iostream>
 
 //#ifndef __APPLE__
-//	#define AVX
+//	#define VEC
 //#endif
 
 

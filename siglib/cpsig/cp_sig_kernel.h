@@ -20,7 +20,7 @@
 
 #include "cp_path.h"
 #include "macros.h"
-#ifdef AVX
+#ifdef VEC
 #include "cp_vector_funcs.h"
 #endif
 

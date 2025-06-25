@@ -21,7 +21,7 @@
 
 #include "cp_path.h"
 #include "macros.h"
-#ifdef AVX
+#ifdef VEC
 #include "cp_vector_funcs.h"
 #endif
 
@@ -147,7 +147,7 @@ void signature_horner_(Path<T>& path, double* out, uint64_t degree)
 				}
 
 				//Multiply
-#ifdef AVX
+#ifdef VEC
 				double left_over_level;
 				double* result_ptr = horner_step + level_index[left_level + 2UL] - level_index[left_level + 1UL] - dimension;
 				for (double* left_ptr = horner_step + left_level_size - 1UL; left_ptr != horner_step - 1UL; --left_ptr, result_ptr -= dimension) {
@@ -178,7 +178,7 @@ void signature_horner_(Path<T>& path, double* out, uint64_t degree)
 			}
 
 			//Multiply and add, writing straight into out
-#ifdef AVX
+#ifdef VEC
 			double* result_ptr = out + level_index[target_level + 1] - dimension;
 			for (double* left_ptr = horner_step + left_level_size - 1UL; left_ptr != horner_step - 1UL; --left_ptr, result_ptr -= dimension) {
 				vec_mult_add(result_ptr, increments, *left_ptr, dimension);

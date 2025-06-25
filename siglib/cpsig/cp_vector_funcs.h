@@ -17,7 +17,7 @@
 #include "cppch.h"
 #include "macros.h"
 
-#ifdef AVX
+#ifdef VEC
 FORCE_INLINE void vec_mult_add(double* out, double* other, double scalar, uint64_t size)
 {
 	uint64_t first_loop_remainder = size % 4UL;

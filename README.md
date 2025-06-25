@@ -7,7 +7,7 @@
 </p>
 
 
-<h2 align='center'>Signature Computations on CPU and GPU</h2>
+<h2 align='center'>Fast Signature Computations on CPU and GPU</h2>
 
 ![CI - Test](https://github.com/daniil-shmelev/pySigLib/actions/workflows/unit_tests.yml/badge.svg)
 [![codecov](https://codecov.io/gh/daniil-shmelev/pySigLib/graph/badge.svg?token=8W0JXOSIC7)](https://codecov.io/gh/daniil-shmelev/pySigLib)
@@ -17,13 +17,13 @@
 
 ## Installation
 
+Before installing, please ensure you have a compatible C++ compiler installed
+(MSVC for Windows, GCC or Clang for Linux and MacOS), then run
+
 ```
 pip install pysiglib
 ```
 
-[//]: # (TODO: Must make sure CUDA_PATH is set. If not, set it first and then pip install)
-[//]: # (TODO: install requires a c++ compiler. On windows this is msvc, on linux...)
-[//]: # (TODO: CPSIG_AVX environment variable)
 pySigLib will automatically detect CUDA, provided the `CUDA_PATH` environment variable is set correctly.
 To manually disable CUDA and build pySigLib for CPU only, create an environment variable `CUSIG` and set
 it to `0`:
@@ -32,6 +32,9 @@ it to `0`:
 set CUSIG=0
 pip install pysiglib
 ```
+
+For detailed and up-to-date installation instructions on Windows, Linux and MacOS, see the
+[installation guide](https://pysiglib.readthedocs.io/en/latest/pages/installation.html).
 
 ## Documentation
 

@@ -21,11 +21,11 @@ it to `0`:
     pip install pysiglib
 
 Similarly, the package will automatically detect if AVX2 instructions are supported.
-To disable these manually, create an environment variable `CPSIG_AVX` and set it to `0`:
+To disable these manually, create an environment variable `SIGLIB_VEC` and set it to `0`:
 
 .. code-block::
 
-    set CPSIG_AVX=0
+    set SIGLIB_VEC=0
     pip install pysiglib
 
 
@@ -56,11 +56,11 @@ it to `0`:
     pip install pysiglib
 
 Similarly, the package will automatically detect if AVX2 instructions are supported.
-To disable these manually, create an environment variable `CPSIG_AVX` and set it to `0`:
+To disable these manually, create an environment variable `SIGLIB_VEC` and set it to `0`:
 
 .. code-block::
 
-    export CPSIG_AVX=0
+    export SIGLIB_VEC=0
     pip install pysiglib
 
 MacOS
