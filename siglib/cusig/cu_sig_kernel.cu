@@ -31,9 +31,6 @@ __constant__ uint64_t num_anti_diag;
 __constant__ double dyadic_frac;
 __constant__ uint64_t gram_length;
 
-//TODO: Fix memory errors
-//TODO: Change paths to gram matrices
-//TODO: Bring loop in goursat_pde out into python (see pysiglib.py)
 
 __global__ void goursat_pde(
 	double* initial_condition, //This is the top row of the grid, which will be overwritten to become the bottom row of this grid.
@@ -130,7 +127,7 @@ __device__ void goursat_pde_32(
 	}
 }
 
-void sig_kernel_cuda_(//TODO: doesn't work with non-zero dyadics, e.g. 2,2
+void sig_kernel_cuda_(
 	double* gram,
 	double* out,
 	uint64_t batch_size_,
