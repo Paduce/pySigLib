@@ -26,10 +26,10 @@ recursive-exclude siglib *.vcxproj
 recursive-exclude siglib *.vcxproj.filters
 recursive-exclude siglib *.vcxproj.user
 recursive-exclude siglib *.jam
+recursive-exclude docs *.psd
 
 prune */__pycache__
 
 prune pysiglib/.idea
-prune pysiglib/_build_log.txt
-prune pysiglib/_config.py
-
+exclude pysiglib/_build_log.txt
+exclude pysiglib/_config.py

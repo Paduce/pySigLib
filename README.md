@@ -9,6 +9,8 @@
 
 <h2 align='center'>Fast Signature Computations on CPU and GPU</h2>
 
+![PyPI - Version](https://img.shields.io/pypi/v/pysiglib)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/pysiglib)
 ![CI - Test](https://github.com/daniil-shmelev/pySigLib/actions/workflows/unit_tests.yml/badge.svg)
 [![codecov](https://codecov.io/gh/daniil-shmelev/pySigLib/graph/badge.svg?token=8W0JXOSIC7)](https://codecov.io/gh/daniil-shmelev/pySigLib)
 ![Read the Docs](https://img.shields.io/readthedocs/pySigLib)
