@@ -639,6 +639,39 @@ namespace cpSigTests
         }
     };
 
+    TEST_CLASS(sigBackpropTest) {
+    public:
+        TEST_METHOD(LinearPathTest) {
+            auto f = sig_backprop_double;
+            uint64_t dimension = 2, length = 2, degree = 2;
+            std::vector<double> path = { 0., 0., 1.,1. };
+            std::vector<double> deriv = { 1., 1., 1., 1., 1., 1., 1. };
+            std::vector<double> true_ = { -3., -3., 3., 3. };
+            std::vector<double> sig = {1., 1., 1., 1./2, 1./2, 1./2, 1./2};
+            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, false, false);
+        }
+
+        TEST_METHOD(ManualTest) {
+            auto f = sig_backprop_double;
+            uint64_t dimension = 2, length = 3, degree = 2;
+            std::vector<double> path = { 0., 0., 1.,2., 0.5, 1. };
+            std::vector<double> deriv = { 1., 1., 2., 3., 4., 5., 6. };
+            std::vector<double> true_ = { -7.5, -10., -0.5, 0.25, 8., 9.75 };
+            std::vector<double> sig = { 1., 0.5, 1., 0.125, 0.25, 0.25, 0.5 };
+            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, false, false);
+        }
+
+        TEST_METHOD(ManualTest2) {
+            auto f = sig_backprop_double;
+            uint64_t dimension = 2, length = 3, degree = 3;
+            std::vector<double> path = { 0., 0., 1.,2., 0.5, 1. };
+            std::vector<double> deriv = { 1., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14. };
+            std::vector<double> true_ = { -19.625, -23.625, -1.25, 0.625, 20.875, 23. };
+            std::vector<double> sig = { 1., 0.5, 1., 0.125, 0.25, 0.25, 0.5, 1. / 48, 1. / 24, 1. / 24, 1. / 12, 1. / 24, 1. / 12, 1. / 12, 1. / 6 };
+            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, false, false);
+        }
+    };
+
     TEST_CLASS(sigKernelTest) {
     public:
         TEST_METHOD(LinearPathTest) {

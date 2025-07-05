@@ -96,6 +96,18 @@ cpsig.signature_float.restype = c_int
 cpsig.signature_double.argtypes = (POINTER(c_double), POINTER(c_double), c_uint64, c_uint64, c_uint64, c_bool, c_bool, c_bool)
 cpsig.signature_double.restype = c_int
 
+cpsig.sig_backprop_float.argtypes = (POINTER(c_float), POINTER(c_double), POINTER(c_double), POINTER(c_double), c_uint64, c_uint64, c_uint64, c_bool, c_bool)
+cpsig.batch_signature_double.restype = c_int
+
+cpsig.sig_backprop_double.argtypes = (POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), c_uint64, c_uint64, c_uint64, c_bool, c_bool)
+cpsig.batch_signature_double.restype = c_int
+
+cpsig.sig_backprop_int32.argtypes = (POINTER(c_int32), POINTER(c_double), POINTER(c_double), POINTER(c_double), c_uint64, c_uint64, c_uint64, c_bool, c_bool)
+cpsig.batch_signature_double.restype = c_int
+
+cpsig.sig_backprop_int64.argtypes = (POINTER(c_int64), POINTER(c_double), POINTER(c_double), POINTER(c_double), c_uint64, c_uint64, c_uint64, c_bool, c_bool)
+cpsig.batch_signature_double.restype = c_int
+
 cpsig.batch_signature_int32.argtypes = (POINTER(c_int32), POINTER(c_double), c_uint64, c_uint64, c_uint64, c_uint64, c_bool, c_bool, c_bool, c_int)
 cpsig.batch_signature_int32.restype = c_int
 
@@ -525,6 +537,35 @@ def signature(
             raise ValueError("n_jobs cannot be 0")
         return batch_signature_(data, time_aug, lead_lag, horner, n_jobs)
     return signature_(data, time_aug, lead_lag, horner)
+
+def sig_backprop(#WARNING: sig_derivs and sig are non-const here
+        path : Union[np.ndarray, torch.tensor],
+        sig_derivs : Union[np.ndarray, torch.tensor],
+        sig : Union[np.ndarray, torch.tensor],
+        degree : int,
+        time_aug : bool = False,
+        lead_lag : bool = False
+) -> Union[np.ndarray, torch.tensor]:
+    data = SigDataHandler(path, degree, time_aug, lead_lag)
+    out = np.zeros(
+        shape=path.shape,
+        dtype=np.float64
+    )
+    err_code = cpsig.sig_backprop_double(
+        data.data_ptr,
+        out.ctypes.data_as(POINTER(c_double)),
+        sig_derivs.ctypes.data_as(POINTER(c_double)),
+        sig.ctypes.data_as(POINTER(c_double)),
+        data.dimension,
+        data.length,
+        data.degree,
+        time_aug,
+        lead_lag
+    )
+
+    if err_code:
+        raise Exception("Error in pysiglib.signature: " + err_msg(err_code))
+    return out
 
 
 class SigKernelDataHandler:

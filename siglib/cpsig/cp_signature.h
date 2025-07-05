@@ -299,3 +299,58 @@ void batch_signature_(T* path, double* out, uint64_t batch_size, uint64_t dimens
 	}
 	return;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+// backpropagation
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+template<typename T>
+void sig_backprop_(T* path, double* out, double* sig_derivs, double* sig, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false) {
+	Path<T> path_obj(path, dimension, length, time_aug, lead_lag);
+	sig_backprop__(path_obj, out, sig_derivs, sig, degree);
+}
+
+template<typename T>
+void sig_backprop__(Path<T>& path, double* out, double* sig_derivs, double* sig, uint64_t degree) {
+
+	const uint64_t dimension = path.dimension();
+
+	const uint64_t sig_len_ = ::sig_length(dimension, degree);
+
+	auto local_derivs_uptr = std::make_unique<double[]>(sig_len_);
+	double* local_derivs = local_derivs_uptr.get();
+
+	auto linear_signature_uptr = std::make_unique<double[]>(sig_len_);
+	double* linear_signature = linear_signature_uptr.get();
+
+	auto level_index_uptr = std::make_unique<uint64_t[]>(degree + 2);
+	uint64_t* level_index = level_index_uptr.get();
+
+	level_index[0] = 0UL;
+	for (uint64_t i = 1UL; i <= degree + 1UL; i++)
+		level_index[i] = level_index[i - 1UL] * dimension + 1UL;
+
+	Point<T> prev_pt(path.end());
+	Point<T> next_pt(path.end());
+	--prev_pt;
+	--prev_pt;
+	--next_pt;
+
+	Point<T> first_pt(path.begin());
+
+	for (double* pos = out + (path.length() - 1) * dimension; next_pt != first_pt; --prev_pt, --next_pt, pos -= dimension) {
+		linear_signature_(prev_pt, next_pt, linear_signature, dimension, degree, level_index);
+		sig_uncombine_linear_inplace_(sig, linear_signature, degree, level_index);
+		uncombine_sig_deriv(sig, linear_signature, sig_derivs, local_derivs, dimension, degree, level_index);
+		linear_sig_deriv_to_increment_deriv(linear_signature, local_derivs, dimension, degree, level_index);
+		
+		//double* pos = out + i * dimension;
+		double* neg = pos - dimension;
+		double* s = local_derivs + 1;
+		for (uint64_t d = 0; d < dimension; ++d) {
+			pos[d] += s[d];
+			neg[d] -= s[d];
+		}
+
+	}
+}

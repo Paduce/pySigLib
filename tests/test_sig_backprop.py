@@ -13,6 +13,30 @@
 # limitations under the License.
 # =========================================================================
 
-from .pysiglib import (sig_length, sig_combine, signature, sig_kernel,
-                       sig_backprop,
-                       SYSTEM, BUILT_WITH_CUDA, BUILT_WITH_AVX)
+import pytest
+import numpy as np
+import torch
+import iisignature
+
+import pysiglib
+
+np.random.seed(42)
+torch.manual_seed(42)
+EPSILON = 1e-7
+
+def check_close(a, b):
+    a_ = np.array(a)
+    b_ = np.array(b)
+    assert not np.any(np.abs(a_ - b_) > EPSILON)
+
+
+@pytest.mark.parametrize("deg", range(1, 6))
+def test_sig_backprop_random(deg):
+    X = np.random.uniform(size=(2, 2))
+    sig_derivs = np.random.uniform(size = pysiglib.sig_length(2, deg))
+
+    sig = pysiglib.signature(X, deg)
+
+    sig_back1 = iisignature.sigbackprop(sig_derivs[1:], X, deg)
+    sig_back2 = pysiglib.sig_backprop(X, sig_derivs, sig, deg)
+    check_close(sig_back1, sig_back2)
