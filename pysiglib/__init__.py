@@ -13,6 +13,8 @@
 # limitations under the License.
 # =========================================================================
 
-from .pysiglib import (sig_length, sig_combine, signature, sig_kernel,
-                       sig_backprop,
-                       SYSTEM, BUILT_WITH_CUDA, BUILT_WITH_AVX)
+from .load_siglib import SYSTEM, BUILT_WITH_CUDA, BUILT_WITH_AVX
+from .sig_length import sig_length
+from .sig import sig_combine, signature
+from .sig_backprop import sig_backprop
+from .sig_kernel import sig_kernel

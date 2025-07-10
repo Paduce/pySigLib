@@ -1,0 +1,121 @@
+# Copyright 2025 Daniil Shmelev
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# =========================================================================
+
+from typing import Union
+from ctypes import c_double, POINTER, cast
+
+import numpy as np
+import torch
+
+from .param_checks import check_type
+
+from .load_siglib import cpsig, cusig, BUILT_WITH_CUDA
+from .error_codes import err_msg
+
+from .data_handlers import SigKernelDataHandler
+
+def sig_kernel_(data, n_jobs):
+
+    err_code = cpsig.batch_sig_kernel(
+        cast(data.gram.data_ptr(), POINTER(c_double)),
+        data.out_ptr,
+        data.batch_size,
+        data.dimension,
+        data.length_1,
+        data.length_2,
+        data.dyadic_order_1,
+        data.dyadic_order_2,
+        n_jobs
+    )
+
+    if err_code:
+        raise Exception("Error in pysiglib.sig_kernel: " + err_msg(err_code))
+    return data.out
+
+def sig_kernel_cuda_(data):
+    err_code = cusig.batch_sig_kernel_cuda(
+        cast(data.gram.data_ptr(), POINTER(c_double)),
+        data.out_ptr, data.batch_size,
+        data.dimension,
+        data.length_1,
+        data.length_2,
+        data.dyadic_order_1,
+        data.dyadic_order_2
+    )
+
+    if err_code:
+        raise Exception("Error in pysiglib.sig_kernel: " + err_msg(err_code))
+    return data.out
+
+def sig_kernel(
+        path1 : Union[np.ndarray, torch.tensor],
+        path2 : Union[np.ndarray, torch.tensor],
+        dyadic_order : Union[int, tuple],
+        n_jobs : int = 1
+) -> Union[np.ndarray, torch.tensor]: #TODO: add time-aug and lead-lag
+    """
+    Computes a single signature kernel or a batch of signature kernels.
+    The signature kernel of two :math:`d`-dimensional paths :math:`x,y`
+    is defined as
+
+    .. math::
+
+        k_{x,y}(s,t) := \\left< S(x)_{[0,s]}, S(y)_{[0, t]} \\right>_{T((\\mathbb{R}^d))}
+
+    where the inner product is defined as
+
+    .. math::
+
+        \\left< A, B \\right> := \\sum_{k=0}^{\\infty} \\left< A_k, B_k \\right>_{\\left(\\mathbb{R}^d\\right)^{\\otimes k}}
+    .. math::
+
+        \\left< u, v \\right>_{\\left(\\mathbb{R}^d\\right)^{\\otimes k}} := \\prod_{i=1}^k \\left< u_i, v_i \\right>_{\\mathbb{R}^d}
+
+    :param path1: The first underlying path or batch of paths, given as a `numpy.ndarray` or
+        `torch.tensor`. For a single path, this must be of shape (length, dimension). For a
+        batch of paths, this must be of shape (batch size, length, dimension).
+    :type path1: numpy.ndarray | torch.tensor
+    :param path2: The second underlying path or batch of paths, given as a `numpy.ndarray`
+        or `torch.tensor`. For a single path, this must be of shape (length, dimension).
+        For a batch of paths, this must be of shape (batch size, length, dimension).
+    :type path2: numpy.ndarray | torch.tensor
+    :param dyadic_order: If set to a positive integer :math:`\\lambda`, will refine the
+        PDE grid by a factor of :math:`2^\\lambda`.
+    :type dyadic_order: int | tuple
+    :param n_jobs: (Only applicable to CPU computation) Number of threads to run in parallel.
+        If n_jobs = 1, the computation is run serially. If set to -1, all available threads
+        are used. For n_jobs below -1, (max_threads + 1 + n_jobs) threads are used. For example
+        if n_jobs = -2, all threads but one are used.
+    :type n_jobs: int
+    :return: Single signature kernel or batch of signature kernels
+    :rtype: numpy.ndarray | torch.tensor
+
+    .. note::
+
+        Ideally, any array passed to ``pysiglib.sig_kernel`` should be both contiguous and own its data.
+        If this is not the case, ``pysiglib.sig_kernel`` will internally create a contiguous copy, which may be
+        inefficient.
+    """
+    check_type(n_jobs, "n_jobs", int)
+    if n_jobs == 0:
+        raise ValueError("n_jobs cannot be 0")
+    data = SigKernelDataHandler(path1, path2, dyadic_order)
+
+    if data.device == "cpu":
+        return sig_kernel_(data, n_jobs)
+
+    if not BUILT_WITH_CUDA:
+        raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")
+    return sig_kernel_cuda_(data)
