@@ -19,16 +19,14 @@ from ctypes import c_double, POINTER, cast
 import numpy as np
 import torch
 
+from .load_siglib import CPSIG, CUSIG, BUILT_WITH_CUDA
 from .param_checks import check_type
-
-from .load_siglib import cpsig, cusig, BUILT_WITH_CUDA
 from .error_codes import err_msg
-
 from .data_handlers import SigKernelDataHandler
 
 def sig_kernel_(data, n_jobs):
 
-    err_code = cpsig.batch_sig_kernel(
+    err_code = CPSIG.batch_sig_kernel(
         cast(data.gram.data_ptr(), POINTER(c_double)),
         data.out_ptr,
         data.batch_size,
@@ -45,7 +43,7 @@ def sig_kernel_(data, n_jobs):
     return data.out
 
 def sig_kernel_cuda_(data):
-    err_code = cusig.batch_sig_kernel_cuda(
+    err_code = CUSIG.batch_sig_kernel_cuda(
         cast(data.gram.data_ptr(), POINTER(c_double)),
         data.out_ptr, data.batch_size,
         data.dimension,

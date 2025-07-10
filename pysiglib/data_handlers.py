@@ -19,9 +19,7 @@ import numpy as np
 import torch
 
 from .param_checks import check_type, check_type_multiple, check_non_neg, check_dtype, check_dtype_double, ensure_own_contiguous_storage
-
 from .dtypes import DTYPES
-
 from .sig_length import sig_length
 
 class PolyDataHandler:

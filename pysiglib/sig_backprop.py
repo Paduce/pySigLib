@@ -19,10 +19,8 @@ from ctypes import c_double, POINTER
 import numpy as np
 import torch
 
+from .load_siglib import CPSIG
 from .error_codes import err_msg
-
-from .load_siglib import cpsig
-
 from .data_handlers import SigDataHandler
 
 def sig_backprop(#WARNING: sig_derivs and sig are non-const here #TODO: fix
@@ -38,7 +36,7 @@ def sig_backprop(#WARNING: sig_derivs and sig are non-const here #TODO: fix
         shape=path.shape,
         dtype=np.float64
     )
-    err_code = cpsig.sig_backprop_double(
+    err_code = CPSIG.sig_backprop_double(
         data.data_ptr,
         out.ctypes.data_as(POINTER(c_double)),
         sig_derivs.ctypes.data_as(POINTER(c_double)),
@@ -51,5 +49,5 @@ def sig_backprop(#WARNING: sig_derivs and sig are non-const here #TODO: fix
     )
 
     if err_code:
-        raise Exception("Error in pysiglib.signature: " + err_msg(err_code))
+        raise Exception("Error in pysiglib.sig_backprop: " + err_msg(err_code))
     return out

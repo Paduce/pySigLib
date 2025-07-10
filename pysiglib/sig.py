@@ -18,10 +18,9 @@ from typing import Union
 import numpy as np
 import torch
 
+from .load_siglib import CPSIG
 from .param_checks import check_type, check_non_neg
 from .error_codes import err_msg
-
-from .load_siglib import cpsig
 from .dtypes import CPSIG_SIGNATURE, CPSIG_BATCH_SIGNATURE
 
 
@@ -112,7 +111,7 @@ def sig_combine(
     data = PolyDataHandler(sig1, sig2, dimension, degree)
 
     if data.is_batch:
-        err_code = cpsig.batch_sig_combine(
+        err_code = CPSIG.batch_sig_combine(
             data.poly1_ptr,
             data.poly2_ptr,
             data.out_ptr,
@@ -122,7 +121,7 @@ def sig_combine(
             n_jobs
         )
     else:
-        err_code = cpsig.sig_combine(
+        err_code = CPSIG.sig_combine(
             data.poly1_ptr,
             data.poly2_ptr,
             data.out_ptr,

@@ -13,9 +13,8 @@
 # limitations under the License.
 # =========================================================================
 
+from .load_siglib import CPSIG
 from .param_checks import check_type, check_non_neg
-
-from .load_siglib import cpsig
 
 def sig_length(dimension : int, degree : int) -> int:
     """
@@ -40,7 +39,7 @@ def sig_length(dimension : int, degree : int) -> int:
     check_non_neg(dimension, "dimension")
     check_non_neg(degree, "degree")
 
-    out = cpsig.sig_length(dimension, degree)
+    out = CPSIG.sig_length(dimension, degree)
     if out == 0:
         raise ValueError("Integer overflow encountered in sig_length")
     return out

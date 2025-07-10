@@ -24,8 +24,6 @@ pySigLib |release|
    :align: center
    :class: only-dark
 
-.. automodule:: pysiglib.pysiglib
-
 .. toctree::
    :titlesonly:
    :maxdepth: 2

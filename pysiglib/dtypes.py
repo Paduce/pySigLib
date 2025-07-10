@@ -14,7 +14,9 @@
 # =========================================================================
 
 from ctypes import c_float, c_double, c_int32, c_int64
-from .load_siglib import cpsig
+import numpy as np
+import torch
+from .load_siglib import CPSIG
 
 ######################################################
 # Some dicts to simplify dtype cases
@@ -27,16 +29,29 @@ DTYPES = {
     "float64": c_double
 }
 
+SUPPORTED_DTYPES = [
+    np.int32,
+    np.int64,
+    np.float32,
+    np.float64,
+    torch.int32,
+    torch.int64,
+    torch.float32,
+    torch.float64
+]
+
+SUPPORTED_DTYPES_STR = "int32, int64, float or double"
+
 CPSIG_SIGNATURE = {
-    "int32": cpsig.signature_int32,
-    "int64": cpsig.signature_int64,
-    "float32": cpsig.signature_float,
-    "float64": cpsig.signature_double
+    "int32": CPSIG.signature_int32,
+    "int64": CPSIG.signature_int64,
+    "float32": CPSIG.signature_float,
+    "float64": CPSIG.signature_double
 }
 
 CPSIG_BATCH_SIGNATURE = {
-    "int32": cpsig.batch_signature_int32,
-    "int64": cpsig.batch_signature_int64,
-    "float32": cpsig.batch_signature_float,
-    "float64": cpsig.batch_signature_double
+    "int32": CPSIG.batch_signature_int32,
+    "int64": CPSIG.batch_signature_int64,
+    "float32": CPSIG.batch_signature_float,
+    "float64": CPSIG.batch_signature_double
 }
