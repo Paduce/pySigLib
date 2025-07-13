@@ -54,6 +54,7 @@ using batch_sig_kernel_fn = void(CDECL_*)(double*, double*, uint64_t, uint64_t, 
 using sig_kernel_cuda_fn = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 using batch_sig_kernel_cuda_fn = void(CDECL_*)(double*, double*, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 using batch_sig_combine_fn = void(CDECL_*)(double*, double*, double*, uint64_t, uint64_t, uint64_t, int);
+using sig_backprop_double_fn = void(CDECL_*)(double*, double*, double*, double*, uint64_t, uint64_t, uint64_t, bool, bool);
 
 extern HMODULE cpsig;
 extern HMODULE cusig;
@@ -66,6 +67,7 @@ extern batch_signature_int32_fn batch_signature_int32;
 extern sig_kernel_fn sig_kernel;
 extern batch_sig_kernel_fn batch_sig_kernel;
 extern batch_sig_combine_fn batch_sig_combine;
+extern sig_backprop_double_fn sig_backprop_double;
 
 extern sig_kernel_cuda_fn sig_kernel_cuda;
 extern batch_sig_kernel_cuda_fn batch_sig_kernel_cuda;

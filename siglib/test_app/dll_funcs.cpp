@@ -158,6 +158,7 @@ batch_signature_int32_fn batch_signature_int32 = nullptr;
 sig_kernel_fn sig_kernel = nullptr;
 batch_sig_kernel_fn batch_sig_kernel = nullptr;
 batch_sig_combine_fn batch_sig_combine = nullptr;
+sig_backprop_double_fn sig_backprop_double = nullptr;
 
 sig_kernel_cuda_fn sig_kernel_cuda = nullptr;
 batch_sig_kernel_cuda_fn batch_sig_kernel_cuda = nullptr;
@@ -173,6 +174,7 @@ void get_cpsig_fn_ptrs()
     GET_FN(sig_kernel, cpsig);
     GET_FN(batch_sig_kernel, cpsig);
     GET_FN(batch_sig_combine, cpsig);
+    GET_FN(sig_backprop_double, cpsig);
 }
 
 void get_cusig_fn_ptrs()

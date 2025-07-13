@@ -151,3 +151,26 @@ void example_batch_signature_kernel_cuda(
     cudaFree(d_gram);
     cudaFree(d_out);
 }
+
+void example_sig_backprop_double(
+    uint64_t dimension,
+    uint64_t length,
+    uint64_t degree,
+    bool time_aug,
+    bool lead_lag,
+    int num_runs
+) {
+    print_header("Signature Double");
+
+    std::vector<double> path = test_data<double>(dimension * length);
+    uint64_t sig_len = sig_length(dimension, degree);
+    std::vector<double> sig_derivs = test_data<double>(sig_len);
+    std::vector<double> sig = test_data<double>(sig_len);
+
+    uint64_t out_size = dimension * length;
+    std::vector<double> out(out_size, 0.);
+
+    time_function(num_runs, sig_backprop_double, path.data(), out.data(), sig_derivs.data(), sig.data(), dimension, length, degree, time_aug, lead_lag);
+
+    std::cout << "done\n";
+}

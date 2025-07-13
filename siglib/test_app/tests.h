@@ -79,3 +79,12 @@ void example_batch_signature_kernel_cuda(
 	uint64_t dyadic_order_2 = 0,
 	int num_runs = 50
 );
+
+void example_sig_backprop_double(
+	uint64_t dimension = 5,
+	uint64_t length = 1000,
+	uint64_t degree = 5,
+	bool time_aug = false,
+	bool lead_lag = false,
+	int num_runs = 50
+);

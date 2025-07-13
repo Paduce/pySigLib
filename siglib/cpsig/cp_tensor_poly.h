@@ -116,7 +116,8 @@ FORCE_INLINE void uncombine_sig_deriv(double* sig1, double* sig2, double* sig_co
 			double* result_ptr = sig_concat_deriv + level_index[level];
 
 			for (double* left_ptr = sig1 + level_index[left_level]; left_ptr != sig1 + level_index[left_level + 1UL]; ++left_ptr) {
-				for (double* right_ptr = sig2_deriv + level_index[right_level]; right_ptr != sig2_deriv + level_index[right_level + 1UL]; ++right_ptr) {
+				const double* right_ptr_upper_bound = sig2_deriv + level_index[right_level + 1UL];
+				for (double* right_ptr = sig2_deriv + level_index[right_level]; right_ptr != right_ptr_upper_bound; ++right_ptr) {
 					*right_ptr += *(result_ptr++) * *left_ptr;
 				}
 			}
@@ -128,7 +129,8 @@ FORCE_INLINE void uncombine_sig_deriv(double* sig1, double* sig2, double* sig_co
 		for (uint64_t level = left_level + 1UL, right_level = 1UL; level <= degree; ++level, ++right_level) {
 			double* result_ptr = sig_concat_deriv + level_index[level];
 			for (double* left_ptr = sig_concat_deriv + level_index[left_level]; left_ptr != sig_concat_deriv + level_index[left_level + 1UL]; ++left_ptr) {
-				for (double* right_ptr = sig2 + level_index[right_level]; right_ptr != sig2 + level_index[right_level + 1UL]; ++right_ptr) {
+				const double* right_ptr_upper_bound = sig2 + level_index[right_level + 1UL];
+				for (double* right_ptr = sig2 + level_index[right_level]; right_ptr != right_ptr_upper_bound; ++right_ptr) {
 					*left_ptr += *(result_ptr++) * *right_ptr;
 				}
 			}
@@ -146,7 +148,7 @@ FORCE_INLINE void linear_sig_deriv_to_increment_deriv(double* sig, double* sig_d
 		double one_over_level = 1. / level;
 		for (uint64_t j = 0UL; j < level_index[level] - level_index[level - 1UL]; ++j) {
 			for (uint64_t dd = 0UL; dd < dimension; ++dd) {
-				double ii = sig_deriv[level_index[level] + dd + dimension * j] * one_over_level;
+				const double ii = sig_deriv[level_index[level] + dd + dimension * j] * one_over_level;
 				sig_deriv[level_index[level - 1UL] + j] += sig[1UL + dd] * ii;
 				sig_deriv[1UL + dd] += sig[level_index[level - 1UL] + j] * ii;
 			}

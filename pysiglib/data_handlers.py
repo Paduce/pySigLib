@@ -274,7 +274,7 @@ class PathOutputHandler:
             self.data_ptr = self.data.ctypes.data_as(POINTER(c_double))
 
         else:
-            self.device = data.path1.device.type
+            self.device = data.device
             if self.is_batch:
                 self.data = torch.empty(
                     size=(self.batch_size, self.length, self.dimension),
