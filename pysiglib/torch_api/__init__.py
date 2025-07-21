@@ -13,11 +13,11 @@
 # limitations under the License.
 # =========================================================================
 
-from .load_siglib import SYSTEM, BUILT_WITH_CUDA, BUILT_WITH_AVX
-from .sig_length import sig_length
-from .sig import sig_combine, signature
-from .sig_backprop import sig_backprop
-from .sig_kernel import sig_kernel
-from .transform_path import transform_path
+from ..load_siglib import SYSTEM, BUILT_WITH_CUDA, BUILT_WITH_AVX
+from ..transform_path import transform_path
+from ..sig_length import sig_length
+from .torch_api import signature
 
-import pysiglib.torch_api
+# from ..sig import sig_combine, signature
+# from ..sig_backprop import sig_backprop
+# from ..sig_kernel import sig_kernel
