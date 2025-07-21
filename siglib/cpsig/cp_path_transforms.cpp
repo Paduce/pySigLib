@@ -14,23 +14,41 @@
  * ========================================================================= */
 
 #include "cppch.h"
+#include "cpsig.h"
+#include "macros.h"
+#include "cp_path_transforms.h"
 
-void add_time(double* data_in, double* data_out, const uint64_t dimension, const uint64_t length) {
-	uint64_t dataInSize = dimension * length;
+extern "C" {
 
-	double* in_ptr = data_in;
-	double* out_ptr = data_out;
-	double* in_end = data_in + dataInSize;
-	auto pointSize = sizeof(double) * dimension;
-	double time = 0.;
-	double step = 1. / static_cast<double>(length);
+	CPSIG_API int transform_path_float(float* data_in, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag) noexcept {
+		SAFE_CALL(transform_path_<float>(data_in, data_out, dimension, length, time_aug, lead_lag));
+	}
 
-	while (in_ptr < in_end) {
-		memcpy(out_ptr, in_ptr, pointSize);
-		in_ptr += dimension;
-		out_ptr += dimension;
-		(*out_ptr) = time;
-		++out_ptr;
-		time += step;
+	CPSIG_API int transform_path_double(double* data_in, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag) noexcept {
+		SAFE_CALL(transform_path_<double>(data_in, data_out, dimension, length, time_aug, lead_lag));
+	}
+
+	CPSIG_API int transform_path_int32(int32_t* data_in, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag) noexcept {
+		SAFE_CALL(transform_path_<int32_t>(data_in, data_out, dimension, length, time_aug, lead_lag));
+	}
+
+	CPSIG_API int transform_path_int64(int64_t* data_in, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag) noexcept {
+		SAFE_CALL(transform_path_<int64_t>(data_in, data_out, dimension, length, time_aug, lead_lag));
+	}
+
+	CPSIG_API int batch_transform_path_float(float* data_in, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, int n_jobs) noexcept {
+		SAFE_CALL(batch_transform_path_<float>(data_in, data_out, batch_size, dimension, length, time_aug, lead_lag, n_jobs));
+	}
+
+	CPSIG_API int batch_transform_path_double(double* data_in, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, int n_jobs) noexcept {
+		SAFE_CALL(batch_transform_path_<double>(data_in, data_out, batch_size, dimension, length, time_aug, lead_lag, n_jobs));
+	}
+
+	CPSIG_API int batch_transform_path_int32(int32_t* data_in, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, int n_jobs) noexcept {
+		SAFE_CALL(batch_transform_path_<int32_t>(data_in, data_out, batch_size, dimension, length, time_aug, lead_lag, n_jobs));
+	}
+
+	CPSIG_API int batch_transform_path_int64(int64_t* data_in, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, int n_jobs) noexcept {
+		SAFE_CALL(batch_transform_path_<int64_t>(data_in, data_out, batch_size, dimension, length, time_aug, lead_lag, n_jobs));
 	}
 }

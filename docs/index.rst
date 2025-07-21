@@ -29,6 +29,7 @@ pySigLib |release|
    :maxdepth: 2
 
    /pages/installation
+   /pages/transform_path
    /pages/sig_length
    /pages/signature
    /pages/sig_backprop

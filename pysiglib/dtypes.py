@@ -42,6 +42,20 @@ SUPPORTED_DTYPES = [
 
 SUPPORTED_DTYPES_STR = "int32, int64, float or double"
 
+CPSIG_TRANSFORM_PATH = {
+    "int32": CPSIG.transform_path_int32,
+    "int64": CPSIG.transform_path_int64,
+    "float32": CPSIG.transform_path_float,
+    "float64": CPSIG.transform_path_double
+}
+
+CPSIG_BATCH_TRANSFORM_PATH = {
+    "int32": CPSIG.batch_transform_path_int32,
+    "int64": CPSIG.batch_transform_path_int64,
+    "float32": CPSIG.batch_transform_path_float,
+    "float64": CPSIG.batch_transform_path_double
+}
+
 CPSIG_SIGNATURE = {
     "int32": CPSIG.signature_int32,
     "int64": CPSIG.signature_int64,

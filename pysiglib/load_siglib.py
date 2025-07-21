@@ -68,6 +68,102 @@ else:
 ######################################################
 
 ######################################################
+# transform_path
+######################################################
+
+CPSIG.transform_path_float.argtypes = (
+    POINTER(c_float),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool
+)
+CPSIG.transform_path_float.restype = c_int
+
+CPSIG.transform_path_double.argtypes = (
+    POINTER(c_double),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool
+)
+CPSIG.transform_path_double.restype = c_int
+
+CPSIG.transform_path_int32.argtypes = (
+    POINTER(c_int32),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool
+)
+CPSIG.transform_path_int32.restype = c_int
+
+CPSIG.transform_path_int64.argtypes = (
+    POINTER(c_int64),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool
+)
+CPSIG.transform_path_int64.restype = c_int
+
+######################################################
+# batch_transform_path
+######################################################
+
+CPSIG.batch_transform_path_float.argtypes = (
+    POINTER(c_float),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_int
+)
+CPSIG.batch_transform_path_float.restype = c_int
+
+CPSIG.batch_transform_path_double.argtypes = (
+    POINTER(c_double),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_int
+)
+CPSIG.batch_transform_path_double.restype = c_int
+
+CPSIG.batch_transform_path_int32.argtypes = (
+    POINTER(c_int32),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_int
+)
+CPSIG.batch_transform_path_int32.restype = c_int
+
+CPSIG.batch_transform_path_int64.argtypes = (
+    POINTER(c_int64),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_int
+)
+CPSIG.batch_transform_path_int64.restype = c_int
+
+######################################################
 # sig_length
 ######################################################
 
