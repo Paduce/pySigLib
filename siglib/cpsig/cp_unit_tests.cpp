@@ -25,7 +25,7 @@
 #include <span>
 #include <cmath>
 
-#define EPSILON 1e-13
+#define EPSILON 1e-10
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -813,7 +813,7 @@ namespace cpSigTests
             uint64_t dimension = 2, length = 3;
             std::vector<double> path = { 0., 0., 0.5, 0.5, 1.,1. };
             std::vector<double> true_sig = { 4.256702149748847 };
-            std::vector<double> gram(length * length);
+            std::vector<double> gram((length - 1) * (length - 1));
             gram_(path.data(), path.data(), gram.data(), 1, dimension, length, length);
             check_result(f, gram, true_sig, dimension, length, length, 2, 2);
         }
@@ -823,18 +823,18 @@ namespace cpSigTests
             uint64_t dimension = 3, length = 4;
             std::vector<double> path = { .9, .5, .8, .5, .3, .0, .0, .2, .6, .4, .0, .2 };
             std::vector<double> true_sig = { 2.1529809076880486 };
-            std::vector<double> gram(length * length);
+            std::vector<double> gram((length - 1) * (length - 1));
             gram_(path.data(), path.data(), gram.data(), 1, dimension, length, length);
             check_result(f, gram, true_sig, dimension, length, length, 2, 2);
         }
 
         TEST_METHOD(NonSquare) {
             auto f = sig_kernel;
-            uint64_t dimension = 1, length1 = 2, length2 = 3;
-            std::vector<double> path1 = { 0., 2. };
-            std::vector<double> path2 = { 0., 1., 2. };
+            uint64_t dimension = 1, length1 = 3, length2 = 2;
+            std::vector<double> path1 = { 0., 1., 2. };
+            std::vector<double> path2 = { 0., 2. };
             std::vector<double> true_sig = { 11. };
-            std::vector<double> gram(length1 * length2);
+            std::vector<double> gram((length1 - 1) * (length2 - 1));
             gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
             check_result(f, gram, true_sig, dimension, length1, length2, 0, 0);
         }

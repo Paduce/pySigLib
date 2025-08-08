@@ -136,6 +136,14 @@ def sig_kernel(
         path2 = transform_path(path2, time_aug, lead_lag, n_jobs)
 
     data = DoublePathInputHandler(path1, path2, False, False, "path1", "path2")
+
+    # Make sure dyadic_len_1 <= dyadic_len_2
+    dyadic_len_1 = ((data.length_1 - 1) << dyadic_order_1) + 1
+    dyadic_len_2 = ((data.length_2 - 1) << dyadic_order_2) + 1
+    if dyadic_len_1 < dyadic_len_2:
+        data.swap_paths()
+        dyadic_order_1, dyadic_order_2 = dyadic_order_2, dyadic_order_1
+
     result = ScalarOutputHandler(data)
 
     torch_path1 = torch.as_tensor(data.path1)  # Avoids data copy

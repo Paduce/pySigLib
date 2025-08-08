@@ -97,10 +97,10 @@ __device__ void goursat_pde_32(
 			}
 
 			uint64_t i = p - j;  // Calculate corresponding i (since i + j = p)
-			uint64_t ii = ((i - 1) >> dyadic_order_1) + 1;
-			uint64_t jj = ((j + iteration * 32 - 1) >> dyadic_order_2) + 1;
+			uint64_t ii = ((i - 1) >> dyadic_order_1);
+			uint64_t jj = ((j + iteration * 32 - 1) >> dyadic_order_2);
 
-			double deriv = gram[(ii - 1) * (length2 - 1) + (jj - 1)];
+			double deriv = gram[ii * (length2 - 1) + jj];
 			deriv *= dyadic_frac;
 			double deriv2 = deriv * deriv * twelth;
 
@@ -142,9 +142,11 @@ void sig_kernel_cuda_(
 	static const double twelth_ = 1. / 12;
 	const uint64_t dyadic_length_1_ = ((length1_ - 1) << dyadic_order_1_) + 1;
 	const uint64_t dyadic_length_2_ = ((length2_ - 1) << dyadic_order_2_) + 1;
-	const uint64_t num_anti_diag_ = dyadic_length_1_ + dyadic_length_2_ - 1;
+	const uint64_t num_anti_diag_ = 33 + dyadic_length_1_ - 1;
 	const double dyadic_frac_ = 1. / (1ULL << (dyadic_order_1_ + dyadic_order_2_));
 	const uint64_t gram_length_ = (length1_ - 1) * (length2_ - 1);
+
+	if (dyadic_length_2_ > dyadic_length_1_) { throw std::invalid_argument("The dyadically refined length of path2 must be less than or equal to that of path1. Please swap path1 and path2."); }
 
 	// Allocate constant memory
 	cudaMemcpyToSymbol(dimension, &dimension_, sizeof(uint64_t));

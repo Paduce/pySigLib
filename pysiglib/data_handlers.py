@@ -260,6 +260,11 @@ class DoublePathInputHandler:
         self.type_ = self.data1.type_
         self.device = self.path1.device.type if self.type_ == "torch" else "cpu"
 
+    def swap_paths(self):
+        self.data1, self.data2 = self.data2, self.data1
+        self.path1, self.path2 = self.path2, self.path1
+        self.length_1, self.length_2 = self.length_2, self.length_1
+
 class ScalarOutputHandler:
     """
     Handle output which is (shaped like) a scalar or a batch of scalars

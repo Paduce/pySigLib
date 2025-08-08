@@ -177,14 +177,23 @@ public:
 	virtual inline void set_to_index(int64_t n) { ptr = path->_data.data() + n * path->_data_dimension; }
 
 	inline T* data() const { return ptr; }
-	virtual inline uint64_t index() const { return static_cast<uint64_t>((ptr - path->_data.data()) / path->_data_dimension); } //TODO: this can be heavy in "!=" operators
+	virtual inline uint64_t index() const { return static_cast<uint64_t>((ptr - path->_data.data()) / path->_data_dimension); }
 
-	bool operator==(const PointImpl& other) const { return path == other.path && index() == other.index(); }
-	bool operator!=(const PointImpl& other) const { return path != other.path || index() != other.index(); }
-	bool operator<(const PointImpl& other) const { return path == other.path && index() < other.index(); }
-	bool operator<=(const PointImpl& other) const { return path == other.path && index() <= other.index(); }
-	bool operator>(const PointImpl& other) const { return path == other.path && index() > other.index(); }
-	bool operator>=(const PointImpl& other) const { return path == other.path && index() >= other.index(); }
+	// We assume here that the two points being compared belong to the same path,
+	// which saves us checking this each time. We keep this check in debug.
+
+#ifndef _DEBUG
+	virtual bool operator==(const PointImpl& other) const { return ptr == other.ptr; }
+	virtual bool operator<(const PointImpl& other) const { return ptr < other.ptr; }
+	virtual bool operator>(const PointImpl& other) const { return ptr > other.ptr; }
+#else
+	virtual bool operator==(const PointImpl& other) const { return path == other.path && ptr == other.ptr; }
+	virtual bool operator<(const PointImpl& other) const { return path == other.path && ptr < other.ptr; }
+	virtual bool operator>(const PointImpl& other) const { return path == other.path && ptr > other.ptr; }
+#endif
+	bool operator!=(const PointImpl& other) const { return !(*this == other); }
+	bool operator<=(const PointImpl& other) const { return !(*this > other); }
+	bool operator>=(const PointImpl& other) const { return !(*this < other); }
 
 	T* ptr;
 	const Path<T>* path;
@@ -251,6 +260,22 @@ public:
 
 	inline uint64_t index() const override { return 2 * static_cast<uint64_t>(this->ptr - this->path->_data.data()) + static_cast<uint64_t>(parity); }
 
+	bool operator==(const PointImpl<T>& other) const override {
+		if (!PointImpl<T>::operator==(other))
+			return false;
+		return parity == static_cast<const PointImplLeadLag<T>*>(&other)->parity;
+	}
+	bool operator<(const PointImpl<T>& other) const override {
+		if (PointImpl<T>::operator<(other))
+			return true;
+		return PointImpl<T>::operator==(other) && parity < static_cast<const PointImplLeadLag<T>*>(&other)->parity;
+	}
+	bool operator>(const PointImpl<T>& other) const override {
+		if (PointImpl<T>::operator>(other))
+			return true;
+		return PointImpl<T>::operator==(other) && parity > static_cast<const PointImplLeadLag<T>*>(&other)->parity;
+	}
+
 private:
 	bool parity;
 };
@@ -316,6 +341,22 @@ public:
 	}
 
 	inline uint64_t index() const override { return 2UL * static_cast<uint64_t>(this->ptr - this->path->_data.data()) + static_cast<uint64_t>(parity); }
+
+	bool operator==(const PointImpl<T>& other) const override {
+		if (!PointImpl<T>::operator==(other))
+			return false;
+		return parity == static_cast<const PointImplTimeAugLeadLag<T>*>(&other)->parity;
+	}
+	bool operator<(const PointImpl<T>& other) const override {
+		if (PointImpl<T>::operator<(other))
+			return true;
+		return PointImpl<T>::operator==(other) && parity < static_cast<const PointImplTimeAugLeadLag<T>*>(&other)->parity;
+	}
+	bool operator>(const PointImpl<T>& other) const override {
+		if (PointImpl<T>::operator>(other))
+			return true;
+		return PointImpl<T>::operator==(other) && parity > static_cast<const PointImplTimeAugLeadLag<T>*>(&other)->parity;
+	}
 
 private:
 	bool parity;

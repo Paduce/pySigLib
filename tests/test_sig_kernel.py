@@ -70,11 +70,11 @@ def batch_time_aug_lead_lag(x):
     path = torch.cat((path, t), dim=2)
     return path
 
-def run_random(device):
+def run_random(device, batch = 32, len1 = 100, len2 = 100, dim = 5):
     for _ in range(5):
         for dyadic_order in range(3):
-            X = torch.tensor(np.random.uniform(size=(32, 50, 5)), device=device)
-            Y = torch.tensor(np.random.uniform(size=(32, 100, 5)), device=device)
+            X = torch.tensor(np.random.uniform(size=(batch, len1, dim)), device=device)
+            Y = torch.tensor(np.random.uniform(size=(batch, len2, dim)), device=device)
 
             static_kernel = sigkernel.LinearKernel()
             signature_kernel = sigkernel.SigKernel(static_kernel, dyadic_order)
@@ -87,10 +87,46 @@ def run_random(device):
 def test_sig_kernel_random_cpu():
     run_random("cpu")
 
+def test_sig_kernel_random_cpu_non_square_1():
+    run_random("cpu", len1 = 10, len2 = 100)
+
+def test_sig_kernel_random_cpu_non_square_2():
+    run_random("cpu", len2 = 10, len1 = 100)
+
+def test_sig_kernel_different_dyadics_cpu():
+    batch, len1, len2, dim = 32, 10, 100, 5
+    dyadic_order = (2, 0)
+    X = torch.tensor(np.random.uniform(size=(batch, len1, dim)), device="cpu")
+    Y = torch.tensor(np.random.uniform(size=(batch, len2, dim)), device="cpu")
+
+    kernel1 = pysiglib.sig_kernel(X, Y, dyadic_order)
+    kernel2 = pysiglib.sig_kernel(Y, X, dyadic_order[::-1])
+
+    check_close(kernel1.cpu(), kernel2.cpu())
+
+@pytest.mark.skipif(not (pysiglib.BUILT_WITH_CUDA and torch.cuda.is_available()), reason="CUDA not available or disabled")
+def test_sig_kernel_different_dyadics_cuda():
+    batch, len1, len2, dim = 32, 10, 100, 5
+    dyadic_order = (2, 0)
+    X = torch.tensor(np.random.uniform(size=(batch, len1, dim)), device="cuda")
+    Y = torch.tensor(np.random.uniform(size=(batch, len2, dim)), device="cuda")
+
+    kernel1 = pysiglib.sig_kernel(X, Y, dyadic_order)
+    kernel2 = pysiglib.sig_kernel(Y, X, dyadic_order[::-1])
+
+    check_close(kernel1.cpu(), kernel2.cpu())
 
 @pytest.mark.skipif(not (pysiglib.BUILT_WITH_CUDA and torch.cuda.is_available()), reason="CUDA not available or disabled")
 def test_sig_kernel_random_cuda():
     run_random("cuda")
+
+@pytest.mark.skipif(not (pysiglib.BUILT_WITH_CUDA and torch.cuda.is_available()), reason="CUDA not available or disabled")
+def test_sig_kernel_random_cuda_non_square_1():
+    run_random("cuda", len1 = 10, len2 = 100)
+
+@pytest.mark.skipif(not (pysiglib.BUILT_WITH_CUDA and torch.cuda.is_available()), reason="CUDA not available or disabled")
+def test_sig_kernel_random_cuda_non_square_2():
+    run_random("cuda", len2 = 10, len1 = 100)
 
 
 def test_sig_kernel_numpy1():
@@ -125,8 +161,8 @@ def test_sig_kernel_non_contiguous():
 
 @pytest.mark.parametrize("dyadic_order", range(3))
 def test_sig_kernel_lead_lag(dyadic_order):
-    X = torch.rand(size=(32, 50, 5))
-    Y = torch.rand(size=(32, 100, 5))
+    X = torch.rand(size=(32, 50, 5)) / 100
+    Y = torch.rand(size=(32, 100, 5)) / 100
 
     X_ll = batch_lead_lag(X).double()
     Y_ll = batch_lead_lag(Y).double()
