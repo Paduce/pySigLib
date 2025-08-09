@@ -119,7 +119,7 @@ void example_batch_signature_kernel(
     std::vector<double> out(batch_size, 0.);
     std::vector<double> gram = test_data<double>(length1 * length2 * batch_size);
 
-    time_function(num_runs, batch_sig_kernel, gram.data(), out.data(), batch_size, dimension, length1, length2, dyadic_order_1, dyadic_order_2, n_jobs);
+    time_function(num_runs, batch_sig_kernel, gram.data(), out.data(), batch_size, dimension, length1, length2, dyadic_order_1, dyadic_order_2, n_jobs, false);
 
     std::cout << "done\n";
 }

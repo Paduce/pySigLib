@@ -281,44 +281,66 @@ class ScalarOutputHandler:
             self.data_ptr = cast(self.data.data_ptr(), POINTER(c_double))
 
 
-class PathOutputHandler:
+class GridOutputHandler:
     """
-    Handle output which is (shaped like) a path or a batch of paths
+    Handle output which is (shaped like) a grid or a batch of grids
     """
-    def __init__(self, length, dimension, batch_size, is_batch, type_, device):
+    def __init__(self, x_size, y_size, data):
 
-        self.length = length
-        self.dimension = dimension
-        self.batch_size = batch_size
-        self.is_batch = is_batch
-        self.type_ = type_
+        self.x_size = x_size
+        self.y_size = y_size
+        self.batch_size = data.batch_size
+        self.is_batch = data.is_batch
+        self.type_ = data.type_
 
         if self.type_ == "numpy":
             self.device = "cpu"
             if self.is_batch:
                 self.data = np.empty(
-                    shape=(self.batch_size, self.length, self.dimension),
+                    shape=(self.batch_size, self.x_size, self.y_size),
                     dtype=np.float64
                 )
             else:
                 self.data = np.empty(
-                    shape=(self.length, self.dimension),
+                    shape=(self.x_size, self.y_size),
                     dtype=np.float64
                 )
             self.data_ptr = self.data.ctypes.data_as(POINTER(c_double))
 
         else:
-            self.device = device
+            self.device = data.device
             if self.is_batch:
                 self.data = torch.empty(
-                    size=(self.batch_size, self.length, self.dimension),
+                    size=(self.batch_size, self.x_size, self.y_size),
                     dtype=torch.float64,
                     device = self.device
                 )
             else:
                 self.data = torch.empty(
-                    size=(self.length, self.dimension),
+                    size=(self.x_size, self.y_size),
                     dtype=torch.float64,
                     device = self.device
                 )
             self.data_ptr = cast(self.data.data_ptr(), POINTER(c_double))
+
+    def transpose(self):
+        if self.type_ == "numpy":
+            if self.is_batch:
+                self.data = np.transpose(self.data, (0, 2, 1))
+            else:
+                self.data = np.transpose(self.data, (1, 0))
+        else:
+            if self.is_batch:
+                self.data = torch.transpose(self.data, 1, 2)
+            else:
+                self.data = torch.transpose(self.data, 0, 1)
+
+class PathOutputHandler(GridOutputHandler):
+    """
+    Handle output which is (shaped like) a path or a batch of paths
+    """
+
+    def __init__(self, length, dimension, data):
+        super().__init__(length, dimension, data)
+        self.length = length
+        self.dimension = dimension

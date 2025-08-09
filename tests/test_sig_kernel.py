@@ -81,7 +81,20 @@ def run_random(device, batch = 32, len1 = 100, len2 = 100, dim = 5):
             kernel1 = signature_kernel.compute_kernel(X, Y, 100)
             kernel2 = pysiglib.sig_kernel(X, Y, dyadic_order)
 
-            check_close(kernel1.cpu(), kernel2.cpu())
+            check_close(kernel1.cpu(), kernel2.cpu())#TODO: rewrite
+
+def sig_kernel_full_grid(X1, X2, len1, len2, batch):
+    result = np.ones(shape = (batch, len1, len2))
+    static_kernel = sigkernel.LinearKernel()
+    signature_kernel = sigkernel.SigKernel(static_kernel, 0)
+    for b in range(batch):
+        for i in range(1, len1):
+            for j in range(1, len2):
+                XX1 = torch.tensor(X1[b, :i + 1, :][np.newaxis, :, :])
+                XX2 = torch.tensor(X2[b, :j + 1, :][np.newaxis, :, :])
+                result[b][i][j] = float(signature_kernel.compute_kernel(XX1, XX2, 100)[0])
+    return result
+
 
 def test_sig_kernel_trivial():
     X = torch.tensor([[0.]])
@@ -179,3 +192,48 @@ def test_sig_kernel_lead_lag(dyadic_order):
     kernel2 = pysiglib.sig_kernel(X, Y, dyadic_order, lead_lag = True)
 
     check_close(kernel1.cpu(), kernel2.cpu())
+
+def test_sig_kernel_full_grid():
+    X = np.random.uniform(size=(10, 5, 5))
+    Y = np.random.uniform(size=(10, 10, 5))
+
+    kernel1 = sig_kernel_full_grid(X, Y, 5, 10, 10)
+    kernel2 = pysiglib.sig_kernel(X, Y, 0, return_grid=True)
+
+    check_close(kernel1, kernel2)
+
+# def test_sig_kernel_full_grid_time_aug():
+#     X = np.random.uniform(size=(10, 5, 5))
+#     Y = np.random.uniform(size=(10, 10, 5))
+#
+#     X_t = pysiglib.transform_path(X, time_aug = True)
+#     Y_t = pysiglib.transform_path(Y, time_aug = True)
+#
+#     kernel1 = sig_kernel_full_grid(X_t, Y_t, 5, 10, 10)
+#     kernel2 = pysiglib.sig_kernel(X, Y, 0, time_aug = True, return_grid=True)
+#
+#     check_close(kernel1, kernel2)
+#
+# def test_sig_kernel_full_grid_lead_lag():
+#     X = np.random.uniform(size=(10, 5, 5)) / 100
+#     Y = np.random.uniform(size=(10, 10, 5)) / 100
+#
+#     X_ll = pysiglib.transform_path(X, lead_lag = True)
+#     Y_ll = pysiglib.transform_path(Y, lead_lag = True)
+#
+#     kernel1 = sig_kernel_full_grid(X_ll, Y_ll, X_ll.shape[1], Y_ll.shape[1], 10)
+#     kernel2 = pysiglib.sig_kernel(X, Y, 0, lead_lag = True, return_grid=True)
+#
+#     check_close(kernel1, kernel2)
+#
+# def test_sig_kernel_full_grid_time_aug_lead_lag():
+#     X = np.random.uniform(size=(10, 5, 5)) / 100
+#     Y = np.random.uniform(size=(10, 10, 5)) / 100
+#
+#     X_ll = pysiglib.transform_path(X, time_aug = True, lead_lag=True)
+#     Y_ll = pysiglib.transform_path(Y, time_aug = True, lead_lag=True)
+#
+#     kernel1 = sig_kernel_full_grid(X_ll, Y_ll, X_ll.shape[1], Y_ll.shape[1], 10)
+#     kernel2 = pysiglib.sig_kernel(X, Y, 0, lead_lag = True, time_aug = True, return_grid=True)
+#
+#     check_close(kernel1, kernel2)

@@ -206,7 +206,7 @@ def sig_backprop(
     path_data = PathInputHandler(path, time_aug, lead_lag, "path")
     sig_len = sig_length(path_data.dimension, degree)
     sig_data = DoubleSigInputHandler(sig, sig_derivs, sig_len, "sig", "sig_derivs")
-    result = PathOutputHandler(path_data.data_length, path_data.data_dimension, path_data.batch_size, path_data.is_batch, path_data.type_, path_data.device)
+    result = PathOutputHandler(path_data.data_length, path_data.data_dimension, path_data)
 
     if path_data.is_batch != sig_data.is_batch or path_data.batch_size != sig_data.batch_size:
         raise ValueError("path, sig and sig_derivs must have the same batch sizes")

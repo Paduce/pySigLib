@@ -146,7 +146,7 @@ def transform_path(
     check_cpu(path, "path")
 
     data = PathInputHandler(path, time_aug, lead_lag, "path")
-    result = PathOutputHandler(data.length, data.dimension, data.batch_size, data.is_batch, data.type_, data.device)
+    result = PathOutputHandler(data.length, data.dimension, data)
     if data.is_batch:
         check_type(n_jobs, "n_jobs", int)
         if n_jobs == 0:

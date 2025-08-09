@@ -23,10 +23,10 @@ from .transform_path import transform_path
 from .load_siglib import CPSIG, CUSIG, BUILT_WITH_CUDA
 from .param_checks import check_type
 from .error_codes import err_msg
-from .data_handlers import DoublePathInputHandler, ScalarOutputHandler
+from .data_handlers import DoublePathInputHandler, ScalarOutputHandler, GridOutputHandler
 
 
-def sig_kernel_(data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs):
+def sig_kernel_(data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs, return_grid):
 
     err_code = CPSIG.batch_sig_kernel(
         cast(gram.data_ptr(), POINTER(c_double)),
@@ -37,12 +37,12 @@ def sig_kernel_(data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs):
         data.length_2,
         dyadic_order_1,
         dyadic_order_2,
-        n_jobs
+        n_jobs,
+        return_grid
     )
 
     if err_code:
         raise Exception("Error in pysiglib.sig_kernel: " + err_msg(err_code))
-    return result.data
 
 def sig_kernel_cuda_(data, result, gram, dyadic_order_1, dyadic_order_2,):
     err_code = CUSIG.batch_sig_kernel_cuda(
@@ -57,7 +57,6 @@ def sig_kernel_cuda_(data, result, gram, dyadic_order_1, dyadic_order_2,):
 
     if err_code:
         raise Exception("Error in pysiglib.sig_kernel: " + err_msg(err_code))
-    return result.data
 
 def sig_kernel(
         path1 : Union[np.ndarray, torch.tensor],
@@ -65,7 +64,8 @@ def sig_kernel(
         dyadic_order : Union[int, tuple],
         time_aug : bool = False,
         lead_lag : bool = False,
-        n_jobs : int = 1
+        n_jobs : int = 1,
+        return_grid = False
 ) -> Union[np.ndarray, torch.tensor]:
     """
     Computes a single signature kernel or a batch of signature kernels.
@@ -140,11 +140,14 @@ def sig_kernel(
     # Make sure dyadic_len_1 <= dyadic_len_2
     dyadic_len_1 = ((data.length_1 - 1) << dyadic_order_1) + 1
     dyadic_len_2 = ((data.length_2 - 1) << dyadic_order_2) + 1
+    swap = False
     if dyadic_len_1 < dyadic_len_2:
+        swap = True
         data.swap_paths()
         dyadic_order_1, dyadic_order_2 = dyadic_order_2, dyadic_order_1
+        dyadic_len_1, dyadic_len_2 = dyadic_len_2, dyadic_len_1
 
-    result = ScalarOutputHandler(data)
+    result = ScalarOutputHandler(data) if not return_grid else GridOutputHandler(dyadic_len_1, dyadic_len_2, data)
 
     torch_path1 = torch.as_tensor(data.path1)  # Avoids data copy
     torch_path2 = torch.as_tensor(data.path2)
@@ -159,8 +162,13 @@ def sig_kernel(
     gram = torch.bmm(x1, y1.permute(0, 2, 1))
 
     if data.device == "cpu":
-        return sig_kernel_(data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs)
+        sig_kernel_(data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs, return_grid)
+    else:
+        if not BUILT_WITH_CUDA:
+            raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")
+        sig_kernel_cuda_(data, result, gram, dyadic_order_1, dyadic_order_2)
 
-    if not BUILT_WITH_CUDA:
-        raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")
-    return sig_kernel_cuda_(data, result, gram, dyadic_order_1, dyadic_order_2)
+    if return_grid and swap:
+        result.transpose()
+
+    return result.data

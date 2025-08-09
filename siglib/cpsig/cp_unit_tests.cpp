@@ -815,7 +815,7 @@ namespace cpSigTests
             std::vector<double> path = { 0. };
             std::vector<double> true_sig = { 1. };
             std::vector<double> gram = {};
-            check_result(f, gram, true_sig, dimension, length, length, 0, 0);
+            check_result(f, gram, true_sig, dimension, length, length, 0, 0, false);
         }
 
         TEST_METHOD(TrivialBatch) {
@@ -824,7 +824,7 @@ namespace cpSigTests
             std::vector<double> path = { 0. };
             std::vector<double> true_sig = { 1., 1., 1., 1., 1. };
             std::vector<double> gram = {};
-            check_result(f, gram, true_sig, batch_size, dimension, length, length, 0, 0, 1);
+            check_result(f, gram, true_sig, batch_size, dimension, length, length, 0, 0, 1, false);
         }
         TEST_METHOD(LinearPathTest) {
             auto f = sig_kernel;
@@ -833,7 +833,7 @@ namespace cpSigTests
             std::vector<double> true_sig = { 4.256702149748847 };
             std::vector<double> gram((length - 1) * (length - 1));
             gram_(path.data(), path.data(), gram.data(), 1, dimension, length, length);
-            check_result(f, gram, true_sig, dimension, length, length, 2, 2);
+            check_result(f, gram, true_sig, dimension, length, length, 2, 2, false);
         }
 
         TEST_METHOD(ManualTest) {
@@ -843,7 +843,7 @@ namespace cpSigTests
             std::vector<double> true_sig = { 2.1529809076880486 };
             std::vector<double> gram((length - 1) * (length - 1));
             gram_(path.data(), path.data(), gram.data(), 1, dimension, length, length);
-            check_result(f, gram, true_sig, dimension, length, length, 2, 2);
+            check_result(f, gram, true_sig, dimension, length, length, 2, 2, false);
         }
 
         TEST_METHOD(NonSquare) {
@@ -854,7 +854,20 @@ namespace cpSigTests
             std::vector<double> true_sig = { 11. };
             std::vector<double> gram((length1 - 1) * (length2 - 1));
             gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
-            check_result(f, gram, true_sig, dimension, length1, length2, 0, 0);
+            check_result(f, gram, true_sig, dimension, length1, length2, 0, 0, false);
+        }
+
+        TEST_METHOD(FullGrid) {
+            auto f = sig_kernel;
+            uint64_t dimension = 1, length1 = 3, length2 = 2;
+            std::vector<double> path1 = { 0., 1., 2. };
+            std::vector<double> path2 = { 0., 2. };
+            std::vector<double> true_sig = { 1., 1.,
+                1., 4.,
+                1., 11. };
+            std::vector<double> gram((length1 - 1) * (length2 - 1));
+            gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
+            check_result(f, gram, true_sig, dimension, length1, length2, 0, 0, true);
         }
     };
 }

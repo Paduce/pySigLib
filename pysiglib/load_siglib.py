@@ -478,7 +478,8 @@ CPSIG.batch_sig_kernel.argtypes = (
     c_uint64,
     c_uint64,
     c_uint64,
-    c_int
+    c_int,
+    c_bool
 )
 CPSIG.batch_sig_kernel.restype = c_int
 

@@ -30,7 +30,8 @@ void get_sig_kernel_(
 	const uint64_t length2,
 	double* out,
 	const uint64_t dyadic_order_1,
-	const uint64_t dyadic_order_2
+	const uint64_t dyadic_order_2,
+	bool return_grid
 );
 
 void get_sig_kernel_diag_(
