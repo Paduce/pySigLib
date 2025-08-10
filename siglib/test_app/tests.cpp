@@ -32,7 +32,7 @@ void example_signature_double(
     uint64_t out_size = sig_length(dimension, degree);
     std::vector<double> out(out_size, 0.);
 
-    time_function(num_runs, signature_double, path.data(), out.data(), dimension, length, degree, time_aug, lead_lag, horner);
+    time_function(num_runs, signature_double, path.data(), out.data(), dimension, length, degree, time_aug, lead_lag, 1., horner);
 
     std::cout << "done\n";
 }
@@ -53,7 +53,7 @@ void example_signature_int32(
     uint64_t out_size = sig_length(dimension, degree);
     std::vector<double> out(out_size, 0.);
 
-    time_function(num_runs, signature_int32, path.data(), out.data(), dimension, length, degree, time_aug, lead_lag, horner);
+    time_function(num_runs, signature_int32, path.data(), out.data(), dimension, length, degree, time_aug, lead_lag, 1., horner);
 
     std::cout << "done\n";
 }
@@ -76,7 +76,7 @@ void example_batch_signature_double(
     uint64_t out_size = sig_length(dimension, degree) * batch_size;
     std::vector<double> out(out_size, 0.);
 
-    time_function(num_runs, batch_signature_double, path.data(), out.data(), batch_size, dimension, length, degree, time_aug, lead_lag, horner, n_jobs);
+    time_function(num_runs, batch_signature_double, path.data(), out.data(), batch_size, dimension, length, degree, time_aug, lead_lag, 1., horner, n_jobs);
 
     std::cout << "done\n";
 }
@@ -99,7 +99,7 @@ void example_batch_signature_int32(
     uint64_t out_size = sig_length(dimension, degree) * batch_size;
     std::vector<double> out(out_size, 0.);
 
-    time_function(num_runs, batch_signature_int32, path.data(), out.data(), batch_size, dimension, length, degree, time_aug, lead_lag, horner, n_jobs);
+    time_function(num_runs, batch_signature_int32, path.data(), out.data(), batch_size, dimension, length, degree, time_aug, lead_lag, 1., horner, n_jobs);
 
     std::cout << "done\n";
 }
@@ -170,7 +170,7 @@ void example_sig_backprop_double(
     uint64_t out_size = dimension * length;
     std::vector<double> out(out_size, 0.);
 
-    time_function(num_runs, sig_backprop_double, path.data(), out.data(), sig_derivs.data(), sig.data(), dimension, length, degree, time_aug, lead_lag);
+    time_function(num_runs, sig_backprop_double, path.data(), out.data(), sig_derivs.data(), sig.data(), dimension, length, degree, time_aug, lead_lag, 1.);
 
     std::cout << "done\n";
 }

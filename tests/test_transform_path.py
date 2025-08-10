@@ -28,10 +28,10 @@ def check_close(a, b):
     b_ = np.array(b)
     assert not np.max(np.abs(a_ - b_)) > EPSILON
 
-def time_aug(X, is_batch = False):
+def time_aug(X, end_time = 1., is_batch = False):
     length = X.shape[1] if is_batch else X.shape[0]
     batch_size = X.shape[0] if is_batch else None
-    t = np.linspace(0, length - 1, length)
+    t = np.linspace(0, end_time, length)
     t = np.tile(t[np.newaxis, :, np.newaxis], (batch_size, 1, 1)) if is_batch else t[:, np.newaxis]
     return np.concatenate((X, t), axis = 2 if is_batch else 1)
 
@@ -62,7 +62,7 @@ def test_transform_path_time_aug():
 
 def test_batch_transform_path_time_aug():
     X = np.random.uniform(size=(10, 100, 5))
-    X1 = time_aug(X, True)
+    X1 = time_aug(X, is_batch = True)
     X2 = pysiglib.transform_path(X, time_aug = True)
     check_close(X1, X2)
 

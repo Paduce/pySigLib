@@ -47,25 +47,25 @@ def batch_lead_lag(x):
     path = torch.cat((lag, lead), dim=2)
     return path
 
-def time_aug_lead_lag(x):
+def time_aug_lead_lag(x, end_time = 1.):
     # A backpropagatable version of lead-lag
     lag = torch.repeat_interleave(x[:-1], repeats=2, dim=0)
     lag = torch.cat((lag, x[-1:]))
     lead = torch.repeat_interleave(x[1:], repeats=2, dim=0)
     lead = torch.cat((x[0:1], lead))
     path = torch.cat((lag, lead), dim=-1)
-    t = torch.linspace(0, path.shape[0] - 1, path.shape[0]).unsqueeze(1)
+    t = torch.linspace(0, end_time, path.shape[0]).unsqueeze(1)
     path = torch.cat((path, t), dim =  1)
     return path
 
-def batch_time_aug_lead_lag(x):
+def batch_time_aug_lead_lag(x, end_time = 1.):
     # A backpropagatable version of lead-lag
     lag = torch.repeat_interleave(x[:, :-1], repeats=2, dim=1)
     lag = torch.cat((lag, x[:, -1:]), dim=1)
     lead = torch.repeat_interleave(x[:, 1:], repeats=2, dim=1)
     lead = torch.cat((x[:, 0:1], lead), axis=1)
     path = torch.cat((lag, lead), dim=2)
-    t = torch.linspace(0, path.shape[1] - 1, path.shape[1]).unsqueeze(0)
+    t = torch.linspace(0, end_time, path.shape[1]).unsqueeze(0)
     t = torch.tile(t, (path.shape[0], 1)).unsqueeze(2)
     path = torch.cat((path, t), dim=2)
     return path
@@ -96,7 +96,7 @@ def test_batch_sig_backprop_random(deg):
 def test_sig_backprop_time_aug_random(deg):
     length, dimension = 100, 5
     X = np.random.uniform(size=(length, dimension))
-    t = np.array(list(range(length))).astype("double")[:, np.newaxis]
+    t = np.linspace(0, 1, length)[:, np.newaxis]
     X_time_aug = np.concatenate([X, t], axis = 1)
     sig_derivs = np.random.uniform(size=pysiglib.sig_length(dimension + 1, deg))
 
@@ -110,7 +110,7 @@ def test_sig_backprop_time_aug_random(deg):
 def test_batch_sig_backprop_time_aug_random(deg):
     batch_size, length, dimension = 10, 100, 5
     X = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
-    t = np.array(list(range(length))).astype("double")[np.newaxis, :, np.newaxis]
+    t = np.linspace(0, 1, length)[np.newaxis, :, np.newaxis]
     t = np.tile(t, (batch_size, 1, 1))
     X_time_aug = np.concatenate([X, t], axis=2)
     sig_derivs = np.random.uniform(size = (batch_size, pysiglib.sig_length(dimension + 1, deg)))

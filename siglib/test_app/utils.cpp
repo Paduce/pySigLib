@@ -16,9 +16,9 @@
 #include "utils.h"
 #include "dll_funcs.h"
 
-double dot_product_(double* a, double* b, int n) {
+double dot_product_(double* a, double* b, uint64_t n) {
     double res = 0;
-    for (int i = 0; i < n; ++i) {
+    for (uint64_t i = 0; i < n; ++i) {
         res += *(a + i) * *(b + i);
     }
     return res;

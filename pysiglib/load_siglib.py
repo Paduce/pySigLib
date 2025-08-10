@@ -77,7 +77,8 @@ CPSIG.transform_path_float.argtypes = (
     c_uint64,
     c_uint64,
     c_bool,
-    c_bool
+    c_bool,
+    c_double
 )
 CPSIG.transform_path_float.restype = c_int
 
@@ -87,7 +88,8 @@ CPSIG.transform_path_double.argtypes = (
     c_uint64,
     c_uint64,
     c_bool,
-    c_bool
+    c_bool,
+    c_double
 )
 CPSIG.transform_path_double.restype = c_int
 
@@ -97,7 +99,8 @@ CPSIG.transform_path_int32.argtypes = (
     c_uint64,
     c_uint64,
     c_bool,
-    c_bool
+    c_bool,
+    c_double
 )
 CPSIG.transform_path_int32.restype = c_int
 
@@ -107,7 +110,8 @@ CPSIG.transform_path_int64.argtypes = (
     c_uint64,
     c_uint64,
     c_bool,
-    c_bool
+    c_bool,
+    c_double
 )
 CPSIG.transform_path_int64.restype = c_int
 
@@ -123,6 +127,7 @@ CPSIG.batch_transform_path_float.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_int
 )
 CPSIG.batch_transform_path_float.restype = c_int
@@ -135,6 +140,7 @@ CPSIG.batch_transform_path_double.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_int
 )
 CPSIG.batch_transform_path_double.restype = c_int
@@ -147,6 +153,7 @@ CPSIG.batch_transform_path_int32.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_int
 )
 CPSIG.batch_transform_path_int32.restype = c_int
@@ -159,6 +166,7 @@ CPSIG.batch_transform_path_int64.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_int
 )
 CPSIG.batch_transform_path_int64.restype = c_int
@@ -245,6 +253,7 @@ CPSIG.signature_int32.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_bool
 )
 CPSIG.signature_int32.restype = c_int
@@ -257,6 +266,7 @@ CPSIG.signature_int64.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_bool
 )
 CPSIG.signature_int64.restype = c_int
@@ -269,6 +279,7 @@ CPSIG.signature_float.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_bool
 )
 CPSIG.signature_float.restype = c_int
@@ -281,6 +292,7 @@ CPSIG.signature_double.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_bool
 )
 CPSIG.signature_double.restype = c_int
@@ -298,7 +310,8 @@ CPSIG.sig_backprop_float.argtypes = (
     c_uint64,
     c_uint64,
     c_bool,
-    c_bool
+    c_bool,
+    c_double
 )
 CPSIG.sig_backprop_float.restype = c_int
 
@@ -311,7 +324,8 @@ CPSIG.sig_backprop_double.argtypes = (
     c_uint64,
     c_uint64,
     c_bool,
-    c_bool
+    c_bool,
+    c_double
 )
 CPSIG.sig_backprop_double.restype = c_int
 
@@ -324,7 +338,8 @@ CPSIG.sig_backprop_int32.argtypes = (
     c_uint64,
     c_uint64,
     c_bool,
-    c_bool
+    c_bool,
+    c_double
 )
 CPSIG.sig_backprop_int32.restype = c_int
 
@@ -337,7 +352,8 @@ CPSIG.sig_backprop_int64.argtypes = (
     c_uint64,
     c_uint64,
     c_bool,
-    c_bool
+    c_bool,
+    c_double
 )
 CPSIG.sig_backprop_int64.restype = c_int
 
@@ -354,6 +370,7 @@ CPSIG.batch_signature_int32.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_bool,
     c_int
 )
@@ -368,6 +385,7 @@ CPSIG.batch_signature_int64.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_bool,
     c_int
 )
@@ -382,6 +400,7 @@ CPSIG.batch_signature_float.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_bool,
     c_int
 )
@@ -396,6 +415,7 @@ CPSIG.batch_signature_double.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_bool,
     c_int
 )
@@ -416,6 +436,7 @@ CPSIG.batch_sig_backprop_float.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_int
 )
 CPSIG.batch_sig_backprop_float.restype = c_int
@@ -431,6 +452,7 @@ CPSIG.batch_sig_backprop_double.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_int
 )
 CPSIG.batch_sig_backprop_double.restype = c_int
@@ -446,6 +468,7 @@ CPSIG.batch_sig_backprop_int32.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_int
 )
 CPSIG.batch_sig_backprop_int32.restype = c_int
@@ -461,6 +484,7 @@ CPSIG.batch_sig_backprop_int64.argtypes = (
     c_uint64,
     c_bool,
     c_bool,
+    c_double,
     c_int
 )
 CPSIG.batch_sig_backprop_int64.restype = c_int

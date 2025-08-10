@@ -50,7 +50,8 @@ void sig_kernel_(
 	uint64_t length1,
 	uint64_t length2,
 	uint64_t dyadic_order_1,
-	uint64_t dyadic_order_2
+	uint64_t dyadic_order_2,
+	bool return_grid = false
 );
 
 void batch_sig_kernel_(
@@ -62,5 +63,6 @@ void batch_sig_kernel_(
 	uint64_t length2,
 	uint64_t dyadic_order_1,
 	uint64_t dyadic_order_2,
-	int n_jobs = 1
+	int n_jobs = 1,
+	bool return_grid = false
 );

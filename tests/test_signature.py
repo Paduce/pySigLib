@@ -118,7 +118,7 @@ def test_signature_non_contiguous():
 @pytest.mark.parametrize("deg", range(1, 6))
 def test_signature_time_aug(deg):
     X = np.random.uniform(size=(10, 4))
-    t = np.array(list(range(10))).astype("double")[:, np.newaxis]
+    t = np.linspace(0, 1, 10)[:, np.newaxis]
     X_aug = np.concatenate([X, t], axis = 1)
     iisig = iisignature.sig(X_aug, deg)
     sig = pysiglib.signature(X, deg, time_aug = True)
@@ -136,7 +136,7 @@ def test_signature_lead_lag(deg):
 def test_signature_time_aug_lead_lag(deg):
     X = np.random.uniform(size=(10, 2))
     X_aug = lead_lag(X)
-    t = np.array(list(range(19))).astype("double")[:, np.newaxis]
+    t = np.linspace(0, 1, 19)[:, np.newaxis]
     X_aug = np.concatenate([X_aug, t], axis = 1)
     iisig = iisignature.sig(X_aug, deg)
     sig = pysiglib.signature(X, deg, lead_lag = True, time_aug = True)

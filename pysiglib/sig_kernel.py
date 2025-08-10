@@ -64,6 +64,7 @@ def sig_kernel(
         dyadic_order : Union[int, tuple],
         time_aug : bool = False,
         lead_lag : bool = False,
+        end_time : float = 1.,
         n_jobs : int = 1,
         return_grid = False
 ) -> Union[np.ndarray, torch.tensor]:
@@ -97,15 +98,20 @@ def sig_kernel(
         PDE grid by a factor of :math:`2^\\lambda`.
     :type dyadic_order: int | tuple
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
-        defined as the original path with an extra channel set to time, :math:`t`.
+        defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
+        where :math`t_L` is given by the parameter ``end_time``.
     :type time_aug: bool
     :param lead_lag: If set to True, will compute the signature of the path after applying the lead-lag transformation.
     :type lead_lag: bool
+    :param end_time: End time for time-augmentation, :math:`t_L`.
+    :type end_time: float
     :param n_jobs: (Only applicable to CPU computation) Number of threads to run in parallel.
         If n_jobs = 1, the computation is run serially. If set to -1, all available threads
         are used. For n_jobs below -1, (max_threads + 1 + n_jobs) threads are used. For example
         if n_jobs = -2, all threads but one are used.
     :type n_jobs: int
+    :param return_grid: If ``True``, returns the entire PDE grid.
+    :type return_grid: bool
     :return: Single signature kernel or batch of signature kernels
     :rtype: numpy.ndarray | torch.tensor
 
@@ -132,10 +138,10 @@ def sig_kernel(
         raise ValueError("dyadic_order must be a non-negative integer or tuple of non-negative integers")
 
     if time_aug or lead_lag:
-        path1 = transform_path(path1, time_aug, lead_lag, n_jobs)
-        path2 = transform_path(path2, time_aug, lead_lag, n_jobs)
+        path1 = transform_path(path1, time_aug, lead_lag, end_time, n_jobs)
+        path2 = transform_path(path2, time_aug, lead_lag, end_time, n_jobs)
 
-    data = DoublePathInputHandler(path1, path2, False, False, "path1", "path2")
+    data = DoublePathInputHandler(path1, path2, False, False, 0., "path1", "path2")
 
     # Make sure dyadic_len_1 <= dyadic_len_2
     dyadic_len_1 = ((data.length_1 - 1) << dyadic_order_1) + 1

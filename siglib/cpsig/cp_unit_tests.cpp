@@ -251,8 +251,8 @@ namespace cpSigTests
             --last;
 
             for (uint64_t j = 0; j < dimension; ++j){
-                Assert::AreEqual(data[j], first[j]);
-                Assert::AreEqual(data[(length - 1) * dimension + j], last[j]);
+                Assert::AreEqual(static_cast<double>(data[j]), first[j]);
+                Assert::AreEqual(static_cast<double>(data[(length - 1) * dimension + j]), last[j]);
             }
         }
 
@@ -304,7 +304,7 @@ namespace cpSigTests
             Point<int> pt(&path, 0);
 
             for (uint64_t i = 0; i < dimension; ++i)
-                Assert::AreEqual(data[i], pt[i]);
+                Assert::AreEqual(static_cast<double>(data[i]), pt[i]);
         }
 
         TEST_METHOD(IncrementTest)
@@ -318,8 +318,8 @@ namespace cpSigTests
 
             for (uint64_t i = 0; i < length; ++i) {
                 for (uint64_t j = 0; j < dimension; ++j) {
-                    Assert::AreEqual(data[i * dimension + j], pt1[j]);
-                    Assert::AreEqual(data[i * dimension + j], pt2[j]);
+                    Assert::AreEqual(static_cast<double>(data[i * dimension + j]), pt1[j]);
+                    Assert::AreEqual(static_cast<double>(data[i * dimension + j]), pt2[j]);
                 }
                 ++pt1;
                 pt2++;
@@ -337,8 +337,8 @@ namespace cpSigTests
 
             for (int64_t i = length - 1; i >= 0; --i) {
                 for (uint64_t j = 0; j < dimension; ++j) {
-                    Assert::AreEqual(data[i * dimension + j], pt1[j]);
-                    Assert::AreEqual(data[i * dimension + j], pt2[j]);
+                    Assert::AreEqual(static_cast<double>(data[i * dimension + j]), pt1[j]);
+                    Assert::AreEqual(static_cast<double>(data[i * dimension + j]), pt2[j]);
                 }
                 --pt1;
                 pt2--;
@@ -355,8 +355,8 @@ namespace cpSigTests
             Point<int> pt2 = pt1;
 
             for (uint64_t i = 0; i < dimension; ++i) {
-                Assert::AreEqual(data[i], pt1[i]);
-                Assert::AreEqual(data[i], pt2[i]);
+                Assert::AreEqual(static_cast<double>(data[i]), pt1[i]);
+                Assert::AreEqual(static_cast<double>(data[i]), pt2[i]);
             }
         }
 
@@ -370,7 +370,7 @@ namespace cpSigTests
 
             for (uint64_t i = 0; i < length; ++i) {
                 for (uint64_t j = 0; j < dimension; ++j) {
-                    Assert::AreEqual(data[i * dimension + j], pt[j]);
+                    Assert::AreEqual(static_cast<double>(data[i * dimension + j]), pt[j]);
                 }
                 pt.advance(1);
             }
@@ -386,10 +386,10 @@ namespace cpSigTests
 
             for (Point<int> pt = path.begin(); pt != path.end(); ++pt) {
                 for (int i = 0; i < dimension; i++) {
-                    int val = data[index * dimension + i];
+                    double val = data[index * dimension + i];
                     Assert::AreEqual(val, pt[i]);
                 }
-                Assert::AreEqual(index, pt[dimension]);
+                Assert::IsTrue(abs(static_cast<double>(index) / (length - 1) - pt[dimension]) < EPSILON);
                 index++;
             }
         }
@@ -406,8 +406,8 @@ namespace cpSigTests
 
             for (Point<int> pt = path.begin(); pt != path.end(); ++pt) {
                 for (int i = 0; i < path.dimension(); ++i) {
-                    int val = pt[i];
-                    Assert::AreEqual(true_[index], pt[i]);
+                    double val = pt[i];
+                    Assert::AreEqual(static_cast<double>(true_[index]), val);
                     ++index;
                 }
             }
@@ -416,7 +416,15 @@ namespace cpSigTests
         {
             uint64_t dimension = 2, length = 5;
             std::vector<int> data = { 2, 6, 7, 1, 7, 0, 1, 7, 6, 3 };
-            std::vector<int> true_ = { 2, 6, 2, 6, 0, 2, 6, 7, 1, 1, 7, 1, 7, 1, 2, 7, 1, 7, 0, 3, 7, 0, 7, 0, 4, 7, 0, 1, 7, 5, 1, 7, 1, 7, 6, 1, 7, 6, 3, 7, 6, 3, 6, 3, 8 };
+            std::vector<double> true_ = { 2., 6., 2., 6., 0., 
+                2., 6., 7., 1., 1. / 8,
+                7., 1., 7., 1., 2. / 8,
+                7., 1., 7., 0., 3. / 8,
+                7., 0., 7., 0., 4. / 8,
+                7., 0., 1., 7., 5. / 8,
+                1., 7., 1., 7., 6. / 8,
+                1., 7., 6., 3., 7. / 8,
+                6., 3., 6., 3., 1. };
 
             Path<int> path(data.data(), dimension, length, true, true);
 
@@ -425,8 +433,8 @@ namespace cpSigTests
 
             for (Point<int> pt = path.begin(); pt != path.end(); ++pt) {
                 for (int i = 0; i < path.dimension(); ++i) {
-                    int val = pt[i];
-                    Assert::AreEqual(true_[index], pt[i]);
+                    double val = pt[i];
+                    Assert::IsTrue(abs(static_cast<double>(true_[index]) - pt[i]) < EPSILON);
                     ++index;
                 }
             }
@@ -439,14 +447,14 @@ namespace cpSigTests
 
             Path<int> path(data.data(), dimension, length, true);
 
-            int index = length - 1;
+            int index = static_cast<int>(length) - 1;
 
             for (Point<int> pt = --path.end(); pt != --path.begin(); --pt) {
                 for (int i = 0; i < dimension; i++) {
-                    int val = data[index * dimension + i];
+                    double val = static_cast<double>(data[index * dimension + i]);
                     Assert::AreEqual(val, pt[i]);
                 }
-                Assert::AreEqual(index, pt[dimension]);
+                Assert::IsTrue(abs(static_cast<double>(index) / (length - 1) - pt[dimension]) < EPSILON);
                 --index;
             }
         }
@@ -506,21 +514,21 @@ namespace cpSigTests
             auto f = signature_double;
             std::vector<double> path;
             std::vector<double> true_sig;
-            Assert::AreEqual(2, f(path.data(), true_sig.data(), 0, 0, 0, false, false, true));
+            Assert::AreEqual(2, f(path.data(), true_sig.data(), 0, 0, 0, false, false, 1., true));
 
             true_sig.push_back(1.);
-            check_result(f, path, true_sig, 1, 0, 0, false, false, true);
+            check_result(f, path, true_sig, 1, 0, 0, false, false, 1., true);
 
             path.push_back(0.);
-            check_result(f, path, true_sig, 1, 1, 0, false, false, true);
+            check_result(f, path, true_sig, 1, 1, 0, false, false, 1., true);
 
             true_sig.push_back(0.);
-            check_result(f, path, true_sig, 1, 0, 1, false, false, true);
-            check_result(f, path, true_sig, 1, 1, 1, false, false, true);
+            check_result(f, path, true_sig, 1, 0, 1, false, false, 1., true);
+            check_result(f, path, true_sig, 1, 1, 1, false, false, 1., true);
 
             path.push_back(1.);
             true_sig[1] = 1.;
-            check_result(f, path, true_sig, 1, 2, 1, false, false, true);
+            check_result(f, path, true_sig, 1, 2, 1, false, false, 1., true);
         }
         TEST_METHOD(LinearPathTest) {
             auto f = signature_double;
@@ -534,7 +542,7 @@ namespace cpSigTests
             for (uint64_t i = 1; i < dimension + 1; ++i) { true_sig[i] = 1.; }
             for (uint64_t i = dimension + 1; i < level_3_start; ++i) { true_sig[i] = 1 / 2.; }
             for (uint64_t i = level_3_start; i < level_4_start; ++i) { true_sig[i] = 1 / 6.; }
-            check_result(f, path, true_sig, dimension, length, degree, false, false, true);
+            check_result(f, path, true_sig, dimension, length, degree, false, false, 1., true);
         }
 
         TEST_METHOD(LinearPathTest2) {
@@ -549,7 +557,7 @@ namespace cpSigTests
             for (uint64_t i = 1; i < dimension + 1; ++i) { true_sig[i] = 1.; }
             for (uint64_t i = dimension + 1; i < level_3_start; ++i) { true_sig[i] = 1 / 2.; }
             for (uint64_t i = level_3_start; i < level_4_start; ++i) { true_sig[i] = 1 / 6.; }
-            check_result(f, path, true_sig, dimension, length, degree, false, false, true);
+            check_result(f, path, true_sig, dimension, length, degree, false, false, 1., true);
         }
 
         TEST_METHOD(ManualSigTest) {
@@ -557,7 +565,7 @@ namespace cpSigTests
             uint64_t dimension = 2, length = 4, degree = 2;
             std::vector<double> path = { 0., 0., 1., 0.5, 4., 0., 0., 1. };
             std::vector<double> true_sig = { 1., 0., 1., 0., 1., -1., 0.5 };
-            check_result(f, path, true_sig, dimension, length, degree, false, false, true);
+            check_result(f, path, true_sig, dimension, length, degree, false, false, 1., true);
         }
         TEST_METHOD(ManualSigTest2) {
             auto f = signature_int32;
@@ -571,7 +579,7 @@ namespace cpSigTests
                                               - 20.5 - 1./3, - 19., - 14. - 1./3, - 7., - 16. - 2./3,
                                               - 39., - 110. - 1./3, 6., - 1./3, - 49.,
                                               - 20. - 2./3, - 78., - 52. - 2./3, - 36. };
-            check_result(f, path, true_sig, dimension, length, degree, false, false, true);
+            check_result(f, path, true_sig, dimension, length, degree, false, false, 1., true);
         }
 
         TEST_METHOD(BatchSigTest) {
@@ -585,8 +593,8 @@ namespace cpSigTests
                 1., 1., 1., 0.5, 0.5, 0.5, 0.5,
                 1., 0., 1., 0., 1., -1., 0.5 };
 
-            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, true, 1);
-            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, true, -1);
+            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, 1., true, 1);
+            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, 1., true, -1);
         }
 
         TEST_METHOD(BatchSigTestDegree1) {
@@ -600,8 +608,8 @@ namespace cpSigTests
                 1., 1., 1.,
                 1., 0., 1. };
 
-            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, true, 1);
-            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, true, -1);
+            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, 1., true, 1);
+            check_result(f, path, true_sig, 3, dimension, length, degree, false, false, 1., true, -1);
         }
 
         TEST_METHOD(ManualTimeAugTest) {
@@ -610,7 +618,8 @@ namespace cpSigTests
             std::vector<int> path = { 0, 5, 2, 4, 9 };
             std::vector<double> true_sig = { 1., 9., 4., 40.5, 15.5, 20.5, 8., 121.5, 37.5,
                                 64.5, 24.5, 60., 13., 34.5, 10. + 2./3 };
-            check_result(f, path, true_sig, dimension, length, degree, true, false, true);
+            double end_time = length - 1.;
+            check_result(f, path, true_sig, dimension, length, degree, true, false, end_time, true);
         }
 
         TEST_METHOD(ManualLeadLagTest) {
@@ -618,7 +627,7 @@ namespace cpSigTests
             uint64_t dimension = 1, length = 5, degree = 3;
             std::vector<int> path = { 0, 5, 2, 4, 9 };
             std::vector<double> true_sig = { 1., 9., 9., 40.5, 9., 72., 40.5, 121.5, 6.5, 68., -8.5, 290., 98., 275., 121.5 };
-            check_result(f, path, true_sig, dimension, length, degree, false, true, true);
+            check_result(f, path, true_sig, dimension, length, degree, false, true, 1., true);
         }
 
         TEST_METHOD(BigLeadLagTest) {
@@ -628,7 +637,7 @@ namespace cpSigTests
             path.resize(batch * length * dimension);
             std::vector<double> out;
             out.resize(batch * sig_length(dimension * 2, degree));
-            f(path.data(), out.data(), batch, dimension, length, degree, false, true, true, 1);
+            f(path.data(), out.data(), batch, dimension, length, degree, false, true, 1., true, 1);
         }
     };
 
@@ -641,7 +650,7 @@ namespace cpSigTests
             std::vector<double> deriv = { 1., 1., 1., 1., 1., 1., 1. };
             std::vector<double> true_ = { -3., -3., 3., 3. };
             std::vector<double> sig = {1., 1., 1., 1./2, 1./2, 1./2, 1./2};
-            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, false, false);
+            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, false, false, 1.);
         }
 
         TEST_METHOD(ManualTest) {
@@ -651,7 +660,7 @@ namespace cpSigTests
             std::vector<double> deriv = { 1., 1., 2., 3., 4., 5., 6. };
             std::vector<double> true_ = { -7.5, -10., -0.5, 0.25, 8., 9.75 };
             std::vector<double> sig = { 1., 0.5, 1., 0.125, 0.25, 0.25, 0.5 };
-            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, false, false);
+            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, false, false, 1.);
         }
 
         TEST_METHOD(ManualTest2) {
@@ -661,7 +670,7 @@ namespace cpSigTests
             std::vector<double> deriv = { 1., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14. };
             std::vector<double> true_ = { -19.625, -23.625, -1.25, 0.625, 20.875, 23. };
             std::vector<double> sig = { 1., 0.5, 1., 0.125, 0.25, 0.25, 0.5, 1. / 48, 1. / 24, 1. / 24, 1. / 12, 1. / 24, 1. / 12, 1. / 12, 1. / 6 };
-            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, false, false);
+            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, false, false, 1.);
         }
 
         TEST_METHOD(ManualTestAsBatch) {
@@ -671,7 +680,7 @@ namespace cpSigTests
             std::vector<double> deriv = { 1., 1., 2., 3., 4., 5., 6. };
             std::vector<double> true_ = { -7.5, -10., -0.5, 0.25, 8., 9.75 };
             std::vector<double> sig = { 1., 0.5, 1., 0.125, 0.25, 0.25, 0.5 };
-            check_result(f, path, true_, deriv.data(), sig.data(), 1, dimension, length, degree, false, false, 1);
+            check_result(f, path, true_, deriv.data(), sig.data(), 1, dimension, length, degree, false, false, 1., 1);
         }
 
         TEST_METHOD(ManualTest2AsBatch) {
@@ -681,7 +690,7 @@ namespace cpSigTests
             std::vector<double> deriv = { 1., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14. };
             std::vector<double> true_ = { -19.625, -23.625, -1.25, 0.625, 20.875, 23. };
             std::vector<double> sig = { 1., 0.5, 1., 0.125, 0.25, 0.25, 0.5, 1. / 48, 1. / 24, 1. / 24, 1. / 12, 1. / 24, 1. / 12, 1. / 12, 1. / 6 };
-            check_result(f, path, true_, deriv.data(), sig.data(), 1, dimension, length, degree, false, false, 1);
+            check_result(f, path, true_, deriv.data(), sig.data(), 1, dimension, length, degree, false, false, 1., 1);
         }
 
         TEST_METHOD(ManualBatchTest) {
@@ -691,8 +700,8 @@ namespace cpSigTests
             std::vector<double> deriv = { 1., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14., 1., 1., -2., 3., -4., 5., -6., 7., -8., 9., -10., 11., -12., 13., -14., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1. };
             std::vector<double> true_ = { -19.625, -23.625, -1.25, 0.625, 20.875, 23., -162.5, -103.5, -81.0, 245.5, 243.5, -142.0, -0.625, -0.625, 0., 0., 0.625, 0.625 };
             std::vector<double> sig = { 1., 0.5, 1., 0.125, 0.25, 0.25, 0.5, 1./48, 1./24, 1./24, 1./12, 1./24, 1./12, 1./12, 1./6, 1., 5., 2., 12.5, 3., 7., 2., 20. + 5./6, 3., 9., 2., 13., 2., 6., 1. + 1./3, 1., 0.5, -1., 0.125, -0.25, -0.25, 0.5, 1./48, -1./24, -1./24,  1./12, -1./24, 1./48, 1./48, -1./6 };
-            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, false, false, 1);
-            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, false, false, -1);
+            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, false, false, 1., 1);
+            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, false, false, 1., -1);
         }
 
         TEST_METHOD(TimeAugTest) {
@@ -702,7 +711,8 @@ namespace cpSigTests
             std::vector<double> deriv = { 1., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14. };
             std::vector<double> true_ = { -54., -4.5, 58.5 };
             std::vector<double> sig = { 1., 1., 2., 0.5, 2.5, -0.5, 2., 1./6, 1.5 + 1./3, -1-1./6, 2 + 1./6, 1./3, 2./3, -0.5-1./3, 1 + 1./3 };
-            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, true, false);
+            double end_time = length - 1.;
+            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, true, false, end_time);
         }
 
         TEST_METHOD(BatchTimeAugTest) {
@@ -713,8 +723,9 @@ namespace cpSigTests
             std::vector<double> true_ = { -54., -4.5, 58.5, -41., 0., 41. };
             std::vector<double> sig = { 1., 1., 2., 0.5, 2.5, -0.5, 2., 1. / 6, 1.5 + 1. / 3, -1 - 1. / 6, 2 + 1. / 6, 1. / 3, 2. / 3, -0.5 - 1. / 3, 1 + 1. / 3,
             1., 6., 2., 18., 6., 6., 2., 36., 12., 12., 4., 12., 4., 4., 4./3};
-            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, true, false, 1);
-            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, true, false, -1);
+            double end_time = length - 1.;
+            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, true, false, end_time, 1);
+            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, true, false, end_time, -1);
         }
 
         TEST_METHOD(LeadLagTest) {
@@ -724,7 +735,7 @@ namespace cpSigTests
             std::vector<double> deriv = { 1., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13., 14. };
             std::vector<double> true_ = { -76., 5.5, 70.5 };
             std::vector<double> sig = { 1., 1., 1., .5, -2., 3., .5, 1./6, -2., 2., 1., .5, -4., 3.5, 1./6 };
-            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, false, true);
+            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, false, true, 1.);
         }
 
         TEST_METHOD(BatchLeadLagTest) {
@@ -735,8 +746,8 @@ namespace cpSigTests
             std::vector<double> true_ = { -76., 5.5, 70.5, -170., 0., 170. };
             std::vector<double> sig = { 1., 1., 1., .5, -2., 3., .5, 1. / 6, -2., 2., 1., .5, -4., 3.5, 1. / 6,
             1., 6., 6., 18., 9., 27., 18., 36., 13.5, 27., 13.5, 67.5, 27., 67.5, 36. };
-            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, false, true, 1);
-            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, false, true, -1);
+            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, false, true, 1., 1);
+            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, false, true, 1., -1);
         }
 
         TEST_METHOD(TimeAugLeadLagTest) {
@@ -746,7 +757,8 @@ namespace cpSigTests
             std::vector<double> deriv = { 1., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12. };
             std::vector<double> true_ = { -98., -6., 104. };
             std::vector<double> sig = { 1., 1., 1., 4., .5, -2., 4.5, 3., .5, 5.5, -.5, -1.5, 8. };
-            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, true, true);
+            double end_time = length * 2. - 2.;
+            check_result(f, path, true_, deriv.data(), sig.data(), dimension, length, degree, true, true, end_time);
         }
 
         TEST_METHOD(BatchTimeAugLeadLagTest) {
@@ -757,8 +769,9 @@ namespace cpSigTests
             std::vector<double> true_ = { -98., -6., 104., -34., 0., 34. };
             std::vector<double> sig = { 1., 1., 1., 4., .5, -2., 4.5, 3., .5, 5.5, -.5, -1.5, 8.,
             1., 6., 6., 4., 18., 9., 9., 27., 18., 15., 15., 9., 8. };
-            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, true, true, 1);
-            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, true, true, -1);
+            double end_time = length * 2. - 2.;
+            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, true, true, end_time, 1);
+            check_result(f, path, true_, deriv.data(), sig.data(), batch_size, dimension, length, degree, true, true, end_time, -1);
         }
     };
 

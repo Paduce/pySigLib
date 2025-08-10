@@ -32,7 +32,8 @@ def transform_path_(data, result):
         data.data_dimension,
         data.data_length,
         data.time_aug,
-        data.lead_lag
+        data.lead_lag,
+        data.end_time
     )
 
     if err_code:
@@ -48,6 +49,7 @@ def batch_transform_path_(data, result, n_jobs):
         data.data_length,
         data.time_aug,
         data.lead_lag,
+        data.end_time,
         n_jobs
     )
 
@@ -59,6 +61,7 @@ def transform_path(
     path : Union[np.ndarray, torch.tensor],
     time_aug : bool = False,
     lead_lag : bool = False,
+    end_time : float = 1.,
     n_jobs : int = 1
 ) -> Union[np.ndarray, torch.tensor]:
     """
@@ -109,10 +112,13 @@ def transform_path(
         For a single path, this must be of shape (length, dimension). For a batch of paths, this must
         be of shape (batch size, length, dimension).
     :type path: numpy.ndarray | torch.tensor
-    :param time_aug: If ``True``, applies time-augmentation.
+    :param time_aug: If ``True``, applies time-augmentation by adding a linear channel to the path
+        spanning :math:`[0, t_L]`. :math:`t_L` is given by the parameter ``end_time`` and defaults to 1.
     :type time_aug: bool
     :param lead_lag: If ``True``, applies the lead-lag transform.
     :type lead_lag: bool
+    :param end_time: End time for time-augmentation, :math:`t_L`.
+    :type end_time: float
     :param n_jobs: Number of threads to run in parallel. If n_jobs = 1, the computation is run serially.
         If set to -1, all available threads are used. For n_jobs below -1, (max_threads + 1 + n_jobs)
         threads are used. For example if n_jobs = -2, all threads but one are used.
@@ -145,7 +151,7 @@ def transform_path(
 
     check_cpu(path, "path")
 
-    data = PathInputHandler(path, time_aug, lead_lag, "path")
+    data = PathInputHandler(path, time_aug, lead_lag, end_time, "path")
     result = PathOutputHandler(data.length, data.dimension, data)
     if data.is_batch:
         check_type(n_jobs, "n_jobs", int)

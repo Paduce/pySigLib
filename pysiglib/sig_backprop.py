@@ -118,7 +118,7 @@ def sig_combine_backprop(
         return batch_sig_combine_backprop_(sig_data, sig1_deriv, sig2_deriv, dimension, degree, n_jobs)
     return sig_combine_backprop_(sig_data, sig1_deriv, sig2_deriv, dimension, degree)
 
-def sig_backprop_(path_data, sig_data, result, degree, time_aug, lead_lag):
+def sig_backprop_(path_data, sig_data, result, degree):
     err_code = CPSIG_SIG_BACKPROP[path_data.dtype](
         path_data.data_ptr,
         result.data_ptr,
@@ -127,15 +127,16 @@ def sig_backprop_(path_data, sig_data, result, degree, time_aug, lead_lag):
         path_data.data_dimension,
         path_data.data_length,
         degree,
-        time_aug,
-        lead_lag
+        path_data. time_aug,
+        path_data.lead_lag,
+        path_data.end_time
     )
 
     if err_code:
         raise Exception("Error in pysiglib.sig_backprop: " + err_msg(err_code))
     return result.data
 
-def batch_sig_backprop_(path_data, sig_data, result, degree, time_aug, lead_lag, n_jobs):
+def batch_sig_backprop_(path_data, sig_data, result, degree, n_jobs):
     err_code = CPSIG_BATCH_SIG_BACKPROP[path_data.dtype](
         path_data.data_ptr,
         result.data_ptr,
@@ -145,8 +146,9 @@ def batch_sig_backprop_(path_data, sig_data, result, degree, time_aug, lead_lag,
         path_data.data_dimension,
         path_data.data_length,
         degree,
-        time_aug,
-        lead_lag,
+        path_data.time_aug,
+        path_data.lead_lag,
+        path_data.end_time,
         n_jobs
     )
 
@@ -161,6 +163,7 @@ def sig_backprop(
         degree : int,
         time_aug : bool = False,
         lead_lag : bool = False,
+        end_time : float = 1.,
         n_jobs : int = 1
 ) -> Union[np.ndarray, torch.tensor]:
     """
@@ -183,10 +186,13 @@ def sig_backprop(
     :param degree: The truncation level of the signature, :math:`N`.
     :type degree: int
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
-        defined as the original path with an extra channel set to time, :math:`t`.
+        defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
+        where :math`t_L` is given by the parameter ``end_time``.
     :type time_aug: bool
     :param lead_lag: If set to True, will compute the signature of the path after applying the lead-lag transformation.
     :type lead_lag: bool
+    :param end_time: End time for time-augmentation, :math:`t_L`.
+    :type end_time: float
     :return: Derivatives of the scalar function :math:`F` with respect to the path(s), :math:`\\partial F / \\partial x`.
         This is an array of the same shape as the provided path(s).
     :rtype: numpy.ndarray | torch.tensor
@@ -203,7 +209,7 @@ def sig_backprop(
     check_cpu(path, "path")
     check_cpu(sig, "sig")
     check_cpu(sig_derivs, "sig_derivs")
-    path_data = PathInputHandler(path, time_aug, lead_lag, "path")
+    path_data = PathInputHandler(path, time_aug, lead_lag, end_time, "path")
     sig_len = sig_length(path_data.dimension, degree)
     sig_data = DoubleSigInputHandler(sig, sig_derivs, sig_len, "sig", "sig_derivs")
     result = PathOutputHandler(path_data.data_length, path_data.data_dimension, path_data)
@@ -215,5 +221,5 @@ def sig_backprop(
         check_type(n_jobs, "n_jobs", int)
         if n_jobs == 0:
             raise ValueError("n_jobs cannot be 0")
-        return batch_sig_backprop_(path_data, sig_data, result, degree, time_aug, lead_lag, n_jobs)
-    return sig_backprop_(path_data, sig_data, result, degree, time_aug, lead_lag)
+        return batch_sig_backprop_(path_data, sig_data, result, degree, n_jobs)
+    return sig_backprop_(path_data, sig_data, result, degree)

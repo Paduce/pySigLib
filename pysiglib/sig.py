@@ -140,15 +140,16 @@ def sig_combine(
         raise Exception("Error in pysiglib.signature: " + err_msg(err_code))
     return result.data
 
-def signature_(data, result, degree, time_aug = False, lead_lag = False, horner = True):
+def signature_(data, result, degree, horner = True):
     err_code = CPSIG_SIGNATURE[data.dtype](
         data.data_ptr,
         result.data_ptr,
         data.data_dimension,
         data.data_length,
         degree,
-        time_aug,
-        lead_lag,
+        data.time_aug,
+        data.lead_lag,
+        data.end_time,
         horner
     )
 
@@ -156,7 +157,7 @@ def signature_(data, result, degree, time_aug = False, lead_lag = False, horner 
         raise Exception("Error in pysiglib.signature: " + err_msg(err_code))
     return result.data
 
-def batch_signature_(data, result, degree, time_aug = False, lead_lag = False, horner = True, n_jobs = 1):
+def batch_signature_(data, result, degree, horner = True, n_jobs = 1):
     err_code = CPSIG_BATCH_SIGNATURE[data.dtype](
         data.data_ptr,
         result.data_ptr,
@@ -164,8 +165,9 @@ def batch_signature_(data, result, degree, time_aug = False, lead_lag = False, h
         data.data_dimension,
         data.data_length,
         degree,
-        time_aug,
-        lead_lag,
+        data.time_aug,
+        data.lead_lag,
+        data.end_time,
         horner,
         n_jobs
     )
@@ -179,6 +181,7 @@ def signature(
         degree : int,
         time_aug : bool = False,
         lead_lag : bool = False,
+        end_time : float = 1.,
         horner : bool = True,
         n_jobs : int = 1
 ) -> Union[np.ndarray, torch.tensor]:
@@ -200,10 +203,13 @@ def signature(
     :param degree: The truncation level of the signature, :math:`N`.
     :type degree: int
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
-        defined as the original path with an extra channel set to time, :math:`t`.
+        defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
+        where :math`t_L` is given by the parameter ``end_time``.
     :type time_aug: bool
     :param lead_lag: If set to True, will compute the signature of the path after applying the lead-lag transformation.
     :type lead_lag: bool
+    :param end_time: End time for time-augmentation, :math:`t_L`.
+    :type end_time: float
     :param horner: If True, will use Horner's algorithm for polynomial multiplication.
     :type horner: bool
     :param n_jobs: Number of threads to run in parallel. If n_jobs = 1, the computation is run serially.
@@ -225,12 +231,12 @@ def signature(
 
     check_cpu(path, "path")
 
-    data = PathInputHandler(path, time_aug, lead_lag, "path")
+    data = PathInputHandler(path, time_aug, lead_lag, end_time, "path")
     sig_len = sig_length(data.dimension, degree)
     result = SigOutputHandler(data, sig_len)
     if data.is_batch:
         check_type(n_jobs, "n_jobs", int)
         if n_jobs == 0:
             raise ValueError("n_jobs cannot be 0")
-        return batch_signature_(data, result, degree, time_aug, lead_lag, horner, n_jobs)
-    return signature_(data, result, degree, time_aug, lead_lag, horner)
+        return batch_signature_(data, result, degree, horner, n_jobs)
+    return signature_(data, result, degree, horner)
