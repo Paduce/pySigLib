@@ -19,6 +19,8 @@ import torch
 from ..sig import signature as sig_forward
 from ..sig import sig_combine as sig_combine_forward
 from ..sig_backprop import sig_backprop, sig_combine_backprop
+from ..sig_kernel import sig_kernel as sig_kernel_forward
+from ..sig_kernel_backprop import sig_kernel_backprop
 from ..transform_path import transform_path as transform_path_forward
 from ..transform_path_backprop import transform_path_backprop
 
@@ -110,5 +112,49 @@ def transform_path(
     n_jobs : int = 1
 ) -> Union[np.ndarray, torch.tensor]:
     return TransformPath.apply(path, time_aug, lead_lag, end_time, n_jobs)
+
+transform_path.__doc__ = transform_path_forward.__doc__
+
+class SigKernel(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, path1, path2, dyadic_order, time_aug, lead_lag, end_time, left_deriv, right_deriv, n_jobs):
+        k = sig_kernel_forward(path1, path2, dyadic_order, time_aug, lead_lag, end_time, n_jobs, False)
+
+        ctx.save_for_backward(path1, path2)
+        ctx.dyadic_order = dyadic_order
+        ctx.time_aug = time_aug
+        ctx.lead_lag = lead_lag
+        ctx.end_time = end_time
+        ctx.left_deriv = left_deriv
+        ctx.right_deriv = right_deriv
+        ctx.n_jobs = n_jobs
+
+        return k
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        path1, path2 = ctx.saved_tensors
+        new_derivs = sig_kernel_backprop(grad_output, path1, path2, ctx.dyadic_order,
+                                         ctx.time_aug, ctx.lead_lag, ctx.end_time,
+                                         ctx.left_deriv, ctx.right_deriv, ctx.n_jobs)
+
+        if (ctx.left_deriv and not ctx.right_deriv):
+            return new_derivs, None, None, None, None, None, None, None, None
+        if (not ctx.left_deriv and ctx.right_deriv):
+            return None, new_derivs, None, None, None, None, None, None, None
+        return new_derivs[0], new_derivs[1], None, None, None, None, None, None, None
+
+def sig_kernel(
+        path1 : Union[np.ndarray, torch.tensor],
+        path2 : Union[np.ndarray, torch.tensor],
+        dyadic_order : Union[int, tuple],
+        time_aug : bool = False,
+        lead_lag : bool = False,
+        end_time : float = 1.,
+        left_deriv : bool = True,
+        right_deriv : bool = False,
+        n_jobs : int = 1
+) -> Union[np.ndarray, torch.tensor]:
+    return SigKernel.apply(path1, path2, dyadic_order, time_aug, lead_lag, end_time, left_deriv, right_deriv, n_jobs)
 
 transform_path.__doc__ = transform_path_forward.__doc__
