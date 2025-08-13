@@ -70,3 +70,26 @@ void batch_transform_path_(T* data_in, double* data_out, const uint64_t batch_si
 	}
 	return;
 }
+
+void transform_path_backprop_(
+	double* data_in,
+	double* data_out,
+	const uint64_t dimension,
+	const uint64_t length,
+	bool time_aug,
+	bool lead_lag,
+	double end_time
+);
+
+
+void batch_transform_path_backprop_(
+	double* data_in,
+	double* data_out,
+	const uint64_t batch_size,
+	const uint64_t dimension,
+	const uint64_t length,
+	bool time_aug,
+	bool lead_lag,
+	double end_time,
+	int n_jobs
+);

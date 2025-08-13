@@ -172,6 +172,38 @@ CPSIG.batch_transform_path_int64.argtypes = (
 CPSIG.batch_transform_path_int64.restype = c_int
 
 ######################################################
+# transform_path_backprop
+######################################################
+
+CPSIG.transform_path_backprop.argtypes = (
+    POINTER(c_double),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_double
+)
+CPSIG.transform_path_backprop.restype = c_int
+
+######################################################
+# batch_transform_path_backprop
+######################################################
+
+CPSIG.batch_transform_path_backprop.argtypes = (
+    POINTER(c_double),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_double,
+    c_int
+)
+CPSIG.batch_transform_path_backprop.restype = c_int
+
+######################################################
 # sig_length
 ######################################################
 

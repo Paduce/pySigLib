@@ -19,6 +19,8 @@ import torch
 from ..sig import signature as sig_forward
 from ..sig import sig_combine as sig_combine_forward
 from ..sig_backprop import sig_backprop, sig_combine_backprop
+from ..transform_path import transform_path as transform_path_forward
+from ..transform_path_backprop import transform_path_backprop
 
 class Signature(torch.autograd.Function):
     @staticmethod
@@ -82,3 +84,31 @@ def sig_combine(
 
 
 sig_combine.__doc__ = sig_combine_forward.__doc__
+
+class TransformPath(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, path, time_aug, lead_lag, end_time, n_jobs):
+        new_path = transform_path_forward(path, time_aug, lead_lag, end_time, n_jobs)
+
+        ctx.time_aug = time_aug
+        ctx.lead_lag = lead_lag
+        ctx.end_time = end_time
+        ctx.n_jobs = n_jobs
+
+        return new_path
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        new_derivs = transform_path_backprop(grad_output, ctx.time_aug, ctx.lead_lag, ctx.end_time, ctx.n_jobs)
+        return new_derivs, None, None, None, None
+
+def transform_path(
+    path : Union[np.ndarray, torch.tensor],
+    time_aug : bool = False,
+    lead_lag : bool = False,
+    end_time : float = 1.,
+    n_jobs : int = 1
+) -> Union[np.ndarray, torch.tensor]:
+    return TransformPath.apply(path, time_aug, lead_lag, end_time, n_jobs)
+
+transform_path.__doc__ = transform_path_forward.__doc__

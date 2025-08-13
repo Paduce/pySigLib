@@ -959,5 +959,34 @@ namespace cpSigTests
             check_result(f, gram, true_, derivs.data(), batch_size, dimension, length1, length2, 0, 0, 1);
         }
     };
+
+    TEST_CLASS(transformPathBackprop) {
+    public:
+
+        TEST_METHOD(TimeAugTest) {
+            auto f = transform_path_backprop;
+            uint64_t dimension = 2, length = 3;
+            std::vector<double> derivs((dimension + 1) * length, 1.);
+            std::vector<double> true_ = { 1., 1., 1., 1., 1., 1. };
+            check_result(f, derivs, true_, dimension, length, true, false, 1.);
+        }
+        TEST_METHOD(LeadLagTest) {
+            auto f = transform_path_backprop;
+            uint64_t dimension = 2, length = 3;
+            std::vector<double> derivs(2 * dimension * (2 * length - 1));
+            for (int i = 0; i < derivs.size(); ++i)
+                derivs[i] = i;
+            std::vector<double> true_ = { 6., 9., 36., 40., 48., 51. };
+            check_result(f, derivs, true_, dimension, length, false, true, 1.);
+        }
+
+        TEST_METHOD(TimeAugLeadLagTest) {
+            auto f = transform_path_backprop;
+            uint64_t dimension = 2, length = 3;
+            std::vector<double> derivs((2 * dimension + 1) * (2 * length - 1), 1.);
+            std::vector<double> true_ = { 3., 3., 4., 4., 3., 3. };
+            check_result(f, derivs, true_, dimension, length, true, true, 1.);
+        }
+    };
 }
 //TODO: add tests for transform_path
