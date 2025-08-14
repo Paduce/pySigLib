@@ -151,8 +151,8 @@ def sig_kernel(
         dyadic_len_2 = ((data.length_2 - 1) << dyadic_order_2) + 1
         result = GridOutputHandler(dyadic_len_1, dyadic_len_2, data)
 
-    torch_path1 = torch.as_tensor(data.path1)  # Avoids data copy
-    torch_path2 = torch.as_tensor(data.path2)
+    torch_path1 = torch.as_tensor(data.path1, dtype = torch.double)  # Avoids data copy
+    torch_path2 = torch.as_tensor(data.path2, dtype = torch.double)
 
     if data.is_batch:
         x1 = torch_path1[:, 1:, :] - torch_path1[:, :-1, :]
@@ -161,7 +161,8 @@ def sig_kernel(
         x1 = (torch_path1[1:, :] - torch_path1[:-1, :])[None, :, :]
         y1 = (torch_path2[1:, :] - torch_path2[:-1, :])[None, :, :]
 
-    gram = torch.bmm(x1, y1.permute(0, 2, 1))
+    gram = torch.empty((x1.shape[0], x1.shape[1], y1.shape[1]), dtype=torch.double, device = x1.device)
+    torch.bmm(x1, y1.permute(0, 2, 1), out=gram)
 
     if data.device == "cpu":
         sig_kernel_(data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs, return_grid)

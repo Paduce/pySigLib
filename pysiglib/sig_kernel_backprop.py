@@ -13,7 +13,7 @@
 # limitations under the License.
 # =========================================================================
 
-from typing import Union
+from typing import Union, Tuple
 from ctypes import c_double, POINTER, cast
 
 import numpy as np
@@ -61,6 +61,52 @@ def sig_kernel_backprop_(data, derivs_data, result, gram, dyadic_order_1, dyadic
 #     if err_code:
 #         raise Exception("Error in pysiglib.sig_kernel: " + err_msg(err_code))
 
+def sig_kernel_backprop_from_gram(
+        derivs_data,
+        data,
+        gram : Union[np.ndarray, torch.tensor],
+        y1,
+        dyadic_order_1,
+        dyadic_order_2,
+        time_aug : bool = False,
+        lead_lag : bool = False,
+        end_time : float = 1.,
+        n_jobs : int = 1
+) -> Union[np.ndarray, torch.tensor]:
+
+    result = GridOutputHandler(data.length_1 - 1, data.length_2 - 1, derivs_data) #Derivatives with respect to gram matrix
+
+    if data.device == "cpu":
+        sig_kernel_backprop_(data, derivs_data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs)
+    else:
+        if not BUILT_WITH_CUDA:
+            raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")
+        raise NotImplementedError()
+        #sig_kernel_backprop_cuda_(data, result, gram, dyadic_order_1, dyadic_order_2)
+
+    # Now convert derivs wrt to gram into derivs wrt the path
+    # note result.data is a torch array
+    if data.is_batch:
+        out = torch.empty((data.batch_size, data.length_1, data.length_2 - 1), dtype=y1.dtype, device = result.device)
+        out[:, 0, :] = 0
+        out[:, 1:, :] = result.data
+        out[:, :-1, :] -= result.data
+    else:
+        out = torch.empty((data.length_1, data.length_2 - 1), dtype=y1.dtype, device=result.device)
+        out[0, :] = 0
+        out[1:, :] = result.data
+        out[:-1, :] -= result.data
+        out = out[None, :, :]
+
+    out = torch.bmm(out, y1)
+
+    if lead_lag or time_aug:
+        out = transform_path_backprop(out, time_aug, lead_lag, end_time, n_jobs)
+
+    if data.type_ == "numpy":
+        return out.numpy()
+    return out
+
 def sig_kernel_backprop(
         derivs : Union[np.ndarray, torch.tensor],
         path1 : Union[np.ndarray, torch.tensor],
@@ -69,10 +115,10 @@ def sig_kernel_backprop(
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
-        left_deriv : bool = True,#TODO
+        left_deriv : bool = True,
         right_deriv : bool = False,
         n_jobs : int = 1
-) -> Union[np.ndarray, torch.tensor]:
+) -> Union[np.ndarray, torch.tensor, Tuple[np.ndarray, np.ndarray], Tuple[torch.tensor, torch.tensor]]:
     """
     This function is required to backpropagate through ``pysiglib.sig_kernel``.
     Given the derivatives of a scalar function :math:`F` with respect to a
@@ -144,7 +190,7 @@ def sig_kernel_backprop(
 
     data = DoublePathInputHandler(path1, path2, False, False, end_time, "path1", "path2")
 
-    derivs = torch.as_tensor(derivs, dtype = torch.double)
+    derivs = torch.as_tensor(derivs, dtype=torch.double)
     derivs_data = ScalarInputHandler(derivs, data.is_batch, "derivs")
 
     if not (derivs_data.type_ == data.type_ and derivs_data.device == data.device):
@@ -152,10 +198,8 @@ def sig_kernel_backprop(
     if data.batch_size != derivs_data.batch_size:
         raise ValueError("batch size for derivs does not match batch size of paths")
 
-    result = GridOutputHandler(data.length_1 - 1, data.length_2 - 1, derivs_data) #Derivatives with respect to gram matrix
-
-    torch_path1 = torch.as_tensor(data.path1)  # Avoids data copy
-    torch_path2 = torch.as_tensor(data.path2)
+    torch_path1 = torch.as_tensor(data.path1, dtype = torch.double)  # Avoids data copy
+    torch_path2 = torch.as_tensor(data.path2, dtype = torch.double)
 
     if data.is_batch:
         x1 = torch_path1[:, 1:, :] - torch_path1[:, :-1, :]
@@ -164,35 +208,23 @@ def sig_kernel_backprop(
         x1 = (torch_path1[1:, :] - torch_path1[:-1, :])[None, :, :]
         y1 = (torch_path2[1:, :] - torch_path2[:-1, :])[None, :, :]
 
-    gram = torch.bmm(x1, y1.permute(0, 2, 1))
+    gram = torch.empty((x1.shape[0], x1.shape[1], y1.shape[1]), dtype = torch.double, device = x1.device)
+    torch.bmm(x1, y1.permute(0, 2, 1), out = gram)
 
-    if data.device == "cpu":
-        sig_kernel_backprop_(data, derivs_data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs)
-    else:
-        if not BUILT_WITH_CUDA:
-            raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")
-        raise NotImplementedError()
-        #sig_kernel_backprop_cuda_(data, result, gram, dyadic_order_1, dyadic_order_2)
+    ld, rd = None, None
 
-    # Now convert derivs wrt to gram into derivs wrt the path
-    # note result.data is a torch array
-    if data.is_batch:
-        out = torch.empty((data.batch_size, data.length_1, data.length_2 - 1), dtype=y1.dtype, device = result.device)
-        out[:, 0, :] = 0
-        out[:, 1:, :] = result.data
-        out[:, :-1, :] -= result.data
-    else:
-        out = torch.empty((data.length_1, data.length_2 - 1), dtype=y1.dtype, device=result.device)
-        out[0, :] = 0
-        out[1:, :] = result.data
-        out[:-1, :] -= result.data
-        out = out[None, :, :]
+    if left_deriv is not None:
+        ld = sig_kernel_backprop_from_gram(derivs_data, data, gram, y1, dyadic_order_1, dyadic_order_2, time_aug, lead_lag, end_time, n_jobs)
 
-    out = torch.bmm(out, y1)
+    if right_deriv is not None:
+        data.swap_paths()
+        rd = sig_kernel_backprop_from_gram(derivs_data, data, torch.transpose(gram, 1, 2).contiguous(), x1, dyadic_order_2, dyadic_order_1, time_aug, lead_lag,
+                                      end_time, n_jobs)
 
-    if lead_lag or time_aug:
-        out = transform_path_backprop(out, time_aug, lead_lag, end_time, n_jobs)
+    if left_deriv and not right_deriv:
+        return ld
+    if not left_deriv and right_deriv:
+        return rd
+    return ld, rd
 
-    if data.type_ == "numpy":
-        return out.numpy()
-    return out
+
