@@ -21,9 +21,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\cpsig\cpframework.h">
-      <Filter>Header Files\cpsig</Filter>
-    </ClInclude>
     <ClInclude Include="..\cpsig\cppch.h">
       <Filter>Header Files\cpsig</Filter>
     </ClInclude>

@@ -191,7 +191,7 @@ void example_sig_backprop_double(
     bool lead_lag,
     int num_runs
 ) {
-    print_header("Signature Double");
+    print_header("Sig Backprop Double");
 
     std::vector<double> path = test_data<double>(dimension * length);
     uint64_t sig_len = sig_length(dimension, degree);
@@ -204,4 +204,37 @@ void example_sig_backprop_double(
     time_function(num_runs, sig_backprop_double, path.data(), out.data(), sig_derivs.data(), sig.data(), dimension, length, degree, time_aug, lead_lag, 1.);
 
     std::cout << "done\n";
+}
+
+void example_batch_sig_kernel_backprop_cuda(
+    uint64_t batch_size,
+    uint64_t dimension,
+    uint64_t length1,
+    uint64_t length2,
+    uint64_t dyadic_order_1,
+    uint64_t dyadic_order_2,
+    int num_runs
+) {
+    print_header("Batch Sig Kernel Backprop CUDA");
+
+    uint64_t gram_size = length1 * length2 * batch_size;
+    std::vector<double> gram = test_data<double>(gram_size);
+    std::vector<double> deriv = test_data<double>(batch_size);
+
+    double* d_gram;
+    double* d_out;
+    double* d_deriv;
+    cudaMalloc(&d_gram, sizeof(double) * gram_size);
+    cudaMalloc(&d_out, sizeof(double) * batch_size * gram_size);
+    cudaMalloc(&d_deriv, sizeof(double) * batch_size);
+
+    // Copy data from the host to the device (CPU -> GPU)
+    cudaMemcpy(d_gram, gram.data(), sizeof(double) * gram_size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_deriv, deriv.data(), sizeof(double) * batch_size, cudaMemcpyHostToDevice);
+
+    time_function(num_runs, batch_sig_kernel_backprop_cuda, d_gram, d_out, d_deriv, batch_size, dimension, length1, length2, dyadic_order_1, dyadic_order_2);
+
+    cudaFree(d_gram);
+    cudaFree(d_deriv);
+    cudaFree(d_out);
 }

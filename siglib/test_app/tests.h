@@ -98,3 +98,13 @@ void example_sig_backprop_double(
 	bool lead_lag = false,
 	int num_runs = 50
 );
+
+void example_batch_sig_kernel_backprop_cuda(
+	uint64_t batch_size = 1,
+	uint64_t dimension = 1,
+	uint64_t length1 = 2,
+	uint64_t length2 = 3,
+	uint64_t dyadic_order_1 = 0,
+	uint64_t dyadic_order_2 = 0,
+	int num_runs = 1
+);

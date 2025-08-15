@@ -11,7 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\cpsig\cpframework.h" />
     <ClInclude Include="..\cpsig\cppch.h" />
     <ClInclude Include="..\cpsig\cpsig.h" />
     <ClInclude Include="..\cpsig\cp_path.h" />

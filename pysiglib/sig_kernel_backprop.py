@@ -42,24 +42,23 @@ def sig_kernel_backprop_(data, derivs_data, result, gram, dyadic_order_1, dyadic
     )
 
     if err_code:
-        raise Exception("Error in pysiglib.sig_kernel: " + err_msg(err_code))#
+        raise Exception("Error in pysiglib.sig_kernel_backprop: " + err_msg(err_code))#
 
-# def sig_kernel_backprop_cuda_(data, derivs, result, gram, dyadic_order_1, dyadic_order_2):
-#     err_code = CUSIG.batch_sig_kernel_backprop_cuda(
-#         cast(gram.data_ptr(), POINTER(c_double)),
-#         result.data_ptr,
-#         derivs_data.data_ptr,
-#         data.batch_size,
-#         data.dimension,
-#         data.length_1,
-#         data.length_2,
-#         dyadic_order_1,
-#         dyadic_order_2,
-#         return_grid
-#     )
-#
-#     if err_code:
-#         raise Exception("Error in pysiglib.sig_kernel: " + err_msg(err_code))
+def sig_kernel_backprop_cuda_(data, derivs_data, result, gram, dyadic_order_1, dyadic_order_2):
+    err_code = CUSIG.batch_sig_kernel_backprop_cuda(
+        cast(gram.data_ptr(), POINTER(c_double)),
+        result.data_ptr,
+        derivs_data.data_ptr,
+        data.batch_size,
+        data.dimension,
+        data.length_1,
+        data.length_2,
+        dyadic_order_1,
+        dyadic_order_2
+    )
+
+    if err_code:
+        raise Exception("Error in pysiglib.sig_kernel_backprop: " + err_msg(err_code))
 
 def sig_kernel_backprop_from_gram(
         derivs_data,
@@ -81,8 +80,7 @@ def sig_kernel_backprop_from_gram(
     else:
         if not BUILT_WITH_CUDA:
             raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")
-        raise NotImplementedError()
-        #sig_kernel_backprop_cuda_(data, result, gram, dyadic_order_1, dyadic_order_2)
+        sig_kernel_backprop_cuda_(data, derivs_data, result, gram, dyadic_order_1, dyadic_order_2)
 
     # Now convert derivs wrt to gram into derivs wrt the path
     # note result.data is a torch array
