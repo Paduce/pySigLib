@@ -561,6 +561,7 @@ CPSIG.batch_sig_kernel_backprop.argtypes = (
     POINTER(c_double),
     POINTER(c_double),
     POINTER(c_double),
+    POINTER(c_double),
     c_uint64,
     c_uint64,
     c_uint64,

@@ -78,3 +78,16 @@ def test_batch_transform_path_lead_lag():
     X2 = pysiglib.transform_path(X, lead_lag = True)
     check_close(X1, X2)
 
+def test_transform_path_backprop_lead_lag():
+    X = torch.rand(size=(100, 5), dtype = torch.double)
+
+    X_ll = pysiglib.transform_path(X, lead_lag = True)
+    deriv = torch.ones(X_ll.shape, dtype = torch.double)
+    X1 = pysiglib.transform_path_backprop(deriv, lead_lag = True)
+
+    f = lambda x: pysiglib.transform_path(x, lead_lag=True).sum()
+    X2 = torch.ones((100,5), dtype = torch.double) * 4.
+    X2[0, :] = 3.
+    X2[-1, :] = 3.
+
+    check_close(X1, X2)

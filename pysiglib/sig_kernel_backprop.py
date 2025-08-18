@@ -21,17 +21,19 @@ import torch
 
 from .transform_path import transform_path
 from .transform_path_backprop import transform_path_backprop
+from .sig_kernel import sig_kernel
 from .load_siglib import CPSIG, CUSIG, BUILT_WITH_CUDA
 from .param_checks import check_type
 from .error_codes import err_msg
-from .data_handlers import DoublePathInputHandler, ScalarInputHandler, ScalarOutputHandler, GridOutputHandler, PathOutputHandler
+from .data_handlers import DoublePathInputHandler, ScalarInputHandler, ScalarOutputHandler, GridOutputHandler, PathOutputHandler, PathInputHandler
 
-def sig_kernel_backprop_(data, derivs_data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs):
+def sig_kernel_backprop_(data, derivs_data, result, gram, k_grid_data, dyadic_order_1, dyadic_order_2, n_jobs):
 
     err_code = CPSIG.batch_sig_kernel_backprop(
         cast(gram.data_ptr(), POINTER(c_double)),
         result.data_ptr,
         derivs_data.data_ptr,
+        k_grid_data.data_ptr,
         data.batch_size,
         data.dimension,
         data.length_1,
@@ -64,6 +66,7 @@ def sig_kernel_backprop_from_gram(
         derivs_data,
         data,
         gram : Union[np.ndarray, torch.tensor],
+        k_grid_data : Union[np.ndarray, torch.tensor],
         y1,
         dyadic_order_1,
         dyadic_order_2,
@@ -76,8 +79,9 @@ def sig_kernel_backprop_from_gram(
     result = GridOutputHandler(data.length_1 - 1, data.length_2 - 1, derivs_data) #Derivatives with respect to gram matrix
 
     if data.device == "cpu":
-        sig_kernel_backprop_(data, derivs_data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs)
+        sig_kernel_backprop_(data, derivs_data, result, gram, k_grid_data, dyadic_order_1, dyadic_order_2, n_jobs)
     else:
+        raise NotImplementedError()
         if not BUILT_WITH_CUDA:
             raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")
         sig_kernel_backprop_cuda_(data, derivs_data, result, gram, dyadic_order_1, dyadic_order_2)
@@ -115,6 +119,7 @@ def sig_kernel_backprop(
         end_time : float = 1.,
         left_deriv : bool = True,
         right_deriv : bool = False,
+        k_grid : Union[np.ndarray, torch.tensor] = None,
         n_jobs : int = 1
 ) -> Union[np.ndarray, torch.tensor, Tuple[np.ndarray, np.ndarray], Tuple[torch.tensor, torch.tensor]]:
     """
@@ -201,6 +206,9 @@ def sig_kernel_backprop(
     torch_path1 = torch.as_tensor(data.path1, dtype = torch.double)  # Avoids data copy
     torch_path2 = torch.as_tensor(data.path2, dtype = torch.double)
 
+    if k_grid is None:
+        k_grid = sig_kernel(torch.as_tensor(path1), torch.as_tensor(path2), dyadic_order, False, False, end_time, n_jobs, True)
+
     if data.is_batch:
         x1 = torch_path1[:, 1:, :] - torch_path1[:, :-1, :]
         y1 = torch_path2[:, 1:, :] - torch_path2[:, :-1, :]
@@ -213,12 +221,15 @@ def sig_kernel_backprop(
 
     ld, rd = None, None
 
-    if left_deriv is not None:
-        ld = sig_kernel_backprop_from_gram(derivs_data, data, gram, y1, dyadic_order_1, dyadic_order_2, time_aug, lead_lag, end_time, n_jobs)
+    if left_deriv:
+        k_grid_data = PathInputHandler(k_grid, False, False, 0., "k_grid")  # TODO
+        ld = sig_kernel_backprop_from_gram(derivs_data, data, gram, k_grid_data, y1, dyadic_order_1, dyadic_order_2, time_aug, lead_lag, end_time, n_jobs)
 
-    if right_deriv is not None:
+    if right_deriv:
+        k_grid = torch.transpose(k_grid, -2, -1).contiguous()
+        k_grid_data = PathInputHandler(k_grid, False, False, 0., "k_grid")  # TODO
         data.swap_paths()
-        rd = sig_kernel_backprop_from_gram(derivs_data, data, torch.transpose(gram, 1, 2).contiguous(), x1, dyadic_order_2, dyadic_order_1, time_aug, lead_lag,
+        rd = sig_kernel_backprop_from_gram(derivs_data, data, torch.transpose(gram, 1, 2).contiguous(), k_grid_data, x1, dyadic_order_2, dyadic_order_1, time_aug, lead_lag,
                                       end_time, n_jobs)
 
     return ld, rd

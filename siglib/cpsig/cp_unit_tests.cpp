@@ -905,8 +905,22 @@ namespace cpSigTests
             double deriv = 1.;
             std::vector<double> true_ = { 4.5 + 1./6, 4.5 };
             std::vector<double> gram((length1 - 1) * (length2 - 1));
+            std::vector<double> k_grid = { 1., 1., 1., 1., 4., 11. };
             gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
-            check_result(f, gram, true_, deriv, dimension, length1, length2, 0, 0);
+            check_result(f, gram, true_, deriv, k_grid.data(), dimension, length1, length2, 0, 0);
+        }
+
+        TEST_METHOD(ManualTest11) {
+            auto f = sig_kernel_backprop;
+            uint64_t dimension = 1, length2 = 2, length1 = 3;
+            std::vector<double> path2 = { 0., 2. };
+            std::vector<double> path1 = { 0., 1., 2. };
+            double deriv = 1.;
+            std::vector<double> true_ = { 4.5 + 1. / 6, 4.5 };
+            std::vector<double> gram((length1 - 1) * (length2 - 1));
+            std::vector<double> k_grid = { 1., 1., 1., 4., 1., 11. };
+            gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
+            check_result(f, gram, true_, deriv, k_grid.data(), dimension, length1, length2, 0, 0);
         }
 
         TEST_METHOD(ManualTest2) {
@@ -917,8 +931,9 @@ namespace cpSigTests
             double deriv = 1.;
             std::vector<double> true_ = { 761./72, 7.125, 133./24, 12.5 + 1. / 6 };
             std::vector<double> gram((length1 - 1) * (length2 - 1));
+            std::vector<double> k_grid = { 1., 1., 1., 1., 4., 11., 1., 7., 25. - 1. / 6 };
             gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
-            check_result(f, gram, true_, deriv, dimension, length1, length2, 0, 0);
+            check_result(f, gram, true_, deriv, k_grid.data(), dimension, length1, length2, 0, 0);
         }
 
         TEST_METHOD(ManualTest3) {
@@ -929,8 +944,25 @@ namespace cpSigTests
             double deriv = 1.;
             std::vector<double> true_ = { 5.1602194279800226, 5.1185673607720270 };
             std::vector<double> gram((length1 - 1) * (length2 - 1));
+            std::vector<double> k_grid = { 
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.5625,
+                2.27734375,
+                3.1857910156249996,
+                4.3402760823567705,
+                1.0,
+                2.27734375,
+                4.25830078125,
+                7.2303009033203125,
+                11.584854549831814
+            };
             gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
-            check_result(f, gram, true_, deriv, dimension, length1, length2, 1, 1);
+            check_result(f, gram, true_, deriv, k_grid.data(), dimension, length1, length2, 1, 1);
         }
 
         TEST_METHOD(BatchManualTest1) {
@@ -941,9 +973,10 @@ namespace cpSigTests
             std::vector<double> derivs = { 1., 1. };
             std::vector<double> true_ = { 4.5 + 1. / 6, 4.5, 4.5 + 1. / 6, 4.5 };
             std::vector<double> gram((length1 - 1) * (length2 - 1) * batch_size);
+            std::vector<double> k_grid = { 1., 1., 1., 1., 4., 11., 1., 1., 1., 1., 4., 11. };
             gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
             gram_(path1.data(), path2.data(), gram.data() + 2, 1, dimension, length1, length2);
-            check_result(f, gram, true_, derivs.data(), batch_size, dimension, length1, length2, 0, 0, 1);
+            check_result(f, gram, true_, derivs.data(), k_grid.data(), batch_size, dimension, length1, length2, 0, 0, 1);
         }
 
         TEST_METHOD(BatchManualTest2) {
@@ -954,9 +987,10 @@ namespace cpSigTests
             std::vector<double> derivs = { 1., 1. };
             std::vector<double> true_ = { 761. / 72, 7.125, 133. / 24, 12.5 + 1. / 6, 761. / 72, 7.125, 133. / 24, 12.5 + 1. / 6 };
             std::vector<double> gram((length1 - 1) * (length2 - 1) * batch_size);
+            std::vector<double> k_grid = { 1., 1., 1., 1., 4., 11., 1., 7., 25. - 1. / 6, 1., 1., 1., 1., 4., 11., 1., 7., 25. - 1. / 6 };
             gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
             gram_(path1.data(), path2.data(), gram.data() + 4, 1, dimension, length1, length2);
-            check_result(f, gram, true_, derivs.data(), batch_size, dimension, length1, length2, 0, 0, 1);
+            check_result(f, gram, true_, derivs.data(), k_grid.data(), batch_size, dimension, length1, length2, 0, 0, 1);
         }
     };
 
@@ -977,6 +1011,22 @@ namespace cpSigTests
             for (int i = 0; i < derivs.size(); ++i)
                 derivs[i] = i;
             std::vector<double> true_ = { 6., 9., 36., 40., 48., 51. };
+            check_result(f, derivs, true_, dimension, length, false, true, 1.);
+        }
+
+        TEST_METHOD(LeadLagTest2) {
+            auto f = transform_path_backprop;
+            uint64_t dimension = 5, length = 100;
+            std::vector<double> derivs(2 * dimension * (2 * length - 1));
+            for (int i = 0; i < derivs.size(); ++i)
+                derivs[i] = 1.;
+            std::vector<double> true_(dimension * length);
+            for (int i = 0; i < dimension; ++i)
+                true_[i] = 3.;
+            for (int i = dimension; i < true_.size() - dimension; ++i)
+                true_[i] = 4.;
+            for (int i = true_.size() - dimension; i < true_.size(); ++i)
+                true_[i] = 3.;
             check_result(f, derivs, true_, dimension, length, false, true, 1.);
         }
 

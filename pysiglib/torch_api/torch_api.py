@@ -118,26 +118,29 @@ transform_path.__doc__ = transform_path_forward.__doc__
 class SigKernel(torch.autograd.Function):
     @staticmethod
     def forward(ctx, path1, path2, dyadic_order, time_aug, lead_lag, end_time, n_jobs):
-        k = sig_kernel_forward(path1, path2, dyadic_order, time_aug, lead_lag, end_time, n_jobs, False)
+        k_grid = sig_kernel_forward(path1, path2, dyadic_order, time_aug, lead_lag, end_time, n_jobs, True)
 
-        ctx.save_for_backward(path1, path2)
+        ctx.save_for_backward(k_grid, path1, path2)
         ctx.dyadic_order = dyadic_order
         ctx.time_aug = time_aug
         ctx.lead_lag = lead_lag
         ctx.end_time = end_time
         ctx.n_jobs = n_jobs
 
-        return k
+        if len(k_grid.shape) == 3:
+            return k_grid[:, -1, -1]
+        else:
+            return k_grid[-1, -1]
 
     @staticmethod
     def backward(ctx, grad_output):
         left_deriv = ctx.needs_input_grad[0]
         right_deriv = ctx.needs_input_grad[1]
 
-        path1, path2 = ctx.saved_tensors
+        k_grid, path1, path2 = ctx.saved_tensors
         new_derivs = sig_kernel_backprop(grad_output, path1, path2, ctx.dyadic_order,
                                          ctx.time_aug, ctx.lead_lag, ctx.end_time,
-                                         left_deriv, right_deriv, ctx.n_jobs)
+                                         left_deriv, right_deriv, k_grid, ctx.n_jobs)
 
         return new_derivs[0], new_derivs[1], None, None, None, None, None, None, None
 
@@ -148,10 +151,8 @@ def sig_kernel(
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
-        left_deriv : bool = True,
-        right_deriv : bool = False,
         n_jobs : int = 1
 ) -> Union[np.ndarray, torch.tensor]:
-    return SigKernel.apply(path1, path2, dyadic_order, time_aug, lead_lag, end_time, left_deriv, right_deriv, n_jobs)
+    return SigKernel.apply(path1, path2, dyadic_order, time_aug, lead_lag, end_time, n_jobs)
 
 transform_path.__doc__ = transform_path_forward.__doc__

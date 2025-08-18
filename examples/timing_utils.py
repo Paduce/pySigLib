@@ -137,6 +137,31 @@ def timesigkernel(batch_size, length, dimension, dyadic_order, device, N):
             continue
     return best_time
 
+def timesigkernel_backprop(batch_size, length, dimension, dyadic_order, device, N):
+    static_kernel = sigkernel.LinearKernel()
+    signature_kernel = sigkernel.SigKernel(static_kernel, dyadic_order)
+
+    X = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
+    X = torch.tensor(X, device=device, requires_grad = True)
+    Y = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
+    Y = torch.tensor(Y, device=device)
+    derivs = torch.ones(batch_size)
+
+    best_time = float('inf')
+    for _ in range(N):
+        try:
+            if device == "cuda":
+                torch.cuda.empty_cache()
+            K = signature_kernel.compute_kernel(X, Y)
+            start = timeit.default_timer()
+            K.backward(derivs)
+            end = timeit.default_timer()
+            time_ = end - start
+            best_time = min(best_time, time_)
+        except:
+            continue
+    return best_time
+
 
 # def timesigkerax(batch_size, length, dimension, dyadic_order, device, N):
 #     signature_kernel = SigKernelJax(static_kernel_kind="linear", refinement_factor=1 << dyadic_order)
@@ -170,6 +195,25 @@ def timepysiglib_kernel(batch_size, length, dimension, dyadic_order, device, N):
             torch.cuda.empty_cache()
         start = timeit.default_timer()
         pysiglib.sig_kernel(X, Y, dyadic_order)
+        end = timeit.default_timer()
+        time_ = end - start
+        best_time = min(best_time, time_)
+    return best_time
+
+def timepysiglib_kernel_backprop(batch_size, length, dimension, dyadic_order, device, N, n_jobs = -1):
+    X = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
+    X = torch.tensor(X, device=device, requires_grad = True)
+    Y = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
+    Y = torch.tensor(Y, device=device)
+    derivs = torch.ones(batch_size)
+
+    best_time = float('inf')
+    for _ in range(N):
+        if device == "cuda":
+            torch.cuda.empty_cache()
+        K = pysiglib.torch_api.sig_kernel(X, Y, dyadic_order, n_jobs = n_jobs)
+        start = timeit.default_timer()
+        K.backward(derivs)
         end = timeit.default_timer()
         time_ = end - start
         best_time = min(best_time, time_)
