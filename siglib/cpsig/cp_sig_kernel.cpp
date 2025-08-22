@@ -178,199 +178,222 @@ void batch_sig_kernel_(
 }
 
 void sig_kernel_backprop_(
-	double* gram,
-	double* out,
-	double deriv,
-	double* k_grid,
-	uint64_t dimension,
-	uint64_t length1,
-	uint64_t length2,
-	uint64_t dyadic_order_1,
-	uint64_t dyadic_order_2
+	const double* const gram,
+	double* const out,
+	const double deriv,
+	const double* const k_grid,
+	const uint64_t dimension,
+	const uint64_t length1,
+	const uint64_t length2,
+	const uint64_t dyadic_order_1,
+	const uint64_t dyadic_order_2
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
-	get_sig_kernel_backprop_(gram, out, deriv, k_grid, dimension, length1, length2, dyadic_order_1, dyadic_order_2);
-	//get_sig_kernel_backprop_diag_(gram, out, deriv, k_grid, dimension, length1, length2, dyadic_order_1, dyadic_order_2);
+	get_sig_kernel_backprop_(gram, out, deriv, k_grid, length1, length2, dyadic_order_1, dyadic_order_2);
+	//get_sig_kernel_backprop_diag_(gram, out, deriv, k_grid, length1, length2, dyadic_order_1, dyadic_order_2);
 }
 
 void get_sig_kernel_backprop_diag_(
-	double* gram,
-	double* out,
-	double deriv,
-	double* k_grid,
-	uint64_t dimension,
-	uint64_t length1,
-	uint64_t length2,
-	uint64_t dyadic_order_1,
-	uint64_t dyadic_order_2
+	const double* const gram,
+	double* const out,
+	const double deriv,
+	const double* const k_grid,
+	const uint64_t length1,
+	const uint64_t length2,
+	const uint64_t dyadic_order_1,
+	const uint64_t dyadic_order_2
 ) {
 	// Dyadically refined grid dimensions
 	const uint64_t dyadic_length_1 = ((length1 - 1) << dyadic_order_1) + 1;
 	const uint64_t dyadic_length_2 = ((length2 - 1) << dyadic_order_2) + 1;
 
 	if (dyadic_length_2 <= dyadic_length_1)
-		get_sig_kernel_backprop_diag_internal_<true>(gram, out, deriv, k_grid, dimension, length1, length2, dyadic_order_1, dyadic_order_2, dyadic_length_1, dyadic_length_2);
+		get_sig_kernel_backprop_diag_internal_<true>(gram, out, deriv, k_grid, length1, length2, dyadic_order_1, dyadic_order_2, dyadic_length_1, dyadic_length_2);
 	else
-		get_sig_kernel_backprop_diag_internal_<false>(gram, out, deriv, k_grid, dimension, length1, length2, dyadic_order_1, dyadic_order_2, dyadic_length_1, dyadic_length_2);
+		get_sig_kernel_backprop_diag_internal_<false>(gram, out, deriv, k_grid, length1, length2, dyadic_order_1, dyadic_order_2, dyadic_length_1, dyadic_length_2);
 }
 
 void get_sig_kernel_backprop_(
-	double* gram,
-	double* out,
-	double deriv,
-	double* k_grid,
-	uint64_t dimension,
-	uint64_t length1,
-	uint64_t length2,
-	uint64_t dyadic_order_1,
-	uint64_t dyadic_order_2
+	const double* const gram,
+	double* const out,
+	const double deriv,
+	const double* const k_grid,
+	const uint64_t length1,
+	const uint64_t length2,
+	const uint64_t dyadic_order_1,
+	const uint64_t dyadic_order_2
 ) {
 	const uint64_t dyadic_length_1 = ((length1 - 1) << dyadic_order_1) + 1;
 	const uint64_t dyadic_length_2 = ((length2 - 1) << dyadic_order_2) + 1;
-	double* out_ptr = out;
 
 	const double dyadic_frac = 1. / (1ULL << (dyadic_order_1 + dyadic_order_2));
 	static const double sixth = 1. / 6;
 	static const double twelth = 1. / 12;
-	const uint64_t num_anti_diag = dyadic_length_1 + dyadic_length_2 - 1;
 	const uint64_t grid_length = dyadic_length_1 * dyadic_length_2;
 	const uint64_t gram_length = (length1 - 1) * (length2 - 1);
 
 	// Allocate grid for dF / dk
 	auto d_grid_uptr = std::make_unique<double[]>(grid_length);
-	double* d_grid = d_grid_uptr.get();
+	double* const d_grid = d_grid_uptr.get();
 
 	std::fill(out, out + (length1 - 1) * (length2 - 1), 0.);
+
+	// a, b, da, db
+	double a, a_deriv, b_deriv;
+	double a10, a01, b11;
+
+	// indices
+	uint64_t grid_idx, gram_idx;
+
+	// k_grid and d_grid ptrs
+	const double* k11, * k12, * k21;
+	const double* d11, * d12, * d21;
 
 	//Start with the last dF / dk, which is known ============================================
 	d_grid[grid_length - 1] = deriv;
 
 	//Compute dA(i-1, j-1) and dB(i-1, j-1)
-	uint64_t ii = length1 - 2;
-	uint64_t jj = length2 - 2;
-	double a_deriv, b_deriv;
-	get_a_b_deriv(a_deriv, b_deriv, gram, ii, jj, length2, dyadic_frac);
+	gram_idx = gram_length - 1;
+	get_a_b_deriv(a_deriv, b_deriv, gram, gram_idx, dyadic_frac);
 
 	//Update dF / dx
-	out[gram_length - 1] += d_grid[grid_length - 1] * (
-		(k_grid[grid_length - 2] + k_grid[grid_length - dyadic_length_2 - 1]) * a_deriv - k_grid[grid_length - dyadic_length_2 - 2] * b_deriv
-		);
+	k21 = k_grid + grid_length - 2;
+	k12 = k_grid + grid_length - dyadic_length_2 - 1;
+	k11 = k12 - 1;
+	out[gram_length - 1] += d_grid[grid_length - 1] * ((*k12 + *k21) * a_deriv - *k11 * b_deriv);
 
 	//Loop over last row ============================================
-	int idx = grid_length - 2;
-	for (int i = dyadic_length_2 - 2; i >= 1; --i) {
-		int j = dyadic_length_1 - 1;
+	grid_idx = grid_length - 2;
+	k21 = k_grid + grid_idx - 1;
+	k12 = k_grid + grid_idx - dyadic_length_2;
+	k11 = k12 - 1;
+	for (int64_t i = dyadic_length_2 - 2; i >= 1; --i) {
+		const int64_t j = dyadic_length_1 - 1;
+
+		//Precompute indices
+		const uint64_t cur_ii = (i >> dyadic_order_2);
+		const uint64_t prev_ii = ((i - 1) >> dyadic_order_2);
+		const uint64_t prev_jj = ((j - 1) >> dyadic_order_1) * (length2 - 1);
 
 		//Compute A(i, j-1)
-		ii = (i >> dyadic_order_2);
-		jj = ((j - 1) >> dyadic_order_1);
-
-		double a;
-		get_a(a, gram, jj, ii, length2, dyadic_frac);
+		get_a(a, gram, prev_jj + cur_ii, dyadic_frac);
 
 		//Update dF / dk
-		d_grid[idx] = d_grid[idx + 1] * a;
+		d_grid[grid_idx] = d_grid[grid_idx + 1] * a;
 
 		//Compute dA(i-1, j-1) and dB(i-1, j-1)
-		ii = ((i - 1) >> dyadic_order_2);
-		jj = ((j - 1) >> dyadic_order_1);
-
-		get_a_b_deriv(a_deriv, b_deriv, gram, jj, ii, length2, dyadic_frac);
+		gram_idx = prev_jj + prev_ii;
+		get_a_b_deriv(a_deriv, b_deriv, gram, gram_idx, dyadic_frac);
 
 		//Update dF / dx
-		out[jj * (length2 - 1) + ii] += d_grid[idx] * (
-			(k_grid[idx - 1] + k_grid[idx - dyadic_length_2]) * a_deriv - k_grid[idx - dyadic_length_2 - 1] * b_deriv
-			);
+		out[gram_idx] += d_grid[grid_idx] * ( (*k12 + *k21) * a_deriv - *k11 * b_deriv );
 
-		--idx;
+		--grid_idx;
+		--k12;
+		--k21;
+		--k11;
 	}
 
-	idx = grid_length - 1 - dyadic_length_2;
+	grid_idx = grid_length - 1 - dyadic_length_2;
+	k21 = k_grid + grid_idx - 1;
+	k12 = k_grid + grid_idx - dyadic_length_2;
+	k11 = k12 - 1;
 	//Loop over last column ============================================
-	for (int j = dyadic_length_1 - 2; j >= 1; --j) {
-		int i = dyadic_length_2 - 1;
+	for (int64_t j = dyadic_length_1 - 2; j >= 1; --j) {
+		const int64_t i = dyadic_length_2 - 1;
+
+		//Precompute indices
+		const uint64_t prev_ii = ((i - 1) >> dyadic_order_2);
+		const uint64_t cur_jj = (j >> dyadic_order_1) * (length2 - 1);
+		const uint64_t prev_jj = ((j - 1) >> dyadic_order_1) * (length2 - 1);
 
 		//Compute A(i-1, j)
-		ii = ((i - 1) >> dyadic_order_2);
-		jj = (j >> dyadic_order_1);
-
-		double a;
-		get_a(a, gram, jj, ii, length2, dyadic_frac);
+		get_a(a, gram, cur_jj + prev_ii, dyadic_frac);
 
 		//Update dF / dk
-		d_grid[idx] = d_grid[idx + dyadic_length_2] * a;
+		d_grid[grid_idx] = d_grid[grid_idx + dyadic_length_2] * a;
 
 		//Compute dA(i-1, j-1) and dB(i-1, j-1)
-		ii = ((i - 1) >> dyadic_order_2);
-		jj = ((j - 1) >> dyadic_order_1);
-
-		get_a_b_deriv(a_deriv, b_deriv, gram, jj, ii, length2, dyadic_frac);
+		gram_idx = prev_jj + prev_ii;
+		get_a_b_deriv(a_deriv, b_deriv, gram, gram_idx, dyadic_frac);
 
 		//Update dF / dx
-		out[jj * (length2 - 1) + ii] += d_grid[idx] * (
-			(k_grid[idx - 1] + k_grid[idx - dyadic_length_2]) * a_deriv - k_grid[idx - dyadic_length_2 - 1] * b_deriv
-			);
+		out[gram_idx] += d_grid[grid_idx] * ((*k12 + *k21) * a_deriv - *k11 * b_deriv);
 
-		idx -= dyadic_length_2;
+		grid_idx -= dyadic_length_2;
+		k21 -= dyadic_length_2;
+		k12 -= dyadic_length_2;
+		k11 -= dyadic_length_2;
 	}
 
 	// Loop over remaining grid ============================================
-	for (int j = dyadic_length_1 - 2; j >= 1; --j) {
-		for (int i = dyadic_length_2 - 2; i >= 1; --i) {
-			idx = j * dyadic_length_2 + i;
+	grid_idx = grid_length - 2 - dyadic_length_2;
+	k21 = k_grid + grid_idx - 1;
+	k12 = k_grid + grid_idx - dyadic_length_2;
+	k11 = k12 - 1;
+	d21 = d_grid + grid_idx + 1;
+	d12 = d_grid + grid_idx + dyadic_length_2;
+	d11 = d12 + 1;
+	for (int64_t j = dyadic_length_1 - 2; j >= 1; --j) {
+		for (int64_t i = dyadic_length_2 - 2; i >= 1; --i) {
+
+			//Precompute indices
+			const uint64_t cur_ii = (i >> dyadic_order_2);
+			const uint64_t prev_ii = ((i - 1) >> dyadic_order_2);
+			const uint64_t cur_jj = (j >> dyadic_order_1) * (length2 - 1);
+			const uint64_t prev_jj = ((j - 1) >> dyadic_order_1) * (length2 - 1);
 
 			// Compute A(i, j-1)
-			ii = (i >> dyadic_order_2);
-			jj = ((j - 1) >> dyadic_order_1);
-
-			double a_10;
-			get_a(a_10, gram, jj, ii, length2, dyadic_frac);
+			get_a(a10, gram, prev_jj + cur_ii, dyadic_frac);
 
 			// Compute A(i-1, j)
-			ii = ((i - 1) >> dyadic_order_2);
-			jj = (j >> dyadic_order_1);
-
-			double a_01;
-			get_a(a_01, gram, jj, ii, length2, dyadic_frac);
+			get_a(a01, gram, cur_jj + prev_ii, dyadic_frac);
 
 			// Compute B(i, j)
-			ii = (i >> dyadic_order_2);
-			jj = (j >> dyadic_order_1);
-
-			double b_11;
-			get_b(b_11, gram, jj, ii, length2, dyadic_frac);
+			get_b(b11, gram, cur_jj + cur_ii, dyadic_frac);
 
 			//Update dF / dk
-			d_grid[idx] = d_grid[idx + 1] * a_10 + d_grid[idx + dyadic_length_2] * a_01 - d_grid[idx + dyadic_length_2 + 1] * b_11;
+			d_grid[grid_idx] = (*d21) * a10 + (*d12) * a01 - (*d11) * b11;
 
 			//Compute dA(i-1, j-1) and dB(i-1, j-1)
-			ii = ((i - 1) >> dyadic_order_2);
-			jj = ((j - 1) >> dyadic_order_1);
-
-			get_a_b_deriv(a_deriv, b_deriv, gram, jj, ii, length2, dyadic_frac);
+			gram_idx = prev_jj + prev_ii;
+			get_a_b_deriv(a_deriv, b_deriv, gram, gram_idx, dyadic_frac);
 
 			//Update dF / dx
-			out[jj * (length2 - 1) + ii] += d_grid[idx] * (
-				(k_grid[idx - 1] + k_grid[idx - dyadic_length_2]) * a_deriv - k_grid[idx - dyadic_length_2 - 1] * b_deriv
-				);
+			out[gram_idx] += d_grid[grid_idx] * ((*k12 + *k21) * a_deriv - *k11 * b_deriv);
+
+			--grid_idx;
+			--k12;
+			--k21;
+			--k11;
+			--d12;
+			--d21;
+			--d11;
 		}
+		grid_idx -= 2;
+		k12 -= 2;
+		k21 -= 2;
+		k11 -= 2;
+		d12 -= 2;
+		d21 -= 2;
+		d11 -= 2;
 	}
 
 	return;
 }
 
 void batch_sig_kernel_backprop_(
-	double* gram,
-	double* out,
-	double* derivs,
-	double* k_grid,
-	uint64_t batch_size,
-	uint64_t dimension,
-	uint64_t length1,
-	uint64_t length2,
-	uint64_t dyadic_order_1,
-	uint64_t dyadic_order_2,
-	int n_jobs
+	const double* const gram,
+	double* const out,
+	const double* const derivs,
+	const double* const k_grid,
+	const uint64_t batch_size,
+	const uint64_t dimension,
+	const uint64_t length1,
+	const uint64_t length2,
+	const uint64_t dyadic_order_1,
+	const uint64_t dyadic_order_2,
+	const int n_jobs
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
 
@@ -381,15 +404,15 @@ void batch_sig_kernel_backprop_(
 		return;
 	}
 
-	double* const data_end_1 = gram + gram_length * batch_size;
+	const double* const data_end_1 = gram + gram_length * batch_size;
 
 	const uint64_t dyadic_length_1 = ((length1 - 1) << dyadic_order_1) + 1;
 	const uint64_t dyadic_length_2 = ((length2 - 1) << dyadic_order_2) + 1;
 	const uint64_t grid_length = dyadic_length_1 * dyadic_length_2;
 
-	std::function<void(double*, double*, double*, double*)> sig_kernel_backprop_func;
+	std::function<void(const double* const, const double* const, const double* const, double* const)> sig_kernel_backprop_func;
 
-	sig_kernel_backprop_func = [&](double* gram_ptr, double* deriv_ptr, double* k_grid_ptr, double* out_ptr) {
+	sig_kernel_backprop_func = [&](const double* const gram_ptr, const double* const deriv_ptr, const double* const k_grid_ptr, double* const out_ptr) {
 		sig_kernel_backprop_(gram_ptr, out_ptr, *deriv_ptr, k_grid_ptr, dimension, length1, length2, dyadic_order_1, dyadic_order_2);
 		};
 
@@ -397,10 +420,10 @@ void batch_sig_kernel_backprop_(
 		multi_threaded_batch_3(sig_kernel_backprop_func, gram, derivs, k_grid, out, batch_size, gram_length, 1, grid_length, gram_length, n_jobs);
 	}
 	else {
-		double* gram_ptr = gram;
+		const double* gram_ptr = gram;
 		double* out_ptr = out;
-		double* deriv_ptr = derivs;
-		double* k_grid_ptr = k_grid;
+		const double* deriv_ptr = derivs;
+		const double* k_grid_ptr = k_grid;
 		for (;
 			gram_ptr < data_end_1;
 			gram_ptr += gram_length, out_ptr += gram_length, deriv_ptr += 1, k_grid_ptr += grid_length) {
@@ -409,45 +432,6 @@ void batch_sig_kernel_backprop_(
 		}
 	}
 	return;
-}
-
-
-void get_a_b(double& a, double& b, const double* const gram, uint64_t ii, uint64_t jj, const uint64_t length2, const double dyadic_frac) {
-	static const double twelth = 1. / 12;
-	double gram_val = gram[ii * (length2 - 1) + jj];
-	gram_val *= dyadic_frac;
-	double gram_val_2 = gram_val * gram_val * twelth;
-
-	a = 1. + 0.5 * gram_val + gram_val_2;
-	b = 1. - gram_val_2;
-}
-
-void get_a(double& a, const double* const gram, uint64_t ii, uint64_t jj, const uint64_t length2, const double dyadic_frac) {
-	static const double twelth = 1. / 12;
-	double gram_val = gram[ii * (length2 - 1) + jj];
-	gram_val *= dyadic_frac;
-	double gram_val_2 = gram_val * gram_val * twelth;
-
-	a = 1. + 0.5 * gram_val + gram_val_2;
-}
-
-void get_b(double& b, const double* const gram, uint64_t ii, uint64_t jj, const uint64_t length2, const double dyadic_frac) {
-	static const double twelth = 1. / 12;
-	double gram_val = gram[ii * (length2 - 1) + jj];
-	gram_val *= dyadic_frac;
-	double gram_val_2 = gram_val * gram_val * twelth;
-
-	b = 1. - gram_val_2;
-}
-
-void get_a_b_deriv(double& a_deriv, double& b_deriv, const double* const gram, uint64_t ii, uint64_t jj, const uint64_t length2, const double dyadic_frac) {
-	static const double twelth = 1. / 12;
-	static const double sixth = 1. / 6;
-	double gram_val = gram[ii * (length2 - 1) + jj];
-	gram_val *= dyadic_frac;
-
-	b_deriv = -gram_val * sixth * dyadic_frac;
-	a_deriv = 0.5 * dyadic_frac - b_deriv;
 }
 
 
