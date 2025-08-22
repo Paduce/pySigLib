@@ -189,7 +189,42 @@ void sig_kernel_backprop_(
 	uint64_t dyadic_order_2
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
+	get_sig_kernel_backprop_(gram, out, deriv, k_grid, dimension, length1, length2, dyadic_order_1, dyadic_order_2);
+	//get_sig_kernel_backprop_diag_(gram, out, deriv, k_grid, dimension, length1, length2, dyadic_order_1, dyadic_order_2);
+}
 
+void get_sig_kernel_backprop_diag_(
+	double* gram,
+	double* out,
+	double deriv,
+	double* k_grid,
+	uint64_t dimension,
+	uint64_t length1,
+	uint64_t length2,
+	uint64_t dyadic_order_1,
+	uint64_t dyadic_order_2
+) {
+	// Dyadically refined grid dimensions
+	const uint64_t dyadic_length_1 = ((length1 - 1) << dyadic_order_1) + 1;
+	const uint64_t dyadic_length_2 = ((length2 - 1) << dyadic_order_2) + 1;
+
+	if (dyadic_length_2 <= dyadic_length_1)
+		get_sig_kernel_backprop_diag_internal_<true>(gram, out, deriv, k_grid, dimension, length1, length2, dyadic_order_1, dyadic_order_2, dyadic_length_1, dyadic_length_2);
+	else
+		get_sig_kernel_backprop_diag_internal_<false>(gram, out, deriv, k_grid, dimension, length1, length2, dyadic_order_1, dyadic_order_2, dyadic_length_1, dyadic_length_2);
+}
+
+void get_sig_kernel_backprop_(
+	double* gram,
+	double* out,
+	double deriv,
+	double* k_grid,
+	uint64_t dimension,
+	uint64_t length1,
+	uint64_t length2,
+	uint64_t dyadic_order_1,
+	uint64_t dyadic_order_2
+) {
 	const uint64_t dyadic_length_1 = ((length1 - 1) << dyadic_order_1) + 1;
 	const uint64_t dyadic_length_2 = ((length2 - 1) << dyadic_order_2) + 1;
 	double* out_ptr = out;
@@ -377,7 +412,7 @@ void batch_sig_kernel_backprop_(
 }
 
 
-void get_a_b(double& a, double& b, double* gram, uint64_t ii, uint64_t jj, const uint64_t length2, const double dyadic_frac) {
+void get_a_b(double& a, double& b, const double* const gram, uint64_t ii, uint64_t jj, const uint64_t length2, const double dyadic_frac) {
 	static const double twelth = 1. / 12;
 	double gram_val = gram[ii * (length2 - 1) + jj];
 	gram_val *= dyadic_frac;
@@ -387,7 +422,7 @@ void get_a_b(double& a, double& b, double* gram, uint64_t ii, uint64_t jj, const
 	b = 1. - gram_val_2;
 }
 
-void get_a(double& a, double* gram, uint64_t ii, uint64_t jj, const uint64_t length2, const double dyadic_frac) {
+void get_a(double& a, const double* const gram, uint64_t ii, uint64_t jj, const uint64_t length2, const double dyadic_frac) {
 	static const double twelth = 1. / 12;
 	double gram_val = gram[ii * (length2 - 1) + jj];
 	gram_val *= dyadic_frac;
@@ -396,7 +431,7 @@ void get_a(double& a, double* gram, uint64_t ii, uint64_t jj, const uint64_t len
 	a = 1. + 0.5 * gram_val + gram_val_2;
 }
 
-void get_b(double& b, double* gram, uint64_t ii, uint64_t jj, const uint64_t length2, const double dyadic_frac) {
+void get_b(double& b, const double* const gram, uint64_t ii, uint64_t jj, const uint64_t length2, const double dyadic_frac) {
 	static const double twelth = 1. / 12;
 	double gram_val = gram[ii * (length2 - 1) + jj];
 	gram_val *= dyadic_frac;
@@ -405,7 +440,7 @@ void get_b(double& b, double* gram, uint64_t ii, uint64_t jj, const uint64_t len
 	b = 1. - gram_val_2;
 }
 
-void get_a_b_deriv(double& a_deriv, double& b_deriv, double* gram, uint64_t ii, uint64_t jj, const uint64_t length2, const double dyadic_frac) {
+void get_a_b_deriv(double& a_deriv, double& b_deriv, const double* const gram, uint64_t ii, uint64_t jj, const uint64_t length2, const double dyadic_frac) {
 	static const double twelth = 1. / 12;
 	static const double sixth = 1. / 6;
 	double gram_val = gram[ii * (length2 - 1) + jj];

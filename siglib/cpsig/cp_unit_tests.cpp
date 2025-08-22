@@ -910,7 +910,7 @@ namespace cpSigTests
             check_result(f, gram, true_, deriv, k_grid.data(), dimension, length1, length2, 0, 0);
         }
 
-        TEST_METHOD(ManualTest11) {
+        TEST_METHOD(ManualTest1Rev) {
             auto f = sig_kernel_backprop;
             uint64_t dimension = 1, length2 = 2, length1 = 3;
             std::vector<double> path2 = { 0., 2. };
@@ -932,6 +932,19 @@ namespace cpSigTests
             std::vector<double> true_ = { 761./72, 7.125, 133./24, 12.5 + 1. / 6 };
             std::vector<double> gram((length1 - 1) * (length2 - 1));
             std::vector<double> k_grid = { 1., 1., 1., 1., 4., 11., 1., 7., 25. - 1. / 6 };
+            gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
+            check_result(f, gram, true_, deriv, k_grid.data(), dimension, length1, length2, 0, 0);
+        }
+
+        TEST_METHOD(ManualTest2Rev) {
+            auto f = sig_kernel_backprop;
+            uint64_t dimension = 1, length2 = 3, length1 = 3;
+            std::vector<double> path2 = { 0., 2., 3. };
+            std::vector<double> path1 = { 0., 1., 2. };
+            double deriv = 1.;
+            std::vector<double> true_ = { 761. / 72, 133. / 24, 7.125, 12.5 + 1. / 6 };
+            std::vector<double> gram((length1 - 1) * (length2 - 1));
+            std::vector<double> k_grid = { 1., 1., 1., 1., 4., 7., 1., 11., 25. - 1. / 6 };
             gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
             check_result(f, gram, true_, deriv, k_grid.data(), dimension, length1, length2, 0, 0);
         }
@@ -963,6 +976,81 @@ namespace cpSigTests
             };
             gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
             check_result(f, gram, true_, deriv, k_grid.data(), dimension, length1, length2, 1, 1);
+        }
+
+        TEST_METHOD(ManualTest3Rev) {
+            auto f = sig_kernel_backprop;
+            uint64_t dimension = 1, length2 = 2, length1 = 3;
+            std::vector<double> path2 = { 0., 2. };
+            std::vector<double> path1 = { 0., 1., 2. };
+            double deriv = 1.;
+            std::vector<double> true_ = { 5.1602194279800226, 5.1185673607720270 };
+            std::vector<double> gram((length1 - 1) * (length2 - 1));
+            std::vector<double> k_grid = {
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.5625,
+                2.27734375,
+                1.0,
+                2.27734375,
+                4.25830078125,
+                1.0,
+                3.1857910156249996,
+                7.2303009033203125,
+                1.0,
+                4.3402760823567705,
+                11.584854549831814
+            };
+            gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
+            check_result(f, gram, true_, deriv, k_grid.data(), dimension, length1, length2, 1, 1);
+        }
+
+        TEST_METHOD(ManualTest4) {
+            auto f = sig_kernel_backprop;
+            uint64_t dimension = 2, length1 = 3, length2 = 3;
+            std::vector<double> path1 = { 0., 1., 2., 4., 5., 5. };
+            std::vector<double> path2 = { 0., 2., 1., 3., 2., 1. };
+            double deriv = 1.;
+            std::vector<double> true_ = { 1631. / 72, -437. / 96, 817. / 32, 1049. / 24 };
+            std::vector<double> gram((length1 - 1) * (length2 - 1));
+            std::vector<double> k_grid = {
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                12.25,
+                4.75,
+                1.0,
+                57.75,
+                87.729 + 1./6000
+            };
+            gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
+            check_result(f, gram, true_, deriv, k_grid.data(), dimension, length1, length2, 0, 0);
+        }
+
+        TEST_METHOD(ManualTest4Rev) {
+            auto f = sig_kernel_backprop;
+            uint64_t dimension = 2, length2 = 3, length1 = 3;
+            std::vector<double> path2 = { 0., 1., 2., 4., 5., 5. };
+            std::vector<double> path1 = { 0., 2., 1., 3., 2., 1. };
+            double deriv = 1.;
+            std::vector<double> true_ = { 1631. / 72, 817. / 32 , -437. / 96, 1049. / 24 };
+            std::vector<double> gram((length1 - 1) * (length2 - 1));
+            std::vector<double> k_grid = {
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                12.25,
+                57.75,
+                1.0,
+                4.75,
+                87.729 + 1. / 6000
+            };
+            gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
+            check_result(f, gram, true_, deriv, k_grid.data(), dimension, length1, length2, 0, 0);
         }
 
         TEST_METHOD(BatchManualTest1) {
