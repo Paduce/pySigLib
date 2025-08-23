@@ -19,13 +19,13 @@
 #include "macros.h"
 
 void get_sig_kernel_(
-	double* gram,
+	const double* const gram,
 	const uint64_t length1,
 	const uint64_t length2,
-	double* out,
+	double* const out,
 	const uint64_t dyadic_order_1,
 	const uint64_t dyadic_order_2,
-	bool return_grid
+	const bool return_grid
 ) {
 	const double dyadic_frac = 1. / (1ULL << (dyadic_order_1 + dyadic_order_2));
 	const double twelth = 1. / 12;
@@ -53,10 +53,10 @@ void get_sig_kernel_(
 	std::fill(pde_grid, pde_grid + dyadic_length_2, 1.0); // Set K[0, j] = 1.0
 
 	auto deriv_term_1_uptr = std::make_unique<double[]>(length2 - 1);
-	double* deriv_term_1 = deriv_term_1_uptr.get();
+	double* const deriv_term_1 = deriv_term_1_uptr.get();
 
 	auto deriv_term_2_uptr = std::make_unique<double[]>(length2 - 1);
-	double* deriv_term_2 = deriv_term_2_uptr.get();
+	double* const deriv_term_2 = deriv_term_2_uptr.get();
 
 	double* k11 = pde_grid;
 	double* k12 = k11 + 1;
@@ -65,17 +65,16 @@ void get_sig_kernel_(
 
 	for (uint64_t ii = 0; ii < length1 - 1; ++ii) {
 		for (uint64_t m = 0; m < length2 - 1; ++m) {
-			double deriv = gram[ii * (length2 - 1) + m];//dot_product(diff1Ptr, diff2Ptr, dimension);
-			deriv *= dyadic_frac;
-			double deriv2 = deriv * deriv * twelth;
+			const double deriv = gram[ii * (length2 - 1) + m] * dyadic_frac;//dot_product(diff1Ptr, diff2Ptr, dimension);
+			const double deriv2 = deriv * deriv * twelth;
 			deriv_term_1[m] = 1.0 + 0.5 * deriv + deriv2;
 			deriv_term_2[m] = 1.0 - deriv2;
 		}
 
 		for (uint64_t i = 0; i < grid_size_1; ++i) {
 			for (uint64_t jj = 0; jj < length2 - 1; ++jj) {
-				double t1 = deriv_term_1[jj];
-				double t2 = deriv_term_2[jj];
+				const double t1 = deriv_term_1[jj];
+				const double t2 = deriv_term_2[jj];
 				for (uint64_t j = 0; j < grid_size_2; ++j) {
 					*(k22++) = (*(k21++) + *(k12++)) * t1 - *(k11++) * t2;
 				}
@@ -92,10 +91,10 @@ void get_sig_kernel_(
 }
 
 void get_sig_kernel_diag_(
-	double* gram,
+	const double* const gram,
 	const uint64_t length1,
 	const uint64_t length2,
-	double* out,
+	double* const out,
 	const uint64_t dyadic_order_1,
 	const uint64_t dyadic_order_2
 ) {
@@ -110,14 +109,14 @@ void get_sig_kernel_diag_(
 }
 
 void sig_kernel_(
-	double* gram,
-	double* out,
-	uint64_t dimension,
-	uint64_t length1,
-	uint64_t length2,
-	uint64_t dyadic_order_1,
-	uint64_t dyadic_order_2,
-	bool return_grid
+	const double* const gram,
+	double* const out,
+	const uint64_t dimension,
+	const uint64_t length1,
+	const uint64_t length2,
+	const uint64_t dyadic_order_1,
+	const uint64_t dyadic_order_2,
+	const bool return_grid
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
 	if (return_grid)
@@ -127,16 +126,16 @@ void sig_kernel_(
 }
 
 void batch_sig_kernel_(
-	double* gram,
-	double* out,
-	uint64_t batch_size,
-	uint64_t dimension,
-	uint64_t length1,
-	uint64_t length2,
-	uint64_t dyadic_order_1,
-	uint64_t dyadic_order_2,
-	int n_jobs,
-	bool return_grid
+	const double* const gram,
+	double* const out,
+	const uint64_t batch_size,
+	const uint64_t dimension,
+	const uint64_t length1,
+	const uint64_t length2,
+	const uint64_t dyadic_order_1,
+	const uint64_t dyadic_order_2,
+	const int n_jobs,
+	const bool return_grid
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
 	if (!gram) {
@@ -145,18 +144,18 @@ void batch_sig_kernel_(
 	}
 
 	const uint64_t gram_length = (length1 - 1) * (length2 - 1);
-	double* const data_end_1 = gram + gram_length * batch_size;
+	const double* const data_end_1 = gram + gram_length * batch_size;
 	const uint64_t result_length = return_grid ? (((length1 - 1) << dyadic_order_1) + 1) * (((length2 - 1) << dyadic_order_2) + 1) : 1;
 
-	std::function<void(double*, double*)> sig_kernel_func;
+	std::function<void(const double* const, double* const)> sig_kernel_func;
 
 	if (return_grid) {
-		sig_kernel_func = [&](double* gram_ptr, double* out_ptr) {
+		sig_kernel_func = [&](const double* const gram_ptr, double* const out_ptr) {
 			get_sig_kernel_(gram_ptr, length1, length2, out_ptr, dyadic_order_1, dyadic_order_2, true);
 			};
 	}
 	else {
-		sig_kernel_func = [&](double* gram_ptr, double* out_ptr) {
+		sig_kernel_func = [&](const double* const gram_ptr, double* const out_ptr) {
 			get_sig_kernel_diag_(gram_ptr, length1, length2, out_ptr, dyadic_order_1, dyadic_order_2);
 			};
 	}
@@ -165,7 +164,7 @@ void batch_sig_kernel_(
 		multi_threaded_batch(sig_kernel_func, gram, out, batch_size, gram_length, result_length, n_jobs);
 	}
 	else {
-		double* gram_ptr = gram;
+		const double* gram_ptr = gram;
 		double* out_ptr = out;
 		for (;
 			gram_ptr < data_end_1;
@@ -437,11 +436,11 @@ void batch_sig_kernel_backprop_(
 
 extern "C" {
 
-	CPSIG_API int sig_kernel(double* gram, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2, bool return_grid) noexcept {
+	CPSIG_API int sig_kernel(const double* const gram, double* const out, const uint64_t dimension, const uint64_t length1, const uint64_t length2, const uint64_t dyadic_order_1, const uint64_t dyadic_order_2, const bool return_grid) noexcept {
 		SAFE_CALL(sig_kernel_(gram, out, dimension, length1, length2, dyadic_order_1, dyadic_order_2, return_grid));
 	}
 
-	CPSIG_API int batch_sig_kernel(double* gram, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2, int n_jobs, bool return_grid) noexcept {
+	CPSIG_API int batch_sig_kernel(const double* const gram, double* const out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length1, const uint64_t length2, const uint64_t dyadic_order_1, const uint64_t dyadic_order_2, const int n_jobs, const bool return_grid) noexcept {
 		SAFE_CALL(batch_sig_kernel_(gram, out, batch_size, dimension, length1, length2, dyadic_order_1, dyadic_order_2, n_jobs, return_grid));
 	}
 

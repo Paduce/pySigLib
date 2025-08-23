@@ -36,19 +36,19 @@ __constant__ uint64_t grid_length;
 
 
 __global__ void goursat_pde(
-	double* initial_condition, //This is the top row of the grid, which will be overwritten to become the bottom row of this grid.
-	double* gram
+	double* const initial_condition, //This is the top row of the grid, which will be overwritten to become the bottom row of this grid.
+	const double* const gram
 ) {
-	int blockId = blockIdx.x;
-	double* gram_ = gram + blockId * gram_length;
+	const int blockId = blockIdx.x;
+	const double* const gram_ = gram + blockId * gram_length;
 
 	__shared__ double diagonals[99]; // Three diagonals of length 33 (32 + initial condition) are rotated and reused
 
 	if (dyadic_length_2 <= dyadic_length_1) {
-		double* initial_condition_ = initial_condition + blockId * dyadic_length_1;
+		double* const initial_condition_ = initial_condition + blockId * dyadic_length_1;
 
-		uint64_t num_full_runs = (dyadic_length_2 - 1) / 32;
-		uint64_t remainder = (dyadic_length_2 - 1) % 32;
+		const uint64_t num_full_runs = (dyadic_length_2 - 1) / 32;
+		const uint64_t remainder = (dyadic_length_2 - 1) % 32;
 
 		for (int i = 0; i < num_full_runs; ++i)
 			goursat_pde_32<true>(initial_condition_, diagonals, gram_, i, 32);
@@ -57,10 +57,10 @@ __global__ void goursat_pde(
 			goursat_pde_32<true>(initial_condition_, diagonals, gram_, num_full_runs, remainder);
 	}
 	else {
-		double* initial_condition_ = initial_condition + blockId * dyadic_length_2;
+		double* const initial_condition_ = initial_condition + blockId * dyadic_length_2;
 
-		uint64_t num_full_runs = (dyadic_length_1 - 1) / 32;
-		uint64_t remainder = (dyadic_length_1 - 1) % 32;
+		const uint64_t num_full_runs = (dyadic_length_1 - 1) / 32;
+		const uint64_t remainder = (dyadic_length_1 - 1) % 32;
 
 		for (int i = 0; i < num_full_runs; ++i)
 			goursat_pde_32<false>(initial_condition_, diagonals, gram_, i, 32);
@@ -71,14 +71,13 @@ __global__ void goursat_pde(
 }
 
 __device__ void goursat_pde_32_full(
-	double* pde_grid, //32 x L2
-	double* gram,
-	uint64_t iteration,
-	int num_threads
+	double* const pde_grid, //32 x L2
+	const double* const gram,
+	const uint64_t iteration,
+	const int num_threads
 ) {
-	int thread_id = threadIdx.x;
-
-	double* pde_grid_ = pde_grid + iteration * 32 * dyadic_length_2;
+	const int thread_id = threadIdx.x;
+	double* const pde_grid_ = pde_grid + iteration * 32 * dyadic_length_2;
 
 	__syncthreads();
 
@@ -90,17 +89,16 @@ __device__ void goursat_pde_32_full(
 		if (num_threads + 1 > p) endj = p;
 		else endj = num_threads + 1;
 
-		uint64_t j = startj + thread_id;
+		const uint64_t j = startj + thread_id;
 
 		if (j < endj) {
 
-			uint64_t i = p - j;  // Calculate corresponding i (since i + j = p)
-			uint64_t ii = ((i - 1) >> dyadic_order_1);
-			uint64_t jj = ((j + iteration * 32 - 1) >> dyadic_order_2);
+			const uint64_t i = p - j;  // Calculate corresponding i (since i + j = p)
+			const uint64_t ii = ((i - 1) >> dyadic_order_1);
+			const uint64_t jj = ((j + iteration * 32 - 1) >> dyadic_order_2);
 
-			double deriv = gram[ii * (length2 - 1) + jj];
-			deriv *= dyadic_frac;
-			double deriv2 = deriv * deriv * twelth;
+			const double deriv = gram[ii * (length2 - 1) + jj] * dyadic_frac;
+			const double deriv2 = deriv * deriv * twelth;
 
 			pde_grid_[i * dyadic_length_2 + j] = (pde_grid_[(i - 1) * dyadic_length_2 + j] + pde_grid_[i * dyadic_length_2 + j - 1]) * (
 				1. + 0.5 * deriv + deriv2) - pde_grid_[(i - 1) * dyadic_length_2 + j - 1] * (1. - deriv2);
@@ -112,16 +110,16 @@ __device__ void goursat_pde_32_full(
 }
 
 __global__ void goursat_pde_full(
-	double* pde_grid,
-	double* gram
+	double* const pde_grid,
+	const double* const gram
 ) {
-	int blockId = blockIdx.x;
+	const int blockId = blockIdx.x;
 
-	double* gram_ = gram + blockId * gram_length;
-	double* pde_grid_ = pde_grid + blockId * grid_length;
+	const double* const gram_ = gram + blockId * gram_length;
+	double* const pde_grid_ = pde_grid + blockId * grid_length;
 
-	uint64_t num_full_runs = (dyadic_length_2 - 1) / 32;
-	uint64_t remainder = (dyadic_length_2 - 1) % 32;
+	const uint64_t num_full_runs = (dyadic_length_2 - 1) / 32;
+	const uint64_t remainder = (dyadic_length_2 - 1) % 32;
 
 	for (int i = 0; i < num_full_runs; ++i)
 		goursat_pde_32_full(pde_grid_, gram_, i, 32);
@@ -131,15 +129,15 @@ __global__ void goursat_pde_full(
 }
 
 void sig_kernel_cuda_(
-	double* gram,
-	double* out,
-	uint64_t batch_size_,
-	uint64_t dimension_,
-	uint64_t length1_,
-	uint64_t length2_,
-	uint64_t dyadic_order_1_,
-	uint64_t dyadic_order_2_,
-	bool return_grid
+	const double* const gram,
+	double* const out,
+	const uint64_t batch_size_,
+	const uint64_t dimension_,
+	const uint64_t length1_,
+	const uint64_t length2_,
+	const uint64_t dyadic_order_1_,
+	const uint64_t dyadic_order_2_,
+	const bool return_grid
 ) {
 	if (dimension_ == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
 
@@ -170,7 +168,7 @@ void sig_kernel_cuda_(
 	if (!return_grid) {
 		// Allocate initial condition
 		auto ones_uptr = std::make_unique<double[]>(main_dyadic_length_ * batch_size_);
-		double* ones = ones_uptr.get();
+		double* const ones = ones_uptr.get();
 		std::fill(ones, ones + main_dyadic_length_ * batch_size_, 1.);
 
 		double* initial_condition;
@@ -187,7 +185,7 @@ void sig_kernel_cuda_(
 	else {
 		// Allocate pde grid
 		auto ones_uptr = std::make_unique<double[]>(grid_length_ * batch_size_);
-		double* ones = ones_uptr.get();
+		double* const ones = ones_uptr.get();
 		std::fill(ones, ones + batch_size_ * grid_length_, 1.);//TODO: avoid fill with all 1s
 
 		//TODO: avoid cudaMemcpy of entire grid
@@ -204,135 +202,107 @@ void sig_kernel_cuda_(
 
 	cudaError_t err = cudaGetLastError();
 	if (err != cudaSuccess) {
-		int error_code = static_cast<int>(err);
+		const int error_code = static_cast<int>(err);
         throw std::runtime_error("CUDA Error (" + std::to_string(error_code) + "): " + cudaGetErrorString(err));
 	}
 }
 
-__global__ void goursat_pde_deriv(
-	double* k_initial_condition, //This is the top row of the grid, which will be overwritten to become the bottom row of this grid.
-	double* d_initial_condition,
-	double* gram,
-	double* deriv
-) {
-	int blockId = blockIdx.x;
+//__global__ void goursat_pde_deriv(
+//	double* k_initial_condition, //This is the top row of the grid, which will be overwritten to become the bottom row of this grid.
+//	double* d_initial_condition,
+//	double* gram,
+//	double* deriv
+//) {
+//	int blockId = blockIdx.x;
+//
+//	//Figure out what we're doing from block id
+//	const uint64_t batch_id = blockId / gram_length;
+//	const uint64_t deriv_point_id = blockId % gram_length;
+//	const uint64_t p0 = deriv_point_id / (length2 - 1);
+//	const uint64_t p1 = deriv_point_id % (length2 - 1);
+//	const double deriv_val = deriv[batch_id];
+//
+//	double* gram_ = gram + batch_id * gram_length;
+//
+//	__shared__ double diagonals[198]; // Six diagonals of length 33 (32 + initial condition) are rotated and reused
+//	double* k_diagonals = diagonals;
+//	double* d_diagonals = diagonals + 99;
+//
+//
+//
+//}
 
-	//Figure out what we're doing from block id
-	const uint64_t batch_id = blockId / gram_length;
-	const uint64_t deriv_point_id = blockId % gram_length;
-	const uint64_t p0 = deriv_point_id / (length2 - 1);
-	const uint64_t p1 = deriv_point_id % (length2 - 1);
-	const double deriv_val = deriv[batch_id];
-
-	double* gram_ = gram + batch_id * gram_length;
-
-	__shared__ double diagonals[198]; // Six diagonals of length 33 (32 + initial condition) are rotated and reused
-	double* k_diagonals = diagonals;
-	double* d_diagonals = diagonals + 99;
-
-	if (dyadic_length_2 <= dyadic_length_1) {
-		double* k_initial_condition_ = k_initial_condition + blockId * dyadic_length_1;
-		double* d_initial_condition_ = d_initial_condition + blockId * dyadic_length_1;
-
-		uint64_t num_full_runs = (dyadic_length_2 - 1) / 32;
-		uint64_t remainder = (dyadic_length_2 - 1) % 32;
-
-		for (int i = 0; i < num_full_runs; ++i)
-			goursat_pde_32_deriv<true>(deriv_val, p0, p1, k_initial_condition_, d_initial_condition_, k_diagonals, d_diagonals, gram_, i, 32);
-
-		if (remainder)
-			goursat_pde_32_deriv<true>(deriv_val, p0, p1, k_initial_condition_, d_initial_condition_, k_diagonals, d_diagonals, gram_, num_full_runs, remainder);
-	}
-	else {
-		double* k_initial_condition_ = k_initial_condition + blockId * dyadic_length_2;
-		double* d_initial_condition_ = d_initial_condition + blockId * dyadic_length_2;
-
-		uint64_t num_full_runs = (dyadic_length_1 - 1) / 32;
-		uint64_t remainder = (dyadic_length_1 - 1) % 32;
-
-		for (int i = 0; i < num_full_runs; ++i)
-			goursat_pde_32_deriv<false>(deriv_val, p0, p1, k_initial_condition_, d_initial_condition_, k_diagonals, d_diagonals, gram_, i, 32);
-
-		if (remainder)
-			goursat_pde_32_deriv<false>(deriv_val, p0, p1, k_initial_condition_, d_initial_condition_, k_diagonals, d_diagonals, gram_, num_full_runs, remainder);
-	}
-}
-
-void sig_kernel_backprop_cuda_(
-	double* gram,
-	double* out,
-	double* deriv,
-	uint64_t batch_size_,
-	uint64_t dimension_,
-	uint64_t length1_,
-	uint64_t length2_,
-	uint64_t dyadic_order_1_,
-	uint64_t dyadic_order_2_
-) {
-	if (dimension_ == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
-
-	static const double twelth_ = 1. / 12;
-	static const double sixth_ = 1. / 6;
-	const uint64_t dyadic_length_1_ = ((length1_ - 1) << dyadic_order_1_) + 1;
-	const uint64_t dyadic_length_2_ = ((length2_ - 1) << dyadic_order_2_) + 1;
-	const uint64_t main_dyadic_length_ = dyadic_length_2_ <= dyadic_length_1_ ? dyadic_length_1_ : dyadic_length_2_;
-	const uint64_t num_anti_diag_ = 33 + main_dyadic_length_ - 1;
-	const double dyadic_frac_ = 1. / (1ULL << (dyadic_order_1_ + dyadic_order_2_));
-	const uint64_t gram_length_ = (length1_ - 1) * (length2_ - 1);
-	const uint64_t grid_length_ = dyadic_length_1_ * dyadic_length_2_;
-
-	// Allocate constant memory
-	cudaMemcpyToSymbol(dimension, &dimension_, sizeof(uint64_t));
-	cudaMemcpyToSymbol(length1, &length1_, sizeof(uint64_t));
-	cudaMemcpyToSymbol(length2, &length2_, sizeof(uint64_t));
-	cudaMemcpyToSymbol(dyadic_order_1, &dyadic_order_1_, sizeof(uint64_t));
-	cudaMemcpyToSymbol(dyadic_order_2, &dyadic_order_2_, sizeof(uint64_t));
-
-	cudaMemcpyToSymbol(twelth, &twelth_, sizeof(double));
-	cudaMemcpyToSymbol(sixth, &sixth_, sizeof(double));
-	cudaMemcpyToSymbol(dyadic_length_1, &dyadic_length_1_, sizeof(uint64_t));
-	cudaMemcpyToSymbol(dyadic_length_2, &dyadic_length_2_, sizeof(uint64_t));
-	cudaMemcpyToSymbol(main_dyadic_length, &main_dyadic_length_, sizeof(uint64_t));
-	cudaMemcpyToSymbol(num_anti_diag, &num_anti_diag_, sizeof(uint64_t));
-	cudaMemcpyToSymbol(dyadic_frac, &dyadic_frac_, sizeof(double));
-	cudaMemcpyToSymbol(gram_length, &gram_length_, sizeof(uint64_t));
-	cudaMemcpyToSymbol(grid_length, &grid_length_, sizeof(uint64_t));
-
-	unsigned int num_blocks = batch_size_ * gram_length_; //TODO: this is likely too big to allocate all memory at once...
-	
-	// Allocate initial condition
-	auto ones_uptr = std::make_unique<double[]>(main_dyadic_length_ * num_blocks);
-	double* ones = ones_uptr.get();
-	std::fill(ones, ones + main_dyadic_length_ * num_blocks, 1.);
-
-	double* k_initial_condition;
-	cudaMalloc((void**)&k_initial_condition, main_dyadic_length_ * num_blocks * sizeof(double));
-	cudaMemcpy(k_initial_condition, ones, main_dyadic_length_ * num_blocks * sizeof(double), cudaMemcpyHostToDevice);
-	ones_uptr.reset();
-
-	auto zeros_uptr = std::make_unique<double[]>(main_dyadic_length_ * num_blocks);
-	double* zeros = zeros_uptr.get();
-	std::fill(zeros, zeros + main_dyadic_length_ * num_blocks, 0.);
-
-	double* d_initial_condition;
-	cudaMalloc((void**)&d_initial_condition, main_dyadic_length_ * num_blocks * sizeof(double));
-	cudaMemcpy(d_initial_condition, zeros, main_dyadic_length_ * num_blocks * sizeof(double), cudaMemcpyHostToDevice);
-	zeros_uptr.reset();
-
-	goursat_pde_deriv << <num_blocks, 32U >> > (k_initial_condition, d_initial_condition, gram, deriv);
-
-	cudaFree(k_initial_condition);
-	for (uint64_t i = 0; i < num_blocks; ++i)
-		cudaMemcpy(out + i, d_initial_condition + (i + 1) * main_dyadic_length_ - 1, sizeof(double), cudaMemcpyDeviceToDevice);
-	cudaFree(d_initial_condition);
-	
-
-	cudaError_t err = cudaGetLastError();
-	if (err != cudaSuccess) {
-		int error_code = static_cast<int>(err);
-		throw std::runtime_error("CUDA Error (" + std::to_string(error_code) + "): " + cudaGetErrorString(err));
-	}
-}
+//void sig_kernel_backprop_cuda_(
+//	double* gram,
+//	double* out,
+//	double* deriv,
+//	uint64_t batch_size_,
+//	uint64_t dimension_,
+//	uint64_t length1_,
+//	uint64_t length2_,
+//	uint64_t dyadic_order_1_,
+//	uint64_t dyadic_order_2_
+//) {
+//	if (dimension_ == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
+//
+//	static const double twelth_ = 1. / 12;
+//	static const double sixth_ = 1. / 6;
+//	const uint64_t dyadic_length_1_ = ((length1_ - 1) << dyadic_order_1_) + 1;
+//	const uint64_t dyadic_length_2_ = ((length2_ - 1) << dyadic_order_2_) + 1;
+//	const uint64_t main_dyadic_length_ = dyadic_length_2_ <= dyadic_length_1_ ? dyadic_length_1_ : dyadic_length_2_;
+//	const uint64_t num_anti_diag_ = 33 + main_dyadic_length_ - 1;
+//	const double dyadic_frac_ = 1. / (1ULL << (dyadic_order_1_ + dyadic_order_2_));
+//	const uint64_t gram_length_ = (length1_ - 1) * (length2_ - 1);
+//	const uint64_t grid_length_ = dyadic_length_1_ * dyadic_length_2_;
+//
+//	// Allocate constant memory
+//	cudaMemcpyToSymbol(dimension, &dimension_, sizeof(uint64_t));
+//	cudaMemcpyToSymbol(length1, &length1_, sizeof(uint64_t));
+//	cudaMemcpyToSymbol(length2, &length2_, sizeof(uint64_t));
+//	cudaMemcpyToSymbol(dyadic_order_1, &dyadic_order_1_, sizeof(uint64_t));
+//	cudaMemcpyToSymbol(dyadic_order_2, &dyadic_order_2_, sizeof(uint64_t));
+//
+//	cudaMemcpyToSymbol(twelth, &twelth_, sizeof(double));
+//	cudaMemcpyToSymbol(sixth, &sixth_, sizeof(double));
+//	cudaMemcpyToSymbol(dyadic_length_1, &dyadic_length_1_, sizeof(uint64_t));
+//	cudaMemcpyToSymbol(dyadic_length_2, &dyadic_length_2_, sizeof(uint64_t));
+//	cudaMemcpyToSymbol(main_dyadic_length, &main_dyadic_length_, sizeof(uint64_t));
+//	cudaMemcpyToSymbol(num_anti_diag, &num_anti_diag_, sizeof(uint64_t));
+//	cudaMemcpyToSymbol(dyadic_frac, &dyadic_frac_, sizeof(double));
+//	cudaMemcpyToSymbol(gram_length, &gram_length_, sizeof(uint64_t));
+//	cudaMemcpyToSymbol(grid_length, &grid_length_, sizeof(uint64_t));
+//
+//	//unsigned int num_blocks = batch_size_ * gram_length_; //TODO: this is likely too big to allocate all memory at once...
+//
+//	cudaMemset(out, 0, batch_size_ * gram_length_ * sizeof(double));
+//	
+//	// Allocate grid for dF / dk
+//	double* d_grid;
+//	cudaMalloc((void**)&d_grid, grid_length_ * sizeof(double));
+//
+//	auto zeros_uptr = std::make_unique<double[]>(main_dyadic_length_ * num_blocks);
+//	double* zeros = zeros_uptr.get();
+//	std::fill(zeros, zeros + main_dyadic_length_ * num_blocks, 0.);
+//
+//	double* d_initial_condition;
+//	cudaMalloc((void**)&d_initial_condition, main_dyadic_length_ * num_blocks * sizeof(double));
+//	cudaMemcpy(d_initial_condition, zeros, main_dyadic_length_ * num_blocks * sizeof(double), cudaMemcpyHostToDevice);
+//	zeros_uptr.reset();
+//
+//	goursat_pde_deriv << <num_blocks, 32U >> > (k_initial_condition, d_initial_condition, gram, deriv);
+//
+//	cudaFree(k_initial_condition);
+//	for (uint64_t i = 0; i < num_blocks; ++i)
+//		cudaMemcpy(out + i, d_initial_condition + (i + 1) * main_dyadic_length_ - 1, sizeof(double), cudaMemcpyDeviceToDevice);
+//	cudaFree(d_initial_condition);
+//	
+//
+//	cudaError_t err = cudaGetLastError();
+//	if (err != cudaSuccess) {
+//		int error_code = static_cast<int>(err);
+//		throw std::runtime_error("CUDA Error (" + std::to_string(error_code) + "): " + cudaGetErrorString(err));
+//	}
+//}
 
 #define SAFE_CALL(function_call)                            \
     try {                                                   \
@@ -370,19 +340,19 @@ void sig_kernel_backprop_cuda_(
 
 extern "C" {
 
-	CUSIG_API int sig_kernel_cuda(double* gram, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2, bool return_grid) noexcept {
+	CUSIG_API int sig_kernel_cuda(const double* const gram, double* const out, const uint64_t dimension, const uint64_t length1, const uint64_t length2, const uint64_t dyadic_order_1, const uint64_t dyadic_order_2, const bool return_grid) noexcept {
 		SAFE_CALL(sig_kernel_cuda_(gram, out, 1ULL, dimension, length1, length2, dyadic_order_1, dyadic_order_2, return_grid));
 	}
 
-	CUSIG_API int batch_sig_kernel_cuda(double* gram, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2, bool return_grid) noexcept {
+	CUSIG_API int batch_sig_kernel_cuda(const double* const gram, double* const out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length1, const uint64_t length2, const uint64_t dyadic_order_1, const uint64_t dyadic_order_2, const bool return_grid) noexcept {
 		SAFE_CALL(sig_kernel_cuda_(gram, out, batch_size, dimension, length1, length2, dyadic_order_1, dyadic_order_2, return_grid));
 	}
 
-	CUSIG_API int sig_kernel_backprop_cuda(double* gram, double* out, double* deriv, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2) noexcept {
+	/*CUSIG_API int sig_kernel_backprop_cuda(double* gram, double* out, double* deriv, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2) noexcept {
 		SAFE_CALL(sig_kernel_backprop_cuda_(gram, out, deriv, 1ULL, dimension, length1, length2, dyadic_order_1, dyadic_order_2));
 	}
 
 	CUSIG_API int batch_sig_kernel_backprop_cuda(double* gram, double* out, double* deriv, uint64_t batch_size, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2) noexcept {
 		SAFE_CALL(sig_kernel_backprop_cuda_(gram, out, deriv, batch_size, dimension, length1, length2, dyadic_order_1, dyadic_order_2));
-	}
+	}*/
 }

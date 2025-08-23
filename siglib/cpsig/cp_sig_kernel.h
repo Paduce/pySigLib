@@ -53,21 +53,21 @@ FORCE_INLINE void get_a_b_deriv(double& a_deriv, double& b_deriv, const double* 
 }
 
 void get_sig_kernel_(
-	double* gram,
+	const double* const gram,
 	const uint64_t length1,
 	const uint64_t length2,
-	double* out,
+	double* const out,
 	const uint64_t dyadic_order_1,
 	const uint64_t dyadic_order_2,
-	bool return_grid
+	const bool return_grid
 );
 
 template<bool order>//order is True if dyadic_length_2 <= dyadic_length_1
 void get_sig_kernel_diag_internal_(
-	double* gram,
+	const double* const gram,
 	const uint64_t length1,
 	const uint64_t length2,
-	double* out,
+	double* const out,
 	const uint64_t dyadic_order_1,
 	const uint64_t dyadic_order_2,
 	const uint64_t dyadic_length_1,
@@ -80,7 +80,7 @@ void get_sig_kernel_diag_internal_(
 	// Allocate three diagonals
 	const uint64_t diag_len = std::min(dyadic_length_1, dyadic_length_2);
 	auto diagonals_uptr = std::make_unique<double[]>(diag_len * 3);
-	double* diagonals = diagonals_uptr.get();
+	double* const diagonals = diagonals_uptr.get();
 
 	double* prev_prev_diag = diagonals;
 	double* prev_diag = diagonals + diag_len;
@@ -99,13 +99,12 @@ void get_sig_kernel_diag_internal_(
 			else endj = dyadic_length_2;
 
 			for (uint64_t j = startj; j < endj; ++j) {
-				uint64_t i = p - j;  // Calculate corresponding i (since i + j = p)
-				uint64_t ii = ((i - 1) >> dyadic_order_1);
-				uint64_t jj = ((j - 1) >> dyadic_order_2);
+				const uint64_t i = p - j;  // Calculate corresponding i (since i + j = p)
+				const uint64_t ii = ((i - 1) >> dyadic_order_1);
+				const uint64_t jj = ((j - 1) >> dyadic_order_2);
 
-				double deriv = gram[ii * (length2 - 1) + jj];
-				deriv *= dyadic_frac;
-				double deriv2 = deriv * deriv * twelth;
+				const double deriv = gram[ii * (length2 - 1) + jj] * dyadic_frac;
+				const double deriv2 = deriv * deriv * twelth;
 
 				*(next_diag + j) = (*(prev_diag + j) + *(prev_diag + j - 1)) * (
 					1. + 0.5 * deriv + deriv2) - *(prev_prev_diag + j - 1) * (1. - deriv2);
@@ -120,14 +119,12 @@ void get_sig_kernel_diag_internal_(
 			else endj = dyadic_length_1;
 
 			for (uint64_t j = startj; j < endj; ++j) {
-				uint64_t i = p - j;  // Calculate corresponding i (since i + j = p)
-				uint64_t ii = ((i - 1) >> dyadic_order_2);
-				uint64_t jj = ((j - 1) >> dyadic_order_1);
+				const uint64_t i = p - j;  // Calculate corresponding i (since i + j = p)
+				const uint64_t ii = ((i - 1) >> dyadic_order_2);
+				const uint64_t jj = ((j - 1) >> dyadic_order_1);
 
-				double deriv = gram[jj * (length2 - 1) + ii];
-
-				deriv *= dyadic_frac;
-				double deriv2 = deriv * deriv * twelth;
+				const double deriv = gram[jj * (length2 - 1) + ii] * dyadic_frac;
+				const double deriv2 = deriv * deriv * twelth;
 
 				*(next_diag + j) = (*(prev_diag + j) + *(prev_diag + j - 1)) * (
 					1. + 0.5 * deriv + deriv2) - *(prev_prev_diag + j - 1) * (1. - deriv2);
@@ -317,36 +314,36 @@ void get_sig_kernel_backprop_diag_internal_(
 }
 
 void get_sig_kernel_diag_(
-	double* gram,
+	const double* const gram,
 	const uint64_t length1,
 	const uint64_t length2,
-	double* out,
+	double* const out,
 	const uint64_t dyadic_order_1,
 	const uint64_t dyadic_order_2
 );
 
 void sig_kernel_(
-	double* gram,
-	double* out,
-	uint64_t dimension,
-	uint64_t length1,
-	uint64_t length2,
-	uint64_t dyadic_order_1,
-	uint64_t dyadic_order_2,
-	bool return_grid = false
+	const double* const gram,
+	double* const out,
+	const uint64_t dimension,
+	const uint64_t length1,
+	const uint64_t length2,
+	const uint64_t dyadic_order_1,
+	const uint64_t dyadic_order_2,
+	const bool return_grid = false
 );
 
 void batch_sig_kernel_(
-	double* gram,
-	double* out,
-	uint64_t batch_size,
-	uint64_t dimension,
-	uint64_t length1,
-	uint64_t length2,
-	uint64_t dyadic_order_1,
-	uint64_t dyadic_order_2,
-	int n_jobs = 1,
-	bool return_grid = false
+	const double* const gram,
+	double* const out,
+	const uint64_t batch_size,
+	const uint64_t dimension,
+	const uint64_t length1,
+	const uint64_t length2,
+	const uint64_t dyadic_order_1,
+	const uint64_t dyadic_order_2,
+	const int n_jobs = 1,
+	const bool return_grid = false
 );
 
 void sig_kernel_backprop_(

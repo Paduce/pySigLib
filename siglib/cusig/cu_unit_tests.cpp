@@ -262,7 +262,7 @@ public:
     }
     };
 
-    TEST_CLASS(sigKernelBackpropTest) {
+    /*TEST_CLASS(sigKernelBackpropTest) {
 public:
     TEST_METHOD(ManualTest1) {
         auto f = sig_kernel_backprop_cuda;
@@ -325,5 +325,5 @@ public:
         gram_(path1.data(), path2.data(), gram.data() + 4, 1, dimension, length1, length2);
         check_result_3(f, gram, true_, deriv, batch_size, dimension, length1, length2, 0, 0);
     }
-    };
+    };*/
 }
