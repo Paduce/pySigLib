@@ -70,45 +70,6 @@ __global__ void goursat_pde(
 	}
 }
 
-__device__ void goursat_pde_32_full(
-	double* const pde_grid, //32 x L2
-	const double* const gram,
-	const uint64_t iteration,
-	const int num_threads
-) {
-	const int thread_id = threadIdx.x;
-	double* const pde_grid_ = pde_grid + iteration * 32 * dyadic_length_2;
-
-	__syncthreads();
-
-	for (uint64_t p = 2; p < num_anti_diag; ++p) { // First two antidiagonals are initialised to 1
-
-		uint64_t startj, endj;
-		if (dyadic_length_1 > p) startj = 1ULL;
-		else startj = p - dyadic_length_1 + 1;
-		if (num_threads + 1 > p) endj = p;
-		else endj = num_threads + 1;
-
-		const uint64_t j = startj + thread_id;
-
-		if (j < endj) {
-
-			const uint64_t i = p - j;  // Calculate corresponding i (since i + j = p)
-			const uint64_t ii = ((i - 1) >> dyadic_order_1);
-			const uint64_t jj = ((j + iteration * 32 - 1) >> dyadic_order_2);
-
-			const double deriv = gram[ii * (length2 - 1) + jj] * dyadic_frac;
-			const double deriv2 = deriv * deriv * twelth;
-
-			pde_grid_[i * dyadic_length_2 + j] = (pde_grid_[(i - 1) * dyadic_length_2 + j] + pde_grid_[i * dyadic_length_2 + j - 1]) * (
-				1. + 0.5 * deriv + deriv2) - pde_grid_[(i - 1) * dyadic_length_2 + j - 1] * (1. - deriv2);
-
-		}
-		// Wait for all threads to finish
-		__syncthreads();
-	}
-}
-
 __global__ void goursat_pde_full(
 	double* const pde_grid,
 	const double* const gram
@@ -118,14 +79,26 @@ __global__ void goursat_pde_full(
 	const double* const gram_ = gram + blockId * gram_length;
 	double* const pde_grid_ = pde_grid + blockId * grid_length;
 
-	const uint64_t num_full_runs = (dyadic_length_2 - 1) / 32;
-	const uint64_t remainder = (dyadic_length_2 - 1) % 32;
+	if (dyadic_length_2 <= dyadic_length_1) {
+		const uint64_t num_full_runs = (dyadic_length_2 - 1) / 32;
+		const uint64_t remainder = (dyadic_length_2 - 1) % 32;
 
-	for (int i = 0; i < num_full_runs; ++i)
-		goursat_pde_32_full(pde_grid_, gram_, i, 32);
+		for (int i = 0; i < num_full_runs; ++i)
+			goursat_pde_32_full<true>(pde_grid_, gram_, i, 32);
 
-	if (remainder)
-		goursat_pde_32_full(pde_grid_, gram_, num_full_runs, remainder);
+		if (remainder)
+			goursat_pde_32_full<true>(pde_grid_, gram_, num_full_runs, remainder);
+	}
+	else {
+		const uint64_t num_full_runs = (dyadic_length_1 - 1) / 32;
+		const uint64_t remainder = (dyadic_length_1 - 1) % 32;
+
+		for (int i = 0; i < num_full_runs; ++i)
+			goursat_pde_32_full<false>(pde_grid_, gram_, i, 32);
+
+		if (remainder)
+			goursat_pde_32_full<false>(pde_grid_, gram_, num_full_runs, remainder);
+	}
 }
 
 void sig_kernel_cuda_(

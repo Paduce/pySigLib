@@ -150,6 +150,72 @@ __device__ void goursat_pde_32(
 	}
 }
 
+template<bool order>
+__device__ void goursat_pde_32_full(
+	double* const pde_grid, //32 x L2
+	const double* const gram,
+	const uint64_t iteration,
+	const int num_threads
+) {
+	const int thread_id = threadIdx.x;
+	double* const pde_grid_ = order ? pde_grid + iteration * 32 : pde_grid + iteration * 32 * dyadic_length_2;
+
+	__syncthreads();
+
+	for (uint64_t p = 2; p < num_anti_diag; ++p) { // First two antidiagonals are initialised to 1
+
+		if (order) {
+
+			uint64_t startj, endj;
+			if (dyadic_length_1 > p) startj = 1ULL;
+			else startj = p - dyadic_length_1 + 1;
+			if (num_threads + 1 > p) endj = p;
+			else endj = num_threads + 1;
+
+			const uint64_t j = startj + thread_id;
+
+			if (j < endj) {
+
+				const uint64_t i = p - j;  // Calculate corresponding i (since i + j = p)
+				const uint64_t ii = ((i - 1) >> dyadic_order_1);
+				const uint64_t jj = ((j + iteration * 32 - 1) >> dyadic_order_2);
+
+				const double deriv = gram[ii * (length2 - 1) + jj] * dyadic_frac;
+				const double deriv2 = deriv * deriv * twelth;
+
+				pde_grid_[i * dyadic_length_2 + j] = (pde_grid_[(i - 1) * dyadic_length_2 + j] + pde_grid_[i * dyadic_length_2 + (j - 1)]) * (
+					1. + 0.5 * deriv + deriv2) - pde_grid_[(i - 1) * dyadic_length_2 + j - 1] * (1. - deriv2);
+
+			}
+		}
+		else {
+			uint64_t startj, endj;
+			if (dyadic_length_2 > p) startj = 1ULL;
+			else startj = p - dyadic_length_2 + 1;
+			if (num_threads + 1 > p) endj = p;
+			else endj = num_threads + 1;
+
+			const uint64_t j = startj + thread_id;
+
+			if (j < endj) {
+
+				const uint64_t i = p - j;  // Calculate corresponding i (since i + j = p)
+				const uint64_t ii = ((i - 1) >> dyadic_order_2);
+				const uint64_t jj = ((j + iteration * 32 - 1) >> dyadic_order_1);
+
+				const double deriv = gram[jj * (length2 - 1) + ii] * dyadic_frac;
+				const double deriv2 = deriv * deriv * twelth;
+
+				pde_grid_[j * dyadic_length_2 + i] = (pde_grid_[j * dyadic_length_2 + i - 1] + pde_grid_[(j - 1) * dyadic_length_2 + i]) * (
+					1. + 0.5 * deriv + deriv2) - pde_grid_[(j - 1) * dyadic_length_2 + i - 1] * (1. - deriv2);
+
+			}
+		}
+		// Wait for all threads to finish
+		__syncthreads();
+	}
+}
+
 //template<bool order> //order is True if dyadic_length_2 <= dyadic_length_1
 //__device__ void goursat_pde_32_deriv(
 //	const double deriv_val,

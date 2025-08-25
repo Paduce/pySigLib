@@ -260,6 +260,23 @@ public:
         gram_(path1.data(), path2.data(), gram.data(), batch_size, dimension, length1, length2);
         check_result(f, gram, true_sig, batch_size, dimension, length1, length2, 0, 0, true);
     }
+
+    TEST_METHOD(FullGridLarge) {
+        auto f = batch_sig_kernel_cuda;
+        uint64_t dimension = 1, length1 = 410, length2 = 410, batch_size = 32;
+        double* d_gram, * d_out;
+        cudaMalloc(&d_gram, sizeof(double) * (length1 - 1) * (length2 - 2) * batch_size);
+        cudaMalloc(&d_out, sizeof(double) * length1 * length2 * batch_size);
+        f(d_gram, d_out, batch_size, dimension, length1, length2, 0, 0, true);
+        cudaFree(d_gram);
+        cudaFree(d_out);
+
+        cudaError_t err = cudaGetLastError();
+        if (err != cudaSuccess) {
+            const int error_code = static_cast<int>(err);
+            throw std::runtime_error("CUDA Error (" + std::to_string(error_code) + "): " + cudaGetErrorString(err));
+        }
+    }
     };
 
     /*TEST_CLASS(sigKernelBackpropTest) {
