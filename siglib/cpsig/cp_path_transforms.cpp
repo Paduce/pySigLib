@@ -18,12 +18,11 @@
 #include "macros.h"
 #include "cp_path_transforms.h"
 
-void transform_path_backprop_(double* derivs, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, double end_time) {
+void transform_path_backprop_(const double* const derivs, double* const data_out, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time) {
 	// Note that here 'dimension' and 'length' refer to the underlying path, not the transformed one.
 	// Also note that if both time_aug and lead_lag are false, we still copy memory to data_out
 	
-	Path<double> dummy_path(nullptr, dimension, length, time_aug, lead_lag, end_time);
-	const uint64_t transformed_length = dummy_path.length();
+	const Path<double> dummy_path(nullptr, dimension, length, time_aug, lead_lag, end_time);
 	const uint64_t transformed_dimension = dummy_path.dimension();
 	const uint64_t dim_update = 2 * transformed_dimension - dimension;
 
@@ -33,14 +32,14 @@ void transform_path_backprop_(double* derivs, double* data_out, const uint64_t d
 	}
 
 	if (lead_lag) {
-		for (int i = 0; i < length; ++i) {
+		for (uint64_t i = 0; i < length; ++i) {
 			std::memcpy(data_out + i * dimension, derivs + 2 * i * transformed_dimension, dimension * sizeof(double));
 		}
 
 		double* out_ptr = data_out;
-		double* derivs_ptr = derivs + transformed_dimension;
-		for (int i = 0; i < length - 1; ++i) {
-			for (int j = 0; j < dimension; ++j) {
+		const double* derivs_ptr = derivs + transformed_dimension;
+		for (uint64_t i = 0; i < length - 1; ++i) {
+			for (uint64_t j = 0; j < dimension; ++j) {
 				*(out_ptr++) += *(derivs_ptr++);
 			}
 			derivs_ptr += dim_update;
@@ -48,8 +47,8 @@ void transform_path_backprop_(double* derivs, double* data_out, const uint64_t d
 
 		out_ptr = data_out;
 		derivs_ptr = derivs + dimension;
-		for (int i = 0; i < length; ++i) {
-			for (int j = 0; j < dimension; ++j) {
+		for (uint64_t i = 0; i < length; ++i) {
+			for (uint64_t j = 0; j < dimension; ++j) {
 				*(out_ptr++) += *(derivs_ptr++);
 			}
 			derivs_ptr += dim_update;
@@ -57,41 +56,41 @@ void transform_path_backprop_(double* derivs, double* data_out, const uint64_t d
 
 		out_ptr = data_out + dimension;
 		derivs_ptr = derivs + transformed_dimension + dimension;
-		for (int i = 1; i < length; ++i) {
-			for (int j = 0; j < dimension; ++j) {
+		for (uint64_t i = 1; i < length; ++i) {
+			for (uint64_t j = 0; j < dimension; ++j) {
 				*(out_ptr++) += *(derivs_ptr++);
 			}
 			derivs_ptr += dim_update;
 		}
 	}
 	else {
-		for (int i = 0; i < length; ++i) {
+		for (uint64_t i = 0; i < length; ++i) {
 			std::memcpy(data_out + i * dimension, derivs + i * transformed_dimension, dimension * sizeof(double));
 		}
 	}
 }
 
-void batch_transform_path_backprop_(double* derivs, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, double end_time, int n_jobs)
+void batch_transform_path_backprop_(const double* const derivs, double* const data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time, const int n_jobs)
 {
 	// Note that here 'dimension' and 'length' refer to the underlying path, not the transformed one.
 	
 	//Deal with trivial cases
 	if (dimension == 0) { throw std::invalid_argument("transform_path_backprop received path of dimension 0"); }
 
-	Path<double> dummy_path_obj(nullptr, dimension, length, time_aug, lead_lag, end_time); //Work with path_obj to capture time_aug, lead_lag transformations
+	const Path<double> dummy_path_obj(nullptr, dimension, length, time_aug, lead_lag, end_time); //Work with path_obj to capture time_aug, lead_lag transformations
 
 	const uint64_t result_length = length * dimension;
 
 	const uint64_t flat_path_length = dummy_path_obj.length() * dummy_path_obj.dimension();
-	double* const data_end = derivs + flat_path_length * batch_size;
+	const double* const data_end = derivs + flat_path_length * batch_size;
 
-	std::function<void(double*, double*)> transform_func;
+	std::function<void(const double* const, double* const)> transform_func;
 
-	transform_func = [&](double* derivs_ptr, double* out_ptr) {
+	transform_func = [&](const double* const derivs_ptr, double* const out_ptr) {
 		transform_path_backprop_(derivs_ptr, out_ptr, dimension, length, time_aug, lead_lag, end_time);
 		};
 
-	double* derivs_ptr;
+	const double* derivs_ptr;
 	double* out_ptr;
 
 	if (n_jobs != 1) {
@@ -110,43 +109,43 @@ void batch_transform_path_backprop_(double* derivs, double* data_out, const uint
 
 extern "C" {
 
-	CPSIG_API int transform_path_float(float* data_in, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, double end_time) noexcept {
+	CPSIG_API int transform_path_float(const float* const data_in, double* const data_out, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time) noexcept {
 		SAFE_CALL(transform_path_<float>(data_in, data_out, dimension, length, time_aug, lead_lag, end_time));
 	}
 
-	CPSIG_API int transform_path_double(double* data_in, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, double end_time) noexcept {
+	CPSIG_API int transform_path_double(const double* const data_in, double* const data_out, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time) noexcept {
 		SAFE_CALL(transform_path_<double>(data_in, data_out, dimension, length, time_aug, lead_lag, end_time));
 	}
 
-	CPSIG_API int transform_path_int32(int32_t* data_in, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, double end_time) noexcept {
+	CPSIG_API int transform_path_int32(const int32_t* const data_in, double* const data_out, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time) noexcept {
 		SAFE_CALL(transform_path_<int32_t>(data_in, data_out, dimension, length, time_aug, lead_lag, end_time));
 	}
 
-	CPSIG_API int transform_path_int64(int64_t* data_in, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, double end_time) noexcept {
+	CPSIG_API int transform_path_int64(const int64_t* const data_in, double* const data_out, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time) noexcept {
 		SAFE_CALL(transform_path_<int64_t>(data_in, data_out, dimension, length, time_aug, lead_lag, end_time));
 	}
 
-	CPSIG_API int batch_transform_path_float(float* data_in, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, double end_time, int n_jobs) noexcept {
+	CPSIG_API int batch_transform_path_float(const float* const data_in, double* const data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time, const int n_jobs) noexcept {
 		SAFE_CALL(batch_transform_path_<float>(data_in, data_out, batch_size, dimension, length, time_aug, lead_lag, end_time, n_jobs));
 	}
 
-	CPSIG_API int batch_transform_path_double(double* data_in, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, double end_time, int n_jobs) noexcept {
+	CPSIG_API int batch_transform_path_double(const double* const data_in, double* const data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time, const int n_jobs) noexcept {
 		SAFE_CALL(batch_transform_path_<double>(data_in, data_out, batch_size, dimension, length, time_aug, lead_lag, end_time, n_jobs));
 	}
 
-	CPSIG_API int batch_transform_path_int32(int32_t* data_in, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, double end_time, int n_jobs) noexcept {
+	CPSIG_API int batch_transform_path_int32(const int32_t* const data_in, double* const data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time, const int n_jobs) noexcept {
 		SAFE_CALL(batch_transform_path_<int32_t>(data_in, data_out, batch_size, dimension, length, time_aug, lead_lag, end_time, n_jobs));
 	}
 
-	CPSIG_API int batch_transform_path_int64(int64_t* data_in, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, double end_time, int n_jobs) noexcept {
+	CPSIG_API int batch_transform_path_int64(const int64_t* const data_in, double* const data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time, const int n_jobs) noexcept {
 		SAFE_CALL(batch_transform_path_<int64_t>(data_in, data_out, batch_size, dimension, length, time_aug, lead_lag, end_time, n_jobs));
 	}
 
-	CPSIG_API int transform_path_backprop(double* derivs, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, double end_time) noexcept {
+	CPSIG_API int transform_path_backprop(const double* const derivs, double* const data_out, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time) noexcept {
 		SAFE_CALL(transform_path_backprop_(derivs, data_out, dimension, length, time_aug, lead_lag, end_time));
 	}
 
-	CPSIG_API int batch_transform_path_backprop(double* derivs, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug, bool lead_lag, double end_time, int n_jobs) noexcept {
+	CPSIG_API int batch_transform_path_backprop(const double* const derivs, double* const data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time, const int n_jobs) noexcept {
 		SAFE_CALL(batch_transform_path_backprop_(derivs, data_out, batch_size, dimension, length, time_aug, lead_lag, end_time, n_jobs));
 	}
 }

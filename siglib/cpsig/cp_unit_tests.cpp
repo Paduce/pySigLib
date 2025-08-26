@@ -910,6 +910,35 @@ namespace cpSigTests
             check_result(f, gram, true_, deriv, k_grid.data(), dimension, length1, length2, 0, 0);
         }
 
+        TEST_METHOD(ManualTest1Extended) {
+            auto f = sig_kernel_backprop;
+            uint64_t dimension = 1, length1 = 34, length2 = 35;
+            std::vector<double> path1(length1, 0.);
+            path1[length1 - 1] = 2.;
+            std::vector<double> path2(length2, 0.);
+            path2[length2 - 2] = 1.;
+            path2[length2 - 1] = 2.;
+            double deriv = 1.;
+            std::vector<double> true_((length1 - 1) * (length2 - 1), 11.); //{ 4.5 + 1. / 6, 4.5 };
+
+            for (int i = 1; i < length1 - 1; ++i) {
+                true_[(length2 - 1) * i - 2] = 7. + 1. / 9;
+                true_[(length2 - 1) * i - 1] = 2. + 1. / 3;
+            }
+            for (int i = (length1 - 2) * (length2 - 1); i < (length1 - 1) * (length2 - 1) - 2; ++i) {
+                true_[i] = 5. + 4. / 9;
+            }
+
+            true_[(length1 - 1) * (length2 - 1) - 2] = 4.5 + 1. / 6;
+            true_[(length1 - 1) * (length2 - 1) - 1] = 4.5;
+            std::vector<double> gram((length1 - 1) * (length2 - 1));
+            std::vector<double> k_grid(length1 * length2, 1.);// = { 1., 1., 1., 1., 4., 11. };
+            k_grid[length1 * length2 - 2] = 4.;
+            k_grid[length1 * length2 - 1] = 11.;
+            gram_(path1.data(), path2.data(), gram.data(), 1, dimension, length1, length2);
+            check_result(f, gram, true_, deriv, k_grid.data(), dimension, length1, length2, 0, 0);
+        }
+
         TEST_METHOD(ManualTest1Rev) {
             auto f = sig_kernel_backprop;
             uint64_t dimension = 1, length2 = 2, length1 = 3;

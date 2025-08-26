@@ -37,18 +37,18 @@
 
 extern "C" {
 
-	CPSIG_API int transform_path_float(float* data_in, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug = false, bool lead_lag = false, double end_time = 1.) noexcept;
-	CPSIG_API int transform_path_double(double* data_in, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug = false, bool lead_lag = false, double end_time = 1.) noexcept;
-	CPSIG_API int transform_path_int32(int32_t* data_in, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug = false, bool lead_lag = false, double end_time = 1.) noexcept;
-	CPSIG_API int transform_path_int64(int64_t* data_in, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug = false, bool lead_lag = false, double end_time = 1.) noexcept;
+	CPSIG_API int transform_path_float(const float* const data_in, double* const data_out, const uint64_t dimension, const uint64_t length, const bool time_aug = false, const bool lead_lag = false, const double end_time = 1.) noexcept;
+	CPSIG_API int transform_path_double(const double* const data_in, double* const data_out, const uint64_t dimension, const uint64_t length, const bool time_aug = false, const bool lead_lag = false, const double end_time = 1.) noexcept;
+	CPSIG_API int transform_path_int32(const int32_t* const data_in, double* const data_out, const uint64_t dimension, const uint64_t length, const bool time_aug = false, const bool lead_lag = false, const double end_time = 1.) noexcept;
+	CPSIG_API int transform_path_int64(const int64_t* const data_in, double* const data_out, const uint64_t dimension, const uint64_t length, const bool time_aug = false, const bool lead_lag = false, const double end_time = 1.) noexcept;
 
-	CPSIG_API int batch_transform_path_float(float* data_in, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug = false, bool lead_lag = false, double end_time = 1., int n_jobs = 1) noexcept;
-	CPSIG_API int batch_transform_path_double(double* data_in, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug = false, bool lead_lag = false, double end_time = 1., int n_jobs = 1) noexcept;
-	CPSIG_API int batch_transform_path_int32(int32_t* data_in, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug = false, bool lead_lag = false, double end_time = 1., int n_jobs = 1) noexcept;
-	CPSIG_API int batch_transform_path_int64(int64_t* data_in, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug = false, bool lead_lag = false, double end_time = 1., int n_jobs = 1) noexcept;
+	CPSIG_API int batch_transform_path_float(const float* const data_in, double* const data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, const bool time_aug = false, const bool lead_lag = false, const double end_time = 1., const int n_jobs = 1) noexcept;
+	CPSIG_API int batch_transform_path_double(const double* const data_in, double* const data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, const bool time_aug = false, const bool lead_lag = false, const double end_time = 1., const int n_jobs = 1) noexcept;
+	CPSIG_API int batch_transform_path_int32(const int32_t* const data_in, double* const data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, const bool time_aug = false, const bool lead_lag = false, const double end_time = 1., const int n_jobs = 1) noexcept;
+	CPSIG_API int batch_transform_path_int64(const int64_t* const data_in, double* const data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, const bool time_aug = false, const bool lead_lag = false, const double end_time = 1., const int n_jobs = 1) noexcept;
 
-	CPSIG_API int transform_path_backprop(double* derivs, double* data_out, const uint64_t dimension, const uint64_t length, bool time_aug = false, bool lead_lag = false, double end_time = 1.) noexcept;
-	CPSIG_API int batch_transform_path_backprop(double* derivs, double* data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, bool time_aug = false, bool lead_lag = false, double end_time = 1., int n_jobs = 1) noexcept;
+	CPSIG_API int transform_path_backprop(const double* const derivs, double* const data_out, const uint64_t dimension, const uint64_t length, const bool time_aug = false, const bool lead_lag = false, const double end_time = 1.) noexcept;
+	CPSIG_API int batch_transform_path_backprop(const double* const derivs, double* const data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, const bool time_aug = false, const bool lead_lag = false, const double end_time = 1., const int n_jobs = 1) noexcept;
 
 	CPSIG_API uint64_t sig_length(uint64_t dimension, uint64_t degree) noexcept;
 	CPSIG_API int sig_combine(double* sig1, double* sig2, double* out, uint64_t dimension, uint64_t degree) noexcept;
