@@ -24,6 +24,9 @@
     <ClInclude Include="cuda_constants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cu_path_transforms.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cupch.cpp">
@@ -36,6 +39,9 @@
     </CudaCompile>
     <CudaCompile Include="cu_sig_kernel.h">
       <Filter>Header Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="cu_path_transforms.cu">
+      <Filter>Source Files</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

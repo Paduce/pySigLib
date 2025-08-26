@@ -16,7 +16,7 @@
 from ctypes import c_float, c_double, c_int32, c_int64
 import numpy as np
 import torch
-from .load_siglib import CPSIG
+from .load_siglib import CPSIG, CUSIG, BUILT_WITH_CUDA
 
 ######################################################
 # Some dicts to simplify dtype cases
@@ -55,6 +55,24 @@ CPSIG_BATCH_TRANSFORM_PATH = {
     "float32": CPSIG.batch_transform_path_float,
     "float64": CPSIG.batch_transform_path_double
 }
+
+CUSIG_TRANSFORM_PATH_CUDA = None
+CUSIG_BATCH_TRANSFORM_PATH_CUDA = None
+
+if BUILT_WITH_CUDA:
+    CUSIG_TRANSFORM_PATH_CUDA = {
+        "int32": CUSIG.transform_path_cuda_int32,
+        "int64": CUSIG.transform_path_cuda_int64,
+        "float32": CUSIG.transform_path_cuda_float,
+        "float64": CUSIG.transform_path_cuda_double
+    }
+
+    CUSIG_BATCH_TRANSFORM_PATH_CUDA = {
+        "int32": CUSIG.batch_transform_path_cuda_int32,
+        "int64": CUSIG.batch_transform_path_cuda_int64,
+        "float32": CUSIG.batch_transform_path_cuda_float,
+        "float64": CUSIG.batch_transform_path_cuda_double
+    }
 
 CPSIG_SIGNATURE = {
     "int32": CPSIG.signature_int32,

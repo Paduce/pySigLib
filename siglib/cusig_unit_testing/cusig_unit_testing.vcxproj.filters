@@ -30,6 +30,9 @@
     <ClInclude Include="..\cusig\cu_sig_kernel.h">
       <Filter>Header Files\cusig</Filter>
     </ClInclude>
+    <ClInclude Include="..\cusig\cu_path_transforms.h">
+      <Filter>Header Files\cusig</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\cusig\cupch.cpp">
@@ -41,6 +44,9 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\cusig\cu_sig_kernel.cu">
+      <Filter>Source Files\cusig</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\cusig\cu_path_transforms.cu">
       <Filter>Source Files\cusig</Filter>
     </CudaCompile>
   </ItemGroup>

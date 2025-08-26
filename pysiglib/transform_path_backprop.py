@@ -58,6 +58,37 @@ def batch_transform_path_backprop_(data, result, length, dimension, time_aug, le
         raise Exception("Error in pysiglib.transform_path_backprop: " + err_msg(err_code))
     return result.data
 
+def transform_path_backprop_cuda_(data, result, length, dimension, time_aug, lead_lag, end_time):
+    err_code = CUSIG.transform_path_backprop_cuda(
+        data.data_ptr,
+        result.data_ptr,
+        dimension,
+        length,
+        time_aug,
+        lead_lag,
+        end_time
+    )
+
+    if err_code:
+        raise Exception("Error in pysiglib.transform_path_backprop: " + err_msg(err_code))
+    return result.data
+
+def batch_transform_path_backprop_cuda_(data, result, length, dimension, time_aug, lead_lag, end_time):
+    err_code = CUSIG.batch_transform_path_backprop_cuda(
+        data.data_ptr,
+        result.data_ptr,
+        data.batch_size,
+        dimension,
+        length,
+        time_aug,
+        lead_lag,
+        end_time
+    )
+
+    if err_code:
+        raise Exception("Error in pysiglib.transform_path_backprop: " + err_msg(err_code))
+    return result.data
+
 def transform_path_backprop(
     derivs : Union[np.ndarray, torch.tensor],
     time_aug : bool = False,
@@ -105,8 +136,6 @@ def transform_path_backprop(
     if (not time_aug) and (not lead_lag):
         return derivs
 
-    check_cpu(derivs, "path")
-
     data = PathInputHandler(derivs, False, False, end_time, "path")
     length = (data.length + 1) // 2 if lead_lag else data.length
     dimension = data.dimension - 1 if time_aug else data.dimension
@@ -117,5 +146,17 @@ def transform_path_backprop(
         check_type(n_jobs, "n_jobs", int)
         if n_jobs == 0:
             raise ValueError("n_jobs cannot be 0")
-        return batch_transform_path_backprop_(data, result, length, dimension, time_aug, lead_lag, end_time, n_jobs)
-    return transform_path_backprop_(data, result, length, dimension, time_aug, lead_lag, end_time)
+
+        if data.device == "cpu":
+            return batch_transform_path_backprop_(data, result, length, dimension, time_aug, lead_lag, end_time, n_jobs)
+        else:
+            if not BUILT_WITH_CUDA:
+                raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")
+            return batch_transform_path_backprop_cuda_(data, result, length, dimension, time_aug, lead_lag, end_time)
+
+    if data.device == "cpu":
+        return transform_path_backprop_(data, result, length, dimension, time_aug, lead_lag, end_time)
+    else:
+        if not BUILT_WITH_CUDA:
+            raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")
+        return transform_path_backprop_cuda_(data, result, length, dimension, time_aug, lead_lag, end_time)

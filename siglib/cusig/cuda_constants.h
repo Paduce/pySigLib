@@ -33,4 +33,14 @@ extern __constant__ double dyadic_frac;
 extern __constant__ uint64_t gram_length;
 extern __constant__ uint64_t grid_length;
 
+__constant__ uint64_t length;
+__constant__ bool time_aug;
+__constant__ bool lead_lag;
+__constant__ double end_time;
+__constant__ uint64_t path_size;
+
+__constant__ uint64_t transformed_dimension;
+__constant__ uint64_t transformed_length;
+__constant__ uint64_t transformed_path_size;
+
 #endif

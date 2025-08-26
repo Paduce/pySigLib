@@ -516,4 +516,49 @@ public:
         check_result_4(f, gram, true_, derivs, k_grid, batch_size, dimension, length1, length2, 0, 0);
     }
     };
+
+    TEST_CLASS(transformPathBackprop) {
+    public:
+
+        TEST_METHOD(TimeAugTest) {
+            auto f = transform_path_backprop_cuda;
+            uint64_t dimension = 2, length = 3;
+            std::vector<double> derivs((dimension + 1) * length, 1.);
+            std::vector<double> true_ = { 1., 1., 1., 1., 1., 1. };
+            check_result(f, derivs, true_, dimension, length, true, false, 1.);
+        }
+        TEST_METHOD(LeadLagTest) {
+            auto f = transform_path_backprop_cuda;
+            uint64_t dimension = 2, length = 3;
+            std::vector<double> derivs(2 * dimension * (2 * length - 1));
+            for (int i = 0; i < derivs.size(); ++i)
+                derivs[i] = i;
+            std::vector<double> true_ = { 6., 9., 36., 40., 48., 51. };
+            check_result(f, derivs, true_, dimension, length, false, true, 1.);
+        }
+
+        TEST_METHOD(LeadLagTest2) {
+            auto f = transform_path_backprop_cuda;
+            uint64_t dimension = 5, length = 100;
+            std::vector<double> derivs(2 * dimension * (2 * length - 1));
+            for (int i = 0; i < derivs.size(); ++i)
+                derivs[i] = 1.;
+            std::vector<double> true_(dimension * length);
+            for (int i = 0; i < dimension; ++i)
+                true_[i] = 3.;
+            for (int i = dimension; i < true_.size() - dimension; ++i)
+                true_[i] = 4.;
+            for (int i = true_.size() - dimension; i < true_.size(); ++i)
+                true_[i] = 3.;
+            check_result(f, derivs, true_, dimension, length, false, true, 1.);
+        }
+
+        TEST_METHOD(TimeAugLeadLagTest) {
+            auto f = transform_path_backprop_cuda;
+            uint64_t dimension = 2, length = 3;
+            std::vector<double> derivs((2 * dimension + 1) * (2 * length - 1), 1.);
+            std::vector<double> true_ = { 3., 3., 4., 4., 3., 3. };
+            check_result(f, derivs, true_, dimension, length, true, true, 1.);
+        }
+    };
 }

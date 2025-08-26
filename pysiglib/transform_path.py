@@ -18,15 +18,31 @@ from typing import Union
 import numpy as np
 import torch
 
+from .load_siglib import BUILT_WITH_CUDA
 from .data_handlers import PathOutputHandler
 from .param_checks import check_type, check_cpu
 from .error_codes import err_msg
-from .dtypes import CPSIG_TRANSFORM_PATH, CPSIG_BATCH_TRANSFORM_PATH
+from .dtypes import CPSIG_TRANSFORM_PATH, CPSIG_BATCH_TRANSFORM_PATH, CUSIG_TRANSFORM_PATH_CUDA, CUSIG_BATCH_TRANSFORM_PATH_CUDA
 
 from .data_handlers import PathInputHandler
 
 def transform_path_(data, result):
     err_code = CPSIG_TRANSFORM_PATH[data.dtype](
+        data.data_ptr,
+        result.data_ptr,
+        data.data_dimension,
+        data.data_length,
+        data.time_aug,
+        data.lead_lag,
+        data.end_time
+    )
+
+    if err_code:
+        raise Exception("Error in pysiglib.transform_path: " + err_msg(err_code))
+    return result.data
+
+def transform_path_cuda_(data, result):
+    err_code = CUSIG_TRANSFORM_PATH_CUDA[data.dtype](
         data.data_ptr,
         result.data_ptr,
         data.data_dimension,
@@ -51,6 +67,22 @@ def batch_transform_path_(data, result, n_jobs):
         data.lead_lag,
         data.end_time,
         n_jobs
+    )
+
+    if err_code:
+        raise Exception("Error in pysiglib.transform_path: " + err_msg(err_code))
+    return result.data
+
+def batch_transform_path_cuda_(data, result, n_jobs):
+    err_code = CUSIG_BATCH_TRANSFORM_PATH_CUDA[data.dtype](
+        data.data_ptr,
+        result.data_ptr,
+        data.batch_size,
+        data.data_dimension,
+        data.data_length,
+        data.time_aug,
+        data.lead_lag,
+        data.end_time
     )
 
     if err_code:
@@ -154,13 +186,23 @@ def transform_path(
     if (not time_aug) and (not lead_lag):
         return path
 
-    check_cpu(path, "path")
-
     data = PathInputHandler(path, time_aug, lead_lag, end_time, "path")
     result = PathOutputHandler(data.length, data.dimension, data)
     if data.is_batch:
         check_type(n_jobs, "n_jobs", int)
         if n_jobs == 0:
             raise ValueError("n_jobs cannot be 0")
-        return batch_transform_path_(data, result, n_jobs)
-    return transform_path_(data, result)
+
+        if data.device == "cpu":
+            return batch_transform_path_(data, result, n_jobs)
+        else:
+            if not BUILT_WITH_CUDA:
+                raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")
+            return batch_transform_path_cuda_(data, result, n_jobs)
+
+    if data.device == "cpu":
+        return transform_path_(data, result)
+    else:
+        if not BUILT_WITH_CUDA:
+            raise RuntimeError("pySigLib was build without CUDA - data must be moved to CPU.")
+        return transform_path_cuda_(data, result)

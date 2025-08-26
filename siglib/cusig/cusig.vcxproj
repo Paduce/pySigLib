@@ -108,6 +108,8 @@
     <ClInclude Include="cuda_constants.h" />
     <ClInclude Include="cusig.h" />
     <ClInclude Include="cupch.h" />
+    <ClInclude Include="cu_path_transforms.h" />
+    <CudaCompile Include="cu_path_transforms.cu" />
     <CudaCompile Include="cu_sig_kernel.h" />
   </ItemGroup>
   <ItemGroup>

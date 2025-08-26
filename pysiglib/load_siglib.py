@@ -203,6 +203,138 @@ CPSIG.batch_transform_path_backprop.argtypes = (
 )
 CPSIG.batch_transform_path_backprop.restype = c_int
 
+if BUILT_WITH_CUDA:
+    ######################################################
+    # transform_path_cuda
+    ######################################################
+
+    CUSIG.transform_path_cuda_float.argtypes = (
+        POINTER(c_float),
+        POINTER(c_double),
+        c_uint64,
+        c_uint64,
+        c_bool,
+        c_bool,
+        c_double
+    )
+    CUSIG.transform_path_cuda_float.restype = c_int
+
+    CUSIG.transform_path_cuda_double.argtypes = (
+        POINTER(c_double),
+        POINTER(c_double),
+        c_uint64,
+        c_uint64,
+        c_bool,
+        c_bool,
+        c_double
+    )
+    CUSIG.transform_path_cuda_double.restype = c_int
+
+    CUSIG.transform_path_cuda_int32.argtypes = (
+        POINTER(c_int32),
+        POINTER(c_double),
+        c_uint64,
+        c_uint64,
+        c_bool,
+        c_bool,
+        c_double
+    )
+    CUSIG.transform_path_cuda_int32.restype = c_int
+
+    CUSIG.transform_path_cuda_int64.argtypes = (
+        POINTER(c_int64),
+        POINTER(c_double),
+        c_uint64,
+        c_uint64,
+        c_bool,
+        c_bool,
+        c_double
+    )
+    CUSIG.transform_path_cuda_int64.restype = c_int
+
+    ######################################################
+    # batch_transform_path_cuda
+    ######################################################
+
+    CUSIG.batch_transform_path_cuda_float.argtypes = (
+        POINTER(c_float),
+        POINTER(c_double),
+        c_uint64,
+        c_uint64,
+        c_uint64,
+        c_bool,
+        c_bool,
+        c_double
+    )
+    CUSIG.batch_transform_path_cuda_float.restype = c_int
+
+    CUSIG.batch_transform_path_cuda_double.argtypes = (
+        POINTER(c_double),
+        POINTER(c_double),
+        c_uint64,
+        c_uint64,
+        c_uint64,
+        c_bool,
+        c_bool,
+        c_double
+    )
+    CUSIG.batch_transform_path_cuda_double.restype = c_int
+
+    CUSIG.batch_transform_path_cuda_int32.argtypes = (
+        POINTER(c_int32),
+        POINTER(c_double),
+        c_uint64,
+        c_uint64,
+        c_uint64,
+        c_bool,
+        c_bool,
+        c_double
+    )
+    CUSIG.batch_transform_path_cuda_int32.restype = c_int
+
+    CUSIG.batch_transform_path_cuda_int64.argtypes = (
+        POINTER(c_int64),
+        POINTER(c_double),
+        c_uint64,
+        c_uint64,
+        c_uint64,
+        c_bool,
+        c_bool,
+        c_double
+    )
+    CUSIG.batch_transform_path_cuda_int64.restype = c_int
+
+    ######################################################
+    # transform_path_backprop_cuda
+    ######################################################
+
+    CUSIG.transform_path_backprop_cuda.argtypes = (
+        POINTER(c_double),
+        POINTER(c_double),
+        c_uint64,
+        c_uint64,
+        c_bool,
+        c_bool,
+        c_double
+    )
+    CUSIG.transform_path_backprop_cuda.restype = c_int
+
+    ######################################################
+    # batch_transform_path_backprop_cuda
+    ######################################################
+
+    CUSIG.batch_transform_path_backprop_cuda.argtypes = (
+        POINTER(c_double),
+        POINTER(c_double),
+        c_uint64,
+        c_uint64,
+        c_uint64,
+        c_bool,
+        c_bool,
+        c_double
+    )
+    CUSIG.batch_transform_path_backprop_cuda.restype = c_int
+
 ######################################################
 # sig_length
 ######################################################
