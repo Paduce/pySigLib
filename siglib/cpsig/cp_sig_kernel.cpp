@@ -19,13 +19,13 @@
 #include "macros.h"
 
 void get_sig_kernel_(
-	const double* const gram,
-	const uint64_t length1,
-	const uint64_t length2,
-	double* const out,
-	const uint64_t dyadic_order_1,
-	const uint64_t dyadic_order_2,
-	const bool return_grid
+	const double* gram,
+	uint64_t length1,
+	uint64_t length2,
+	double* out,
+	uint64_t dyadic_order_1,
+	uint64_t dyadic_order_2,
+	bool return_grid
 ) {
 	const double dyadic_frac = 1. / (1ULL << (dyadic_order_1 + dyadic_order_2));
 	const double twelth = 1. / 12;
@@ -91,32 +91,32 @@ void get_sig_kernel_(
 }
 
 void get_sig_kernel_diag_(
-	const double* const gram,
-	const uint64_t length1,
-	const uint64_t length2,
-	double* const out,
-	const uint64_t dyadic_order_1,
-	const uint64_t dyadic_order_2
+	const double* gram,
+	uint64_t length1,
+	uint64_t length2,
+	double* out,
+	uint64_t dyadic_order_1,
+	uint64_t dyadic_order_2
 ) {
 	// Dyadically refined grid dimensions
 	const uint64_t dyadic_length_1 = ((length1 - 1) << dyadic_order_1) + 1;
 	const uint64_t dyadic_length_2 = ((length2 - 1) << dyadic_order_2) + 1;
 	
 	if (dyadic_length_2 <= dyadic_length_1)
-		get_sig_kernel_diag_internal_<true>(gram, length1, length2, out, dyadic_order_1, dyadic_order_2, dyadic_length_1, dyadic_length_2);
+		get_sig_kernel_diag_internal_<true>(gram, length2, out, dyadic_order_1, dyadic_order_2, dyadic_length_1, dyadic_length_2);
 	else
-		get_sig_kernel_diag_internal_<false>(gram, length1, length2, out, dyadic_order_1, dyadic_order_2, dyadic_length_1, dyadic_length_2);
+		get_sig_kernel_diag_internal_<false>(gram, length2, out, dyadic_order_1, dyadic_order_2, dyadic_length_1, dyadic_length_2);
 }
 
 void sig_kernel_(
-	const double* const gram,
-	double* const out,
-	const uint64_t dimension,
-	const uint64_t length1,
-	const uint64_t length2,
-	const uint64_t dyadic_order_1,
-	const uint64_t dyadic_order_2,
-	const bool return_grid
+	const double* gram,
+	double* out,
+	uint64_t dimension,
+	uint64_t length1,
+	uint64_t length2,
+	uint64_t dyadic_order_1,
+	uint64_t dyadic_order_2,
+	bool return_grid
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
 	if (return_grid)
@@ -126,16 +126,16 @@ void sig_kernel_(
 }
 
 void batch_sig_kernel_(
-	const double* const gram,
-	double* const out,
-	const uint64_t batch_size,
-	const uint64_t dimension,
-	const uint64_t length1,
-	const uint64_t length2,
-	const uint64_t dyadic_order_1,
-	const uint64_t dyadic_order_2,
-	const int n_jobs,
-	const bool return_grid
+	const double* gram,
+	double* out,
+	uint64_t batch_size,
+	uint64_t dimension,
+	uint64_t length1,
+	uint64_t length2,
+	uint64_t dyadic_order_1,
+	uint64_t dyadic_order_2,
+	int n_jobs,
+	bool return_grid
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
 	if (!gram) {
@@ -177,15 +177,15 @@ void batch_sig_kernel_(
 }
 
 void sig_kernel_backprop_(
-	const double* const gram,
-	double* const out,
-	const double deriv,
-	const double* const k_grid,
-	const uint64_t dimension,
-	const uint64_t length1,
-	const uint64_t length2,
-	const uint64_t dyadic_order_1,
-	const uint64_t dyadic_order_2
+	const double* gram,
+	double* out,
+	double deriv,
+	const double* k_grid,
+	uint64_t dimension,
+	uint64_t length1,
+	uint64_t length2,
+	uint64_t dyadic_order_1,
+	uint64_t dyadic_order_2
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
 	get_sig_kernel_backprop_(gram, out, deriv, k_grid, length1, length2, dyadic_order_1, dyadic_order_2);
@@ -193,14 +193,14 @@ void sig_kernel_backprop_(
 }
 
 void get_sig_kernel_backprop_diag_(
-	const double* const gram,
-	double* const out,
-	const double deriv,
-	const double* const k_grid,
-	const uint64_t length1,
-	const uint64_t length2,
-	const uint64_t dyadic_order_1,
-	const uint64_t dyadic_order_2
+	const double* gram,
+	double* out,
+	double deriv,
+	const double* k_grid,
+	uint64_t length1,
+	uint64_t length2,
+	uint64_t dyadic_order_1,
+	uint64_t dyadic_order_2
 ) {
 	// Dyadically refined grid dimensions
 	const uint64_t dyadic_length_1 = ((length1 - 1) << dyadic_order_1) + 1;
@@ -213,14 +213,14 @@ void get_sig_kernel_backprop_diag_(
 }
 
 void get_sig_kernel_backprop_(
-	const double* const gram,
-	double* const out,
-	const double deriv,
-	const double* const k_grid,
-	const uint64_t length1,
-	const uint64_t length2,
-	const uint64_t dyadic_order_1,
-	const uint64_t dyadic_order_2
+	const double* gram,
+	double* out,
+	double deriv,
+	const double* k_grid,
+	uint64_t length1,
+	uint64_t length2,
+	uint64_t dyadic_order_1,
+	uint64_t dyadic_order_2
 ) {
 	const uint64_t dyadic_length_1 = ((length1 - 1) << dyadic_order_1) + 1;
 	const uint64_t dyadic_length_2 = ((length2 - 1) << dyadic_order_2) + 1;
@@ -382,17 +382,17 @@ void get_sig_kernel_backprop_(
 }
 
 void batch_sig_kernel_backprop_(
-	const double* const gram,
-	double* const out,
-	const double* const derivs,
-	const double* const k_grid,
-	const uint64_t batch_size,
-	const uint64_t dimension,
-	const uint64_t length1,
-	const uint64_t length2,
-	const uint64_t dyadic_order_1,
-	const uint64_t dyadic_order_2,
-	const int n_jobs
+	const double* gram,
+	double* out,
+	const double* derivs,
+	const double* k_grid,
+	uint64_t batch_size,
+	uint64_t dimension,
+	uint64_t length1,
+	uint64_t length2,
+	uint64_t dyadic_order_1,
+	uint64_t dyadic_order_2,
+	int n_jobs
 ) {
 	if (dimension == 0) { throw std::invalid_argument("signature kernel received path of dimension 0"); }
 
@@ -436,19 +436,19 @@ void batch_sig_kernel_backprop_(
 
 extern "C" {
 
-	CPSIG_API int sig_kernel(const double* const gram, double* const out, const uint64_t dimension, const uint64_t length1, const uint64_t length2, const uint64_t dyadic_order_1, const uint64_t dyadic_order_2, const bool return_grid) noexcept {
+	CPSIG_API int sig_kernel(const double* gram, double* out, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2, bool return_grid) noexcept {
 		SAFE_CALL(sig_kernel_(gram, out, dimension, length1, length2, dyadic_order_1, dyadic_order_2, return_grid));
 	}
 
-	CPSIG_API int batch_sig_kernel(const double* const gram, double* const out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length1, const uint64_t length2, const uint64_t dyadic_order_1, const uint64_t dyadic_order_2, const int n_jobs, const bool return_grid) noexcept {
+	CPSIG_API int batch_sig_kernel(const double* gram, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2, int n_jobs, bool return_grid) noexcept {
 		SAFE_CALL(batch_sig_kernel_(gram, out, batch_size, dimension, length1, length2, dyadic_order_1, dyadic_order_2, n_jobs, return_grid));
 	}
 
-	CPSIG_API int sig_kernel_backprop(const double* const gram, double* const out, const double deriv, const double* const k_grid, const uint64_t dimension, const uint64_t length1, const uint64_t length2, const uint64_t dyadic_order_1, const uint64_t dyadic_order_2) noexcept {
+	CPSIG_API int sig_kernel_backprop(const double* gram, double* out, double deriv, const double* k_grid, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2) noexcept {
 		SAFE_CALL(sig_kernel_backprop_(gram, out, deriv, k_grid, dimension, length1, length2, dyadic_order_1, dyadic_order_2));
 	}
 
-	CPSIG_API int batch_sig_kernel_backprop(const double* const gram, double* const out, const double* const derivs, const double* const k_grid, const uint64_t batch_size, const uint64_t dimension, const uint64_t length1, const uint64_t length2, const uint64_t dyadic_order_1, const uint64_t dyadic_order_2, const int n_jobs) noexcept {
+	CPSIG_API int batch_sig_kernel_backprop(const double* gram, double* out, const double* derivs, const double* k_grid, uint64_t batch_size, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2, int n_jobs) noexcept {
 		SAFE_CALL(batch_sig_kernel_backprop_(gram, out, derivs, k_grid, batch_size, dimension, length1, length2, dyadic_order_1, dyadic_order_2, n_jobs));
 	}
 }

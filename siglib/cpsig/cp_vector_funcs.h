@@ -18,7 +18,7 @@
 #include "macros.h"
 
 #ifdef VEC
-FORCE_INLINE void vec_mult_add(double* out, double* other, double scalar, uint64_t size)
+FORCE_INLINE void vec_mult_add(double* out, const double* other, double scalar, uint64_t size)
 {
 	uint64_t first_loop_remainder = size % 4UL;
 
@@ -28,10 +28,11 @@ FORCE_INLINE void vec_mult_add(double* out, double* other, double scalar, uint64
 	__m128d c, d;
 	__m128d scalar_128 = _mm_set1_pd(scalar);
 
-	double* other_ptr = other, * out_ptr = out;
+	const double* other_ptr = other;
+	double* out_ptr = out;
 	double* out_end = out + size;
 
-	double* first_loop_end = out_end - first_loop_remainder;
+	double* const first_loop_end = out_end - first_loop_remainder;
 
 	for (; out_ptr != first_loop_end; other_ptr += 4, out_ptr += 4) {
 		a = _mm256_loadu_pd(other_ptr);
@@ -58,7 +59,7 @@ FORCE_INLINE void vec_mult_add(double* out, double* other, double scalar, uint64
 	}
 }
 
-FORCE_INLINE void vec_mult_assign(double* out, double* other, double scalar, uint64_t size) {
+FORCE_INLINE void vec_mult_assign(double* out, const double* other, double scalar, uint64_t size) {
 	uint64_t first_loop_remainder = size % 4UL;
 
 	__m256d a;
@@ -67,10 +68,11 @@ FORCE_INLINE void vec_mult_assign(double* out, double* other, double scalar, uin
 	__m128d c;
 	__m128d scalar_128 = _mm_set1_pd(scalar);
 
-	double* other_ptr = other, * out_ptr = out;
+	const double* other_ptr = other;
+	double* out_ptr = out;
 	double* out_end = out + size;
 
-	double* first_loop_end = out_end - first_loop_remainder;
+	double* const first_loop_end = out_end - first_loop_remainder;
 
 	for (; out_ptr != first_loop_end; other_ptr += 4, out_ptr += 4) {
 		a = _mm256_loadu_pd(other_ptr);

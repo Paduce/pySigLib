@@ -237,7 +237,7 @@ namespace cpSigTests
 
             Path<int> path(data.data(), dimension, length);
             Point<int> pt = path[3];
-            Assert::AreEqual(data.data() + 3 * dimension, pt.data());
+            Assert::AreEqual(static_cast<const int*>(data.data() + 3 * dimension), pt.data());
         }
         TEST_METHOD(FirstLastTest)
         {
@@ -921,11 +921,11 @@ namespace cpSigTests
             double deriv = 1.;
             std::vector<double> true_((length1 - 1) * (length2 - 1), 11.); //{ 4.5 + 1. / 6, 4.5 };
 
-            for (int i = 1; i < length1 - 1; ++i) {
+            for (uint64_t i = 1; i < length1 - 1; ++i) {
                 true_[(length2 - 1) * i - 2] = 7. + 1. / 9;
                 true_[(length2 - 1) * i - 1] = 2. + 1. / 3;
             }
-            for (int i = (length1 - 2) * (length2 - 1); i < (length1 - 1) * (length2 - 1) - 2; ++i) {
+            for (uint64_t i = (length1 - 2) * (length2 - 1); i < (length1 - 1) * (length2 - 1) - 2; ++i) {
                 true_[i] = 5. + 4. / 9;
             }
 
@@ -1135,14 +1135,14 @@ namespace cpSigTests
             auto f = transform_path_backprop;
             uint64_t dimension = 5, length = 100;
             std::vector<double> derivs(2 * dimension * (2 * length - 1));
-            for (int i = 0; i < derivs.size(); ++i)
+            for (uint64_t i = 0; i < derivs.size(); ++i)
                 derivs[i] = 1.;
             std::vector<double> true_(dimension * length);
-            for (int i = 0; i < dimension; ++i)
+            for (uint64_t i = 0; i < dimension; ++i)
                 true_[i] = 3.;
-            for (int i = dimension; i < true_.size() - dimension; ++i)
+            for (uint64_t i = dimension; i < true_.size() - dimension; ++i)
                 true_[i] = 4.;
-            for (int i = true_.size() - dimension; i < true_.size(); ++i)
+            for (uint64_t i = true_.size() - dimension; i < true_.size(); ++i)
                 true_[i] = 3.;
             check_result(f, derivs, true_, dimension, length, false, true, 1.);
         }

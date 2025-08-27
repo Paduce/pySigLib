@@ -20,7 +20,15 @@
 #include "multithreading.h"
 
 template<typename T>
-void transform_path_(const T* const data_in, double* const data_out, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time) {
+void transform_path_(
+	const T* data_in,
+	double* data_out,
+	uint64_t dimension,
+	uint64_t length,
+	bool time_aug,
+	bool lead_lag,
+	double end_time
+) {
 	// Note that here 'dimension' and 'length' refer to the underlying path, not the transformed one.
 	// Also note that if both time_aug and lead_lag are false, we still copy memory to data_out
 
@@ -91,7 +99,17 @@ void transform_path_(const T* const data_in, double* const data_out, const uint6
 }
 
 template<typename T>
-void batch_transform_path_(const T* const data_in, double* const data_out, const uint64_t batch_size, const uint64_t dimension, const uint64_t length, const bool time_aug, const bool lead_lag, const double end_time, const int n_jobs)
+void batch_transform_path_(
+	const T* data_in,
+	double* data_out,
+	uint64_t batch_size,
+	uint64_t dimension,
+	uint64_t length,
+	bool time_aug,
+	bool lead_lag,
+	double end_time,
+	int n_jobs
+)
 {
 	//Deal with trivial cases
 	if (dimension == 0) { throw std::invalid_argument("transform_path received path of dimension 0"); }
@@ -127,24 +145,24 @@ void batch_transform_path_(const T* const data_in, double* const data_out, const
 }
 
 void transform_path_backprop_(
-	const double* const data_in,
-	double* const data_out,
-	const uint64_t dimension,
-	const uint64_t length,
-	const bool time_aug,
-	const bool lead_lag,
-	const double end_time
+	const double* data_in,
+	double* data_out,
+	uint64_t dimension,
+	uint64_t length,
+	bool time_aug,
+	bool lead_lag,
+	double end_time
 );
 
 
 void batch_transform_path_backprop_(
-	const double* const data_in,
-	double* const data_out,
-	const uint64_t batch_size,
-	const uint64_t dimension,
-	const uint64_t length,
-	const bool time_aug,
-	const bool lead_lag,
-	const double end_time,
-	const int n_jobs
+	const double* data_in,
+	double* data_out,
+	uint64_t batch_size,
+	uint64_t dimension,
+	uint64_t length,
+	bool time_aug,
+	bool lead_lag,
+	double end_time,
+	int n_jobs
 );

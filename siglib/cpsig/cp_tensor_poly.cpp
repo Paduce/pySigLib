@@ -54,7 +54,13 @@ extern "C" CPSIG_API uint64_t sig_length(uint64_t dimension, uint64_t degree) no
 }
 
 
-void sig_combine_(double* sig1, double* sig2, double* out, uint64_t dimension, uint64_t degree)
+void sig_combine_(
+	const double* sig1,
+	const double* sig2,
+	double* out, 
+	uint64_t dimension, 
+	uint64_t degree
+)
 {
 	if (dimension == 0) { throw std::invalid_argument("sig_combine received dimension 0"); }
 
@@ -70,16 +76,24 @@ void sig_combine_(double* sig1, double* sig2, double* out, uint64_t dimension, u
 	sig_combine_inplace_(out, sig2, degree, level_index);
 }
 
-void batch_sig_combine_(double* sig1, double* sig2, double* out, uint64_t batch_size, uint64_t dimension, uint64_t degree, int n_jobs = 1)
+void batch_sig_combine_(
+	const double* sig1,
+	const double* sig2,
+	double* out, 
+	uint64_t batch_size,
+	uint64_t dimension, 
+	uint64_t degree, 
+	int n_jobs = 1
+)
 {
 	if (dimension == 0) { throw std::invalid_argument("sig_combine received dimension 0"); }
 
 	const uint64_t siglength = ::sig_length(dimension, degree);
-	double* const sig1_end = sig1 + siglength * batch_size;
+	const double* const sig1_end = sig1 + siglength * batch_size;
 
-	std::function<void(double*, double*, double*)> sig_combine_func;
+	std::function<void(const double*, const double*, double*)> sig_combine_func;
 
-	sig_combine_func = [&](double* sig1_ptr, double* sig2_ptr, double* out_ptr) {
+	sig_combine_func = [&](const double* sig1_ptr, const double* sig2_ptr, double* out_ptr) {
 		sig_combine_(sig1_ptr, sig2_ptr, out_ptr, dimension, degree);
 		};
 
@@ -87,8 +101,8 @@ void batch_sig_combine_(double* sig1, double* sig2, double* out, uint64_t batch_
 		multi_threaded_batch_2(sig_combine_func, sig1, sig2, out, batch_size, siglength, siglength, siglength, n_jobs);
 	}
 	else {
-		double* sig1_ptr = sig1;
-		double* sig2_ptr = sig2;
+		const double* sig1_ptr = sig1;
+		const double* sig2_ptr = sig2;
 		double* out_ptr = out;
 		for (;
 			sig1_ptr < sig1_end;
@@ -102,7 +116,15 @@ void batch_sig_combine_(double* sig1, double* sig2, double* out, uint64_t batch_
 	return;
 }
 
-void sig_combine_backprop_(double* sig_combined_deriv, double* sig1_deriv, double* sig2_deriv, double* sig1, double* sig2, uint64_t dimension, uint64_t degree)
+void sig_combine_backprop_(
+	const double* sig_combined_deriv,
+	double* sig1_deriv, 
+	double* sig2_deriv, 
+	const double* sig1,
+	const double* sig2,
+	uint64_t dimension,
+	uint64_t degree
+)
 {
 	if (dimension == 0) { throw std::invalid_argument("sig_combine_backprop received dimension 0"); }
 
@@ -119,7 +141,17 @@ void sig_combine_backprop_(double* sig_combined_deriv, double* sig1_deriv, doubl
 	return;
 }
 
-void batch_sig_combine_backprop_(double* sig_combined_deriv, double* sig1_deriv, double* sig2_deriv, double* sig1, double* sig2, uint64_t batch_size, uint64_t dimension, uint64_t degree, int n_jobs = 1)
+void batch_sig_combine_backprop_(
+	const double* sig_combined_deriv,
+	double* sig1_deriv, 
+	double* sig2_deriv, 
+	const double* sig1,
+	const double* sig2,
+	uint64_t batch_size,
+	uint64_t dimension, 
+	uint64_t degree,
+	int n_jobs = 1
+)
 {
 	if (dimension == 0) { throw std::invalid_argument("sig_combine_backprop received dimension 0"); }
 
@@ -134,9 +166,9 @@ void batch_sig_combine_backprop_(double* sig_combined_deriv, double* sig1_deriv,
 
 	std::memcpy(sig1_deriv, sig_combined_deriv, sizeof(double) * siglength * batch_size);
 
-	std::function<void(double*, double*, double*, double*, double*)> sig_combine_backprop_func;
+	std::function<void(const double*, double*, double*, const double*, const double*)> sig_combine_backprop_func;
 
-	sig_combine_backprop_func = [&](double* sig_combined_deriv_ptr, double* sig1_deriv_ptr, double* sig2_deriv_ptr, double* sig1_ptr, double* sig2_ptr) {
+	sig_combine_backprop_func = [&](const double* sig_combined_deriv_ptr, double* sig1_deriv_ptr, double* sig2_deriv_ptr, const double* sig1_ptr, const double* sig2_ptr) {
 		sig_combine_backprop_(sig_combined_deriv_ptr, sig1_deriv_ptr, sig2_deriv_ptr, sig1_ptr, sig2_ptr, dimension, degree);
 		};
 
@@ -144,12 +176,12 @@ void batch_sig_combine_backprop_(double* sig_combined_deriv, double* sig1_deriv,
 		multi_threaded_batch_4(sig_combine_backprop_func, sig_combined_deriv, sig1_deriv, sig2_deriv, sig1, sig2, batch_size, siglength, siglength, siglength, siglength, siglength, n_jobs);
 	}
 	else {
-		double* sig_combined_derivs_ptr = sig_combined_deriv;
+		const double* sig_combined_derivs_ptr = sig_combined_deriv;
 		double* sig1_deriv_ptr = sig1_deriv;
 		double* sig2_deriv_ptr = sig2_deriv;
-		double* sig1_ptr = sig1;
-		double* sig2_ptr = sig2;
-		double* sig1_end = sig1 + batch_size * siglength;
+		const double* sig1_ptr = sig1;
+		const double* sig2_ptr = sig2;
+		const double* sig1_end = sig1 + batch_size * siglength;
 		for (;
 			sig1_ptr < sig1_end;
 			sig_combined_derivs_ptr += siglength,
@@ -167,19 +199,19 @@ void batch_sig_combine_backprop_(double* sig_combined_deriv, double* sig1_deriv,
 
 extern "C" {
 
-	CPSIG_API int sig_combine(double* sig1, double* sig2, double* out, uint64_t dimension, uint64_t degree) noexcept {
+	CPSIG_API int sig_combine(const double* sig1, const double* sig2, double* out, uint64_t dimension, uint64_t degree) noexcept {
 		SAFE_CALL(sig_combine_(sig1, sig2, out, dimension, degree));
 	}
 
-	CPSIG_API int batch_sig_combine(double* sig1, double* sig2, double* out, uint64_t batch_size, uint64_t dimension, uint64_t degree, int n_jobs) noexcept {
+	CPSIG_API int batch_sig_combine(const double* sig1, const double* sig2, double* out, uint64_t batch_size, uint64_t dimension, uint64_t degree, int n_jobs) noexcept {
 		SAFE_CALL(batch_sig_combine_(sig1, sig2, out, batch_size, dimension, degree, n_jobs));
 	}
 
-	CPSIG_API int sig_combine_backprop(double* sig_combined_deriv, double* sig1_deriv, double* sig2_deriv, double* sig1, double* sig2, uint64_t dimension, uint64_t degree) noexcept {
+	CPSIG_API int sig_combine_backprop(const double* sig_combined_deriv, double* sig1_deriv, double* sig2_deriv, const double* sig1, const double* sig2, uint64_t dimension, uint64_t degree) noexcept {
 		SAFE_CALL(sig_combine_backprop_(sig_combined_deriv, sig1_deriv, sig2_deriv, sig1, sig2, dimension, degree));
 	}
 
-	CPSIG_API int batch_sig_combine_backprop(double* sig_combined_deriv, double* sig1_deriv, double* sig2_deriv, double* sig1, double* sig2, uint64_t batch_size, uint64_t dimension, uint64_t degree, int n_jobs) noexcept {
+	CPSIG_API int batch_sig_combine_backprop(const double* sig_combined_deriv, double* sig1_deriv, double* sig2_deriv, const double* sig1, const double* sig2, uint64_t batch_size, uint64_t dimension, uint64_t degree, int n_jobs) noexcept {
 		SAFE_CALL(batch_sig_combine_backprop_(sig_combined_deriv, sig1_deriv, sig2_deriv, sig1, sig2, batch_size, dimension, degree, n_jobs));
 	}
 }

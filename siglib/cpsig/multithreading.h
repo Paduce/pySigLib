@@ -45,7 +45,7 @@ void multi_threaded_batch(FN& thread_func, T* path, double* out, uint64_t batch_
 		}
 		};
 
-	unsigned int num_threads = 0;
+	int num_threads = 0;
 	double* out_ptr = out;
 	for (T* path_ptr = path;
 		(num_threads < max_threads) && (path_ptr < data_end);
@@ -86,7 +86,7 @@ void multi_threaded_batch_2(FN& thread_func, S* path1, T* path2, double* out, ui
 		}
 		};
 
-	unsigned int num_threads = 0;
+	int num_threads = 0;
 	double* out_ptr = out;
 	S* path1_ptr = path1;
 	T* path2_ptr = path2;
@@ -130,7 +130,7 @@ void multi_threaded_batch_3(FN& thread_func, R* path1, S* path2, T* path3, doubl
 		}
 		};
 
-	unsigned int num_threads = 0;
+	int num_threads = 0;
 	double* out_ptr = out;
 	R* path1_ptr = path1;
 	S* path2_ptr = path2;
@@ -148,7 +148,7 @@ void multi_threaded_batch_3(FN& thread_func, R* path1, S* path2, T* path3, doubl
 }
 
 template<typename T, typename FN>
-void multi_threaded_batch_4(FN& thread_func, T* path1, T* path2, T* path3, T* path4, double* out, uint64_t batch_size, uint64_t flat_path_length_1, uint64_t flat_path_length_2, uint64_t flat_path_length_3, uint64_t flat_path_length_4, uint64_t result_length, int n_jobs) {
+void multi_threaded_batch_4(FN& thread_func, const T* path1, T* path2, T* path3, const T* path4, const double* out, uint64_t batch_size, uint64_t flat_path_length_1, uint64_t flat_path_length_2, uint64_t flat_path_length_3, uint64_t flat_path_length_4, uint64_t result_length, int n_jobs) {
 	if (n_jobs == 0)
 		throw std::invalid_argument("n_jobs cannot be 0");
 	const int max_threads = n_jobs > 0 ? n_jobs : get_max_threads() + 1 + n_jobs;
@@ -159,16 +159,16 @@ void multi_threaded_batch_4(FN& thread_func, T* path1, T* path2, T* path3, T* pa
 	const uint64_t thread_path_step_3 = flat_path_length_3 * max_threads;
 	const uint64_t thread_path_step_4 = flat_path_length_4 * max_threads;
 	const uint64_t thread_result_step = result_length * max_threads;
-	T* const data_end_1 = path1 + flat_path_length_1 * batch_size;
+	const T* const data_end_1 = path1 + flat_path_length_1 * batch_size;
 
 	std::vector<std::thread> workers;
 
-	auto batch_thread_func = [&](T* path_ptr_1, T* path_ptr_2, T* path_ptr_3, T* path_ptr_4, double* out_ptr) {
-		double* out_ptr_ = out_ptr;
-		T* path1_ptr_ = path_ptr_1;
+	auto batch_thread_func = [&](const T* path_ptr_1, T* path_ptr_2, T* path_ptr_3, const T* path_ptr_4, const double* out_ptr) {
+		const double* out_ptr_ = out_ptr;
+		const T* path1_ptr_ = path_ptr_1;
 		T* path2_ptr_ = path_ptr_2;
 		T* path3_ptr_ = path_ptr_3;
-		T* path4_ptr_ = path_ptr_4;
+		const T* path4_ptr_ = path_ptr_4;
 		for (;
 			path1_ptr_ < data_end_1;
 			path1_ptr_ += thread_path_step_1, path2_ptr_ += thread_path_step_2, path3_ptr_ += thread_path_step_3, path4_ptr_ += thread_path_step_4, out_ptr_ += thread_result_step) {
@@ -177,12 +177,12 @@ void multi_threaded_batch_4(FN& thread_func, T* path1, T* path2, T* path3, T* pa
 		}
 		};
 
-	unsigned int num_threads = 0;
-	double* out_ptr = out;
-	T* path1_ptr = path1;
+	int num_threads = 0;
+	const double* out_ptr = out;
+	const T* path1_ptr = path1;
 	T* path2_ptr = path2;
 	T* path3_ptr = path3;
-	T* path4_ptr = path4;
+	const T* path4_ptr = path4;
 	for (;
 		(num_threads < max_threads) && (path1_ptr < data_end_1);
 		path1_ptr += flat_path_length_1, path2_ptr += flat_path_length_2, path3_ptr += flat_path_length_3, path4_ptr += flat_path_length_4, out_ptr += result_length) {

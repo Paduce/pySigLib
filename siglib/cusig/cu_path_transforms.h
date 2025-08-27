@@ -17,18 +17,18 @@
 #include "cupch.h"
 
 __global__ void transform_path_backprop_internal_(
-	const double* const derivs,
-	double* const data_out
+	const double* derivs,
+	double* data_out
 );
 
 void transform_path_backprop_(
-	const double* const derivs,
-	double* const data_out,
-	const uint64_t batch_size_,
-	const uint64_t dimension_,
-	const uint64_t length_,
-	const bool time_aug_,
-	const bool lead_lag_,
-	const double end_time_
+	const double* derivs,
+	double* data_out,
+	uint64_t batch_size_,
+	uint64_t dimension_,
+	uint64_t length_,
+	bool time_aug_,
+	bool lead_lag_,
+	double end_time_
 );
 

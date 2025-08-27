@@ -16,12 +16,23 @@
 #include "cupch.h"
 #include "cusig.h"
 #include "cu_path_transforms.h"
-#include "cuda_constants.h"
+//#include "cuda_constants.h"
+
+__constant__ uint64_t path_dimension;
+__constant__ uint64_t length;
+__constant__ bool time_aug;
+__constant__ bool lead_lag;
+__constant__ double end_time;
+__constant__ uint64_t path_size;
+
+__constant__ uint64_t transformed_dimension;
+__constant__ uint64_t transformed_length;
+__constant__ uint64_t transformed_path_size;
 
 template<typename T>
 __global__ void transform_path_internal_(
-	const T* const data_in,
-	double* const data_out
+	const T* data_in,
+	double* data_out
 ) {
 	const int thread_id = threadIdx.x;
 
@@ -34,26 +45,26 @@ __global__ void transform_path_internal_(
 	}
 
 	if (lead_lag) {
-		const uint64_t twice_dimension = 2 * dimension;
+		const uint64_t twice_dimension = 2 * path_dimension;
 		const uint64_t twice_transformed_dimension = 2 * transformed_dimension;
 
 		for (uint64_t i = thread_id; i < length; i += 32) {
-			for (uint64_t j = 0; j < dimension; ++j) {
-				data_out_[i * twice_transformed_dimension + j] = static_cast<double>(data_in_[i * dimension + j]);
-				data_out_[i * twice_transformed_dimension + j + dimension] = static_cast<double>(data_in_[i * dimension + j]);
+			for (uint64_t j = 0; j < path_dimension; ++j) {
+				data_out_[i * twice_transformed_dimension + j] = static_cast<double>(data_in_[i * path_dimension + j]);
+				data_out_[i * twice_transformed_dimension + j + path_dimension] = static_cast<double>(data_in_[i * path_dimension + j]);
 			}
 		}
 
 		for (uint64_t i = thread_id; i < length - 1; i += 32) {
 			for (uint64_t j = 0; j < twice_dimension; ++j) {
-				data_out_[i * twice_transformed_dimension + transformed_dimension + j] = static_cast<double>(data_in_[i * dimension + j]);
+				data_out_[i * twice_transformed_dimension + transformed_dimension + j] = static_cast<double>(data_in_[i * path_dimension + j]);
 			}
 		}
 	}
 	else {
 		for (uint64_t i = thread_id; i < length; i += 32) {
-			for (uint64_t j = 0; j < dimension; ++j) {
-				data_out_[i * transformed_dimension + j] = static_cast<double>(data_in_[i * dimension + j]);
+			for (uint64_t j = 0; j < path_dimension; ++j) {
+				data_out_[i * transformed_dimension + j] = static_cast<double>(data_in_[i * path_dimension + j]);
 			}
 		}
 	}
@@ -69,14 +80,14 @@ __global__ void transform_path_internal_(
 
 template<typename T>
 void transform_path_(
-	const T* const data_in,
-	double* const data_out,
-	const uint64_t batch_size_,
-	const uint64_t dimension_,
-	const uint64_t length_,
-	const bool time_aug_,
-	const bool lead_lag_,
-	const double end_time_
+	const T* data_in,
+	double* data_out,
+	uint64_t batch_size_,
+	uint64_t dimension_,
+	uint64_t length_,
+	bool time_aug_,
+	bool lead_lag_,
+	double end_time_
 ) {
 	const uint64_t path_size_ = dimension_ * length_;
 
@@ -84,7 +95,7 @@ void transform_path_(
 	const uint64_t transformed_dimension_ = (lead_lag_ ? 2 * dimension_ : dimension_) + (time_aug_ ? 1 : 0);
 	const uint64_t transformed_path_size_ = transformed_length_ * transformed_dimension_;
 
-	cudaMemcpyToSymbol(dimension, &dimension_, sizeof(uint64_t));
+	cudaMemcpyToSymbol(path_dimension, &dimension_, sizeof(uint64_t));
 	cudaMemcpyToSymbol(length, &length_, sizeof(uint64_t));
 	cudaMemcpyToSymbol(time_aug, &time_aug_, sizeof(bool));
 	cudaMemcpyToSymbol(lead_lag, &lead_lag_, sizeof(bool));
@@ -105,8 +116,8 @@ void transform_path_(
 }
 
 __global__ void transform_path_backprop_internal_(
-	const double* const derivs,
-	double* const data_out
+	const double* derivs,
+	double* data_out
 ) {
 	const int thread_id = threadIdx.x;
 
@@ -114,40 +125,40 @@ __global__ void transform_path_backprop_internal_(
 	double* const data_out_ = data_out + blockIdx.x * path_size;
 
 	if (lead_lag) {
-		const uint64_t twice_dimension = 2 * dimension;
+		const uint64_t twice_dimension = 2 * path_dimension;
 		const uint64_t twice_transformed_dimension = 2 * transformed_dimension;
 
 		for (uint64_t i = thread_id; i < length; i += 32) {
-			for (uint64_t j = 0; j < dimension; ++j) {
-				data_out_[i * dimension + j] = derivs_[i * twice_transformed_dimension + j];
-				data_out_[i * dimension + j] += derivs_[i * twice_transformed_dimension + dimension + j];
+			for (uint64_t j = 0; j < path_dimension; ++j) {
+				data_out_[i * path_dimension + j] = derivs_[i * twice_transformed_dimension + j];
+				data_out_[i * path_dimension + j] += derivs_[i * twice_transformed_dimension + path_dimension + j];
 			}
 		}
 
 		for (uint64_t i = thread_id; i < length - 1; i += 32) {
 			for (uint64_t j = 0; j < twice_dimension; ++j) {
-				data_out_[i * dimension + j] += derivs_[i * twice_transformed_dimension + transformed_dimension + j];
+				data_out_[i * path_dimension + j] += derivs_[i * twice_transformed_dimension + transformed_dimension + j];
 			}
 		}
 	}
 	else {
 		for (uint64_t i = thread_id; i < length; i += 32) {
-			for (uint64_t j = 0; j < dimension; ++j) {
-				data_out_[i * dimension + j] = derivs_[i * transformed_dimension + j];
+			for (uint64_t j = 0; j < path_dimension; ++j) {
+				data_out_[i * path_dimension + j] = derivs_[i * transformed_dimension + j];
 			}
 		}
 	}
 }
 
 void transform_path_backprop_(
-	const double* const derivs,
-	double* const data_out,
-	const uint64_t batch_size_,
-	const uint64_t dimension_,
-	const uint64_t length_,
-	const bool time_aug_,
-	const bool lead_lag_,
-	const double end_time_
+	const double* derivs,
+	double* data_out,
+	uint64_t batch_size_,
+	uint64_t dimension_,
+	uint64_t length_,
+	bool time_aug_,
+	bool lead_lag_,
+	double end_time_
 ) {
 	const uint64_t path_size_ = dimension_ * length_;
 
@@ -155,7 +166,7 @@ void transform_path_backprop_(
 	const uint64_t transformed_dimension_ = (lead_lag_ ? 2 * dimension_ : dimension_) + (time_aug_ ? 1 : 0);
 	const uint64_t transformed_path_size_ = transformed_length_ * transformed_dimension_;
 
-	cudaMemcpyToSymbol(dimension, &dimension_, sizeof(uint64_t));
+	cudaMemcpyToSymbol(path_dimension, &dimension_, sizeof(uint64_t));
 	cudaMemcpyToSymbol(length, &length_, sizeof(uint64_t));
 	cudaMemcpyToSymbol(time_aug, &time_aug_, sizeof(bool));
 	cudaMemcpyToSymbol(lead_lag, &lead_lag_, sizeof(bool));

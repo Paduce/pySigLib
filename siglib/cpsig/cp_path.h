@@ -39,10 +39,10 @@ class Path {
 public:
 	static_assert(std::is_arithmetic<T>::value);
 
-	Path(T* data_, uint64_t dimension_, uint64_t length_, bool time_aug_ = false, bool lead_lag_ = false, double end_time_ = 1.) :
+	Path(const T* data_, uint64_t dimension_, uint64_t length_, bool time_aug_ = false, bool lead_lag_ = false, double end_time_ = 1.) :
 		_dimension{ (lead_lag_ ? 2 * dimension_ : dimension_) + (time_aug_ ? 1 : 0) },
 		_length{ lead_lag_ ? length_ * 2 - 1 : length_ },
-		_data{ std::span<T>(data_, dimension_ * length_) },
+		_data{ std::span<const T>(data_, dimension_ * length_) },
 		_data_dimension{ dimension_ },
 		_data_length{ length_ },
 		_data_size{ dimension_ * length_ },
@@ -51,7 +51,7 @@ public:
 		_time_step{ end_time_ / (_length - 1) } {
 	}
 
-	Path(const std::span<T> data_, uint64_t dimension_, uint64_t length_, bool time_aug_ = false, bool lead_lag_ = false, double end_time_ = 1.) :
+	Path(const std::span<const T> data_, uint64_t dimension_, uint64_t length_, bool time_aug_ = false, bool lead_lag_ = false, double end_time_ = 1.) :
 		_dimension{ (lead_lag_ ? 2 * dimension_ : dimension_) + (time_aug_ ? 1 : 0) },
 		_length{ lead_lag_ ? length_ * 2 - 1 : length_ },
 		_data{ data_ },
@@ -97,7 +97,7 @@ public:
 	inline uint64_t data_dimension() const { return _data_dimension; }
 	inline uint64_t length() const { return _length; }
 	inline uint64_t data_length() const { return _data_length; }
-	inline T* data() const { return _data.data(); }
+	inline const T* data() const { return _data.data(); }
 
 	inline bool time_aug() const { return _time_aug; }
 	inline bool lead_lag() const { return _lead_lag; }
@@ -142,7 +142,7 @@ private:
 	const uint64_t _dimension;
 	const uint64_t _length;
 
-	const std::span<T> _data;
+	const std::span<const T> _data;
 	const uint64_t _data_dimension;
 	const uint64_t _data_length;
 	const uint64_t _data_size;
@@ -183,7 +183,7 @@ public:
 	virtual inline void set_to_end() { ptr = path->_data.data() + path->_data_size; }
 	virtual inline void set_to_index(int64_t n) { ptr = path->_data.data() + n * path->_data_dimension; }
 
-	inline T* data() const { return ptr; }
+	inline const T* data() const { return ptr; }
 	virtual inline uint64_t index() const { return static_cast<uint64_t>((ptr - path->_data.data()) / path->_data_dimension); }
 
 	// We assume here that the two points being compared belong to the same path,
@@ -202,7 +202,7 @@ public:
 	bool operator<=(const PointImpl& other) const { return !(*this > other); }
 	bool operator>=(const PointImpl& other) const { return !(*this < other); }
 
-	T* ptr;
+	const T* ptr;
 	const Path<T>* path;
 };
 
@@ -440,7 +440,7 @@ public:
 	inline void set_to_end() { _impl->set_to_end(); }
 	inline void set_to_index(int64_t n) { _impl->set_to_index(); }
 
-	inline T* data() const { return _impl->data(); }
+	inline const T* data() const { return _impl->data(); }
 	inline uint64_t index() const { 
 #ifdef _DEBUG
 		index_bounds_check();
