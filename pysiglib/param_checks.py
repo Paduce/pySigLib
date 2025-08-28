@@ -49,6 +49,12 @@ def check_dtype_double(arr, arr_name):
     if arr.dtype not in [np.float64, torch.float64]:
         raise TypeError(arr_name + ".dtype must be float64, got " + str(arr.dtype) + " instead")
 
+def to_double(arr):
+    if isinstance(arr, torch.Tensor):
+        arr.to(dtype = torch.float64, copy = False)
+    else:
+        arr.astype(dtype = np.float64, copy = False)
+
 def check_cpu(arr, arr_name):
     if isinstance(arr, torch.Tensor):
         if not arr.device.type == "cpu":

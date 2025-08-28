@@ -18,7 +18,7 @@ from ctypes import c_double, POINTER, cast
 import numpy as np
 import torch
 
-from .param_checks import check_type, check_type_multiple, check_dtype, check_dtype_double, ensure_own_contiguous_storage
+from .param_checks import check_type, check_type_multiple, check_dtype, check_dtype_double, ensure_own_contiguous_storage, to_double
 from .dtypes import DTYPES
 
 class SigInputHandler:
@@ -159,11 +159,13 @@ class PathInputHandler:
     """
     Handle input which is (shaped like) a path or a batch of paths
     """
-    def __init__(self, path_, time_aug, lead_lag, end_time, param_name):
+    def __init__(self, path_, time_aug, lead_lag, end_time, param_name, as_double = False):
         self.param_name = param_name
         check_type_multiple(path_, param_name,(np.ndarray, torch.Tensor))
         self.path = ensure_own_contiguous_storage(path_, 4)
         check_dtype(self.path, param_name)
+        if as_double:
+            to_double(self.path)
         check_type(time_aug, "time_aug", bool)
         check_type(lead_lag, "lead_lag", bool)
         check_type(end_time, "end_time", float) #In theory end_time can be negative, we don't prevent this
@@ -218,10 +220,10 @@ class DoublePathInputHandler:
     """
     Handle a pair of inputs which are (shaped like) paths or a batch of paths
     """
-    def __init__(self, path1_, path2_, time_aug, lead_lag, end_time, path1_name = "path1", path2_name = "path2"):
+    def __init__(self, path1_, path2_, time_aug, lead_lag, end_time, path1_name = "path1", path2_name = "path2", as_double = False):
 
-        self.data1 = PathInputHandler(path1_, time_aug, lead_lag, end_time, path1_name)
-        self.data2 = PathInputHandler(path2_, time_aug, lead_lag, end_time, path2_name)
+        self.data1 = PathInputHandler(path1_, time_aug, lead_lag, end_time, path1_name, as_double = as_double)
+        self.data2 = PathInputHandler(path2_, time_aug, lead_lag, end_time, path2_name, as_double = as_double)
         self.path1 = self.data1.path
         self.path2 = self.data2.path
 

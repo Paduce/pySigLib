@@ -142,7 +142,7 @@ def sig_kernel(
         path1 = transform_path(path1, time_aug, lead_lag, end_time, n_jobs)
         path2 = transform_path(path2, time_aug, lead_lag, end_time, n_jobs)
 
-    data = DoublePathInputHandler(path1, path2, False, False, 0., "path1", "path2")
+    data = DoublePathInputHandler(path1, path2, False, False, 0., "path1", "path2", as_double = True)
 
     if not return_grid:
         result = ScalarOutputHandler(data)
