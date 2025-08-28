@@ -21,7 +21,7 @@ import pysiglib
 
 np.random.seed(42)
 torch.manual_seed(42)
-EPSILON = 1e-5 #TODO: not an exact match with iisig
+EPSILON = 1e-5
 
 def check_close(a, b):
     a_ = np.array(a)
@@ -85,7 +85,6 @@ def test_transform_path_backprop_lead_lag():
     deriv = torch.ones(X_ll.shape, dtype = torch.double)
     X1 = pysiglib.transform_path_backprop(deriv, lead_lag = True)
 
-    f = lambda x: pysiglib.transform_path(x, lead_lag=True).sum()
     X2 = torch.ones((100,5), dtype = torch.double) * 4.
     X2[0, :] = 3.
     X2[-1, :] = 3.

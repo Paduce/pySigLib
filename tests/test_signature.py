@@ -53,8 +53,9 @@ def test_signature_trivial():
 
 
 @pytest.mark.parametrize("deg", range(1, 6))
-def test_signature_random(deg):
-    X = np.random.uniform(size=(100, 5))
+@pytest.mark.parametrize("dtype", [np.float64, np.float32, np.int64, np.int32])
+def test_signature_random(deg, dtype):
+    X = np.random.uniform(size=(100, 5)).astype(dtype)
     iisig = iisignature.sig(X, deg)
     sig = pysiglib.signature(X, deg)
     check_close(iisig, sig[1:])
@@ -133,13 +134,12 @@ def test_signature_lead_lag(deg):
     check_close(iisig, sig[1:])
 
 @pytest.mark.parametrize("deg", range(1, 6))
-def test_signature_time_aug_lead_lag(deg):
-    X = np.random.uniform(size=(10, 2))
+@pytest.mark.parametrize("dtype", [np.float64, np.float32, np.int64, np.int32])
+def test_signature_time_aug_lead_lag(deg, dtype):
+    X = np.random.uniform(size=(10, 2)).astype(dtype)
     X_aug = lead_lag(X)
     t = np.linspace(0, 1, 19)[:, np.newaxis]
     X_aug = np.concatenate([X_aug, t], axis = 1)
     iisig = iisignature.sig(X_aug, deg)
     sig = pysiglib.signature(X, deg, lead_lag = True, time_aug = True)
     check_close(iisig, sig[1:])
-
-#TODO: add time_aug and lead_lag tests
