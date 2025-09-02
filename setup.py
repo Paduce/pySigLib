@@ -16,10 +16,19 @@
 from pathlib import Path
 import shutil
 import os
+import sys
 import platform
 
 from setuptools import setup
 from setuptools.command.build_py import build_py as _build_py
+
+ALLOW_EDITABLE = False
+if 'ALLOW_EDITABLE' in os.environ and int(os.environ['ALLOW_EDITABLE']) == 1:
+    ALLOW_EDITABLE = True
+
+# Editable installs don't compile the dlls. Block them entirely.
+if any(arg in ["develop", "editable", "-e"] for arg in sys.argv) and not ALLOW_EDITABLE:
+    raise RuntimeError("This package cannot be installed in editable mode.")
 
 REBUILD = True
 USE_CUDA = 'CUDA_PATH' in os.environ

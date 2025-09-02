@@ -32,6 +32,7 @@ jobs:
 
       - name: Install package
         run: |
+          export ALLOW_EDITABLE=1
           python3 setup.py build_py
           python -m pip install -e .
 
