@@ -16,14 +16,32 @@
 import os.path
 import timeit
 
-# import signatory
-import iisignature
-# import esig
+try:
+    import signatory
+except:
+    signatory = None
 
+# iisignature requires numpy < 2.0
+# esig requires numpy >= 2.0
+# Will have to run timings separately, installing numpy<2.0 first for iisig
+# and then numpy>=2.0 for esig
+try:
+    import iisignature
+except:
+    iisignature = None
+
+try:
+    import esig
+except:
+    esig = None
+
+try:
+    import sigkernel
+except:
+    sigkernel = None
+
+from tqdm import tqdm
 import numpy as np
-import sigkernel
-# import jax
-# from sigkerax.sigkernel import SigKernel as SigKernelJax
 import torch
 import matplotlib.pyplot as plt
 
@@ -37,17 +55,21 @@ def plot_times(
         xlabel,
         ylabel,
         scale,
-        filename
+        filename,
+        linestyles = None
 ):
     if not os.path.exists("plots"):
         os.makedirs("plots")
+
+    if linestyles is None:
+        linestyles = ["-"] * len(ys)
 
     plt.figure(figsize=(4, 3))
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    for y in ys:
-        plt.plot(x, y)
+    for y, ls in zip(ys, linestyles):
+        plt.plot(x, y, linestyle = ls)
     plt.legend(legend)
     plt.yscale(scale)
     plt.grid(True, linestyle='--')
@@ -56,14 +78,15 @@ def plot_times(
     plt.savefig("plots/" + filename + ".pdf", dpi=300)
     plt.show()
 
-def timeiisig(batch_size, length, dimension, degree, device, N):
+def time_iisig_sig(batch_size, length, dimension, degree, device, N, progress_bar = False):
     if device != "cpu":
         raise ValueError("iisignature only supports cpu")
 
     X = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
 
     best_time = float('inf')
-    for _ in range(N):
+    loop = tqdm(range(N)) if progress_bar else range(N)
+    for _ in loop:
         start = timeit.default_timer()
         iisignature.sig(X, degree)
         end = timeit.default_timer()
@@ -71,27 +94,29 @@ def timeiisig(batch_size, length, dimension, degree, device, N):
         best_time = min(best_time, time_)
     return best_time
 
-def timepysiglib(batch_size, length, dimension, degree, horner, n_jobs, device, N):
+def time_pysiglib_sig(batch_size, length, dimension, degree, horner, n_jobs, device, N, progress_bar = False):
     X = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
     X = torch.tensor(X, device=device)
 
     best_time = float('inf')
-    for _ in range(N):
+    loop = tqdm(range(N)) if progress_bar else range(N)
+    for _ in loop:
         torch.cuda.empty_cache()
         start = timeit.default_timer()
-        pysiglib.signature(X, degree, horner = horner, parallel = parallel)
+        pysiglib.signature(X, degree, horner = horner, n_jobs = n_jobs)
         end = timeit.default_timer()
         time_ = end - start
         best_time = min(best_time, time_)
     return best_time
 
 
-def timesignatory(batch_size, length, dimension, degree, device, N):
+def time_signatory_sig(batch_size, length, dimension, degree, device, N, progress_bar = False):
     X = np.random.uniform(size=(batch_size, length, dimension))#.astype("double")
     X = torch.tensor(X, device=device)
 
     best_time = float('inf')
-    for _ in range(N):
+    loop = tqdm(range(N)) if progress_bar else range(N)
+    for _ in loop:
         start = timeit.default_timer()
         signatory.signature(X, degree)
         end = timeit.default_timer()
@@ -100,21 +125,24 @@ def timesignatory(batch_size, length, dimension, degree, device, N):
     return best_time
 
 
-# def timeesig(batchSize, length, dimension, degree, device, N):
-#     if device != "cpu":
-#         raise ValueError("esig only supports cpu")
-#     X = np.random.uniform(size=(batchSize, length, dimension)).astype("double")
-#
-#     best_time = float('inf')
-#     for _ in range(N):
-#         start = timeit.default_timer()
-#         esig.stream2sig(X, degree)
-#         end = timeit.default_timer()
-#         time_ = end - start
-#         best_time = min(best_time, time_)
-#     return best_time
+def time_esig_sig(batch_size, length, dimension, degree, device, N, progress_bar = False):
+    if device != "cpu":
+        raise ValueError("esig only supports cpu")
+    X = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
 
-def timesigkernel(batch_size, length, dimension, dyadic_order, device, N):
+    best_time = float('inf')
+    loop = tqdm(range(N)) if progress_bar else range(N)
+    for _ in loop:
+        start = timeit.default_timer()
+        # esig cannot handle batches, so loop
+        for i in range(batch_size):
+            esig.stream2sig(X[i], degree)
+        end = timeit.default_timer()
+        time_ = end - start
+        best_time = min(best_time, time_)
+    return best_time
+
+def time_sigkernel_kernel(batch_size, length, dimension, dyadic_order, device, N, progress_bar = False):
     static_kernel = sigkernel.LinearKernel()
     signature_kernel = sigkernel.SigKernel(static_kernel, dyadic_order)
 
@@ -124,7 +152,8 @@ def timesigkernel(batch_size, length, dimension, dyadic_order, device, N):
     Y = torch.tensor(Y, device=device)
 
     best_time = float('inf')
-    for _ in range(N):
+    loop = tqdm(range(N)) if progress_bar else range(N)
+    for _ in loop:
         try:
             if device == "cuda":
                 torch.cuda.empty_cache()
@@ -137,7 +166,7 @@ def timesigkernel(batch_size, length, dimension, dyadic_order, device, N):
             continue
     return best_time
 
-def timesigkernel_backprop(batch_size, length, dimension, dyadic_order, device, N):
+def time_sigkernel_kernel_backprop(batch_size, length, dimension, dyadic_order, device, N, progress_bar = False):
     static_kernel = sigkernel.LinearKernel()
     signature_kernel = sigkernel.SigKernel(static_kernel, dyadic_order)
 
@@ -145,10 +174,11 @@ def timesigkernel_backprop(batch_size, length, dimension, dyadic_order, device, 
     X = torch.tensor(X, device=device, requires_grad = True)
     Y = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
     Y = torch.tensor(Y, device=device)
-    derivs = torch.ones(batch_size)
+    derivs = torch.ones(batch_size, device = device)
 
     best_time = float('inf')
-    for _ in range(N):
+    loop = tqdm(range(N)) if progress_bar else range(N)
+    for _ in loop:
         try:
             if device == "cuda":
                 torch.cuda.empty_cache()
@@ -183,32 +213,34 @@ def timesigkernel_backprop(batch_size, length, dimension, dyadic_order, device, 
 #     return best_time
 
 
-def timepysiglib_kernel(batch_size, length, dimension, dyadic_order, device, N):
+def time_pysiglib_kernel(batch_size, length, dimension, dyadic_order, device, N, n_jobs = -1, progress_bar = False):
     X = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
     X = torch.tensor(X, device=device)
     Y = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
     Y = torch.tensor(Y, device=device)
 
     best_time = float('inf')
-    for _ in range(N):
+    loop = tqdm(range(N)) if progress_bar else range(N)
+    for _ in loop:
         if device == "cuda":
             torch.cuda.empty_cache()
         start = timeit.default_timer()
-        pysiglib.sig_kernel(X, Y, dyadic_order)
+        pysiglib.sig_kernel(X, Y, dyadic_order, n_jobs = n_jobs)
         end = timeit.default_timer()
         time_ = end - start
         best_time = min(best_time, time_)
     return best_time
 
-def timepysiglib_kernel_backprop(batch_size, length, dimension, dyadic_order, device, N, n_jobs = -1):
+def time_pysiglib_kernel_backprop(batch_size, length, dimension, dyadic_order, device, N, n_jobs = -1, progress_bar = False):
     X = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
     X = torch.tensor(X, device=device, requires_grad = True)
     Y = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
     Y = torch.tensor(Y, device=device)
-    derivs = torch.ones(batch_size)
+    derivs = torch.ones(batch_size, device = device)
 
     best_time = float('inf')
-    for _ in range(N):
+    loop = tqdm(range(N)) if progress_bar else range(N)
+    for _ in loop:
         if device == "cuda":
             torch.cuda.empty_cache()
         K = pysiglib.torch_api.sig_kernel(X, Y, dyadic_order, n_jobs = n_jobs)
@@ -219,30 +251,31 @@ def timepysiglib_kernel_backprop(batch_size, length, dimension, dyadic_order, de
         best_time = min(best_time, time_)
     return best_time
 
-def timepysiglib_sig_backprop(batch_size, length, dimension, degree, n_jobs, device, N):
+def time_pysiglib_sig_backprop(batch_size, length, dimension, degree, n_jobs, device, N, progress_bar = False):
     X = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
     X = torch.tensor(X, device=device)
     sig = np.random.uniform(size=(batch_size,pysiglib.sig_length(dimension, degree)))
     sig_derivs = np.random.uniform(size=(batch_size,pysiglib.sig_length(dimension, degree)))
 
     best_time = float('inf')
-    for _ in range(N):
+    loop = tqdm(range(N)) if progress_bar else range(N)
+    for _ in loop:
         torch.cuda.empty_cache()
         start = timeit.default_timer()
-        _sig = iisignature.sig(X, degree) #just for timing comparison with iisig which recomputes the signature
-        pysiglib.sig_backprop(X, sig, sig_derivs, degree, False, False, n_jobs)
+        pysiglib.sig_backprop(X, sig, sig_derivs, degree, n_jobs = n_jobs)
         end = timeit.default_timer()
         time_ = end - start
         best_time = min(best_time, time_)
     return best_time
 
-def timeiisig_sig_backprop(batch_size, length, dimension, degree, n_jobs, device, N):
+def time_iisig_sig_backprop(batch_size, length, dimension, degree, device, N, progress_bar = False):
     X = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
     X = torch.tensor(X, device=device)
     sig_derivs = np.random.uniform(size=(batch_size,pysiglib.sig_length(dimension, degree) - 1))
 
     best_time = float('inf')
-    for _ in range(N):
+    loop = tqdm(range(N)) if progress_bar else range(N)
+    for _ in loop:
         torch.cuda.empty_cache()
         start = timeit.default_timer()
         iisignature.sigbackprop(sig_derivs, X, degree)
@@ -251,14 +284,15 @@ def timeiisig_sig_backprop(batch_size, length, dimension, degree, n_jobs, device
         best_time = min(best_time, time_)
     return best_time
 
-def timesignatory_sig_backprop(batch_size, length, dimension, degree, n_jobs, device, N):
+def time_signatory_sig_backprop(batch_size, length, dimension, degree, device, N, progress_bar = False):
     X = np.random.uniform(size=(batch_size, length, dimension)).astype("double")
     X = torch.tensor(X, device=device, requires_grad=True)
     sig_derivs = np.random.uniform(size=(batch_size,pysiglib.sig_length(dimension, degree) - 1))
     sig_derivs = torch.tensor(sig_derivs)
 
     best_time = float('inf')
-    for _ in range(N):
+    loop = tqdm(range(N)) if progress_bar else range(N)
+    for _ in loop:
         torch.cuda.empty_cache()
         sig = signatory.signature(X, degree)
         start = timeit.default_timer()

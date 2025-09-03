@@ -15,7 +15,7 @@
 
 from tqdm import tqdm
 
-from timing_utils import timeiisig, timepysiglib, timesignatory, plot_times
+from timing_utils import time_iisig_sig, time_pysiglib_sig, time_signatory_sig, plot_times
 
 import plotting_params
 plotting_params.set_plotting_params(8, 10, 12)
@@ -39,12 +39,12 @@ if __name__ == '__main__':
     pysiglibtimehornerparallel = []
 
     for degree in tqdm(degree_arr):
-        iisigtime.append(timeiisig(batch_size, length, dimension, degree, device, N))
-        signatorytime.append(timesignatory(batch_size, length, dimension, degree, device, N))
-        pysiglibtime.append(timepysiglib(batch_size, length, dimension, degree, False, False, device, N))
-        pysiglibtimeparallel.append(timepysiglib(batch_size, length, dimension, degree, False, True, device, N))
-        pysiglibtimehorner.append(timepysiglib(batch_size, length, dimension, degree, True, False, device, N))
-        pysiglibtimehornerparallel.append(timepysiglib(batch_size, length, dimension, degree, True, True, device, N))
+        iisigtime.append(time_iisig_sig(batch_size, length, dimension, degree, device, N))
+        signatorytime.append(time_signatory_sig(batch_size, length, dimension, degree, device, N))
+        pysiglibtime.append(time_pysiglib_sig(batch_size, length, dimension, degree, False, False, device, N))
+        pysiglibtimeparallel.append(time_pysiglib_sig(batch_size, length, dimension, degree, False, True, device, N))
+        pysiglibtimehorner.append(time_pysiglib_sig(batch_size, length, dimension, degree, True, False, device, N))
+        pysiglibtimehornerparallel.append(time_pysiglib_sig(batch_size, length, dimension, degree, True, True, device, N))
 
     print(iisigtime)
     print(signatorytime)

@@ -15,7 +15,7 @@
 
 from tqdm import tqdm
 
-from timing_utils import plot_times, timepysiglib_sig_backprop, timeiisig_sig_backprop, timesignatory_sig_backprop
+from timing_utils import plot_times, time_pysiglib_sig_backprop, time_iisig_sig_backprop, time_signatory_sig_backprop
 
 import plotting_params
 plotting_params.set_plotting_params(8, 10, 12)
@@ -39,9 +39,9 @@ if __name__ == '__main__':
     signatorytime = []
 
     for degree in tqdm(degree_arr):
-        iisigtime.append(timeiisig_sig_backprop(batch_size, length, dimension, degree, 1,device, N))
-        pysiglibtime.append(timepysiglib_sig_backprop(batch_size, length, dimension, degree, -1, device, N))
-        signatorytime.append(timesignatory_sig_backprop(batch_size, length, dimension, degree, 1, device, N))
+        iisigtime.append(time_iisig_sig_backprop(batch_size, length, dimension, degree, 1, device, N))
+        pysiglibtime.append(time_pysiglib_sig_backprop(batch_size, length, dimension, degree, -1, device, N))
+        signatorytime.append(time_signatory_sig_backprop(batch_size, length, dimension, degree, 1, device, N))
 
     print(iisigtime)
     print(pysiglibtime)

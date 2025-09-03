@@ -14,7 +14,7 @@
 # =========================================================================
 
 from tqdm import tqdm
-from timing_utils import timepysiglib_kernel, timesigkernel, plot_times
+from timing_utils import time_sigkernel_kernel, time_pysiglib_kernel, plot_times
 
 import plotting_params
 plotting_params.set_plotting_params(8, 10, 12)
@@ -23,29 +23,42 @@ if __name__ == '__main__':
 
     dyadic_order = 0
     batch_size = 32
-    length = 1000
+    dimension = 5
     N = 10
     device = "cuda"
 
-    dim_arr = list(range(10, 1100, 100))
+    length_arr = list(range(10, 2100, 100))
     sigkerneltime = []
     pysiglibtime = []
 
-    for dimension in tqdm(dim_arr):
-        sigkerneltime.append(timesigkernel(batch_size, length, dimension, dyadic_order, device, N))
-        pysiglibtime.append(timepysiglib_kernel(batch_size, length, dimension, dyadic_order, device, N))
+
+    for length in tqdm(length_arr):
+        sigkerneltime.append(time_sigkernel_kernel(batch_size, length, dimension, dyadic_order, device, N))
+        pysiglibtime.append(time_pysiglib_kernel(batch_size, length, dimension, dyadic_order, device, N, -1))
 
     print(sigkerneltime)
     print(pysiglibtime)
 
     for scale in ["linear", "log"]:
         plot_times(
-                x= dim_arr,
-                ys= [sigkerneltime, pysiglibtime],
+                x=length_arr[:9],
+                ys= [sigkerneltime[:9], pysiglibtime[:9]],
                 legend = ["sigkernel", "pysiglib"],
-                title = "Signature Kernels " + device,
-                xlabel = "Path Dimension",
+                title = "Signature Kernels " + ("(CPU)" if device == "cpu" else "(CUDA)"),
+                xlabel = "Path Length",
                 ylabel = "Elapsed Time (s)",
                 scale = scale,
-                filename = "sigkernel_times_dim_" + scale + "_" + device
+                filename = "sigkernel_times_len_" + scale + "_" + device + "_1",
+                linestyles = ["-", "--"]
+        )
+        plot_times(
+                x= length_arr,
+                ys= [sigkerneltime, pysiglibtime],
+                legend = ["sigkernel", "pysiglib"],
+                title = "Signature Kernels " + ("(CPU)" if device == "cpu" else "(CUDA)"),
+                xlabel = "Path Length",
+                ylabel = "Elapsed Time (s)",
+                scale = scale,
+                filename = "sigkernel_times_len_" + scale + "_" + device + "_2",
+                linestyles = ["-", "--"]
         )
