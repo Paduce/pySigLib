@@ -394,7 +394,7 @@ public:
 		_impl.reset(other._impl->duplicate());
 	}
 
-	Point(Point&& other)
+	Point(Point&& other) noexcept
 	{
 		_impl.swap(other._impl);
 	}

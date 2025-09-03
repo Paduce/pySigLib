@@ -138,7 +138,7 @@ void signature_horner_(
 		for (uint64_t i = 0; i < dimension; ++i)
 			increments[i] = next_pt[i] - prev_pt[i];
 
-		for (int64_t target_level = static_cast<int64_t>(degree); target_level > 1L; --target_level) {
+		for (int64_t target_level = static_cast<int64_t>(degree); target_level > 1LL; --target_level) {
 
 			double one_over_level = 1. / static_cast<double>(target_level);
 
@@ -147,8 +147,8 @@ void signature_horner_(
 			for (uint64_t i = 0; i < dimension; ++i)
 				horner_step[i] = increments[i] * one_over_level;
 
-			for (int64_t left_level = 1L, right_level = target_level - 1L;
-				left_level < target_level - 1L; 
+			for (int64_t left_level = 1LL, right_level = target_level - 1LL;
+				left_level < target_level - 1LL; 
 				++left_level, --right_level) { //for each, add current left_level and times by z / right_level
 
 				const uint64_t left_level_size = level_index[left_level + 1] - level_index[left_level];

@@ -131,10 +131,12 @@ FORCE_INLINE void uncombine_sig_deriv(
 	for (uint64_t level = degree; level > 0; --level) {
 		for (uint64_t left_level = level - 1, right_level = 1; left_level > 0; --left_level, ++right_level) {
 			double* result_ptr = sig_concat_deriv + level_index[level];
+			double* right_ptr_ = sig2_deriv + level_index[right_level];
+			const double* const right_ptr_upper_bound = sig2_deriv + level_index[right_level + 1];
+			const double* const left_ptr_upper_bound = sig1 + level_index[left_level + 1];
 
-			for (const double* left_ptr = sig1 + level_index[left_level]; left_ptr != sig1 + level_index[left_level + 1]; ++left_ptr) {
-				const double* const right_ptr_upper_bound = sig2_deriv + level_index[right_level + 1];
-				for (double* right_ptr = sig2_deriv + level_index[right_level]; right_ptr != right_ptr_upper_bound; ++right_ptr) {
+			for (const double* left_ptr = sig1 + level_index[left_level]; left_ptr != left_ptr_upper_bound; ++left_ptr) {
+				for (double* right_ptr = right_ptr_; right_ptr != right_ptr_upper_bound; ++right_ptr) {
 					*right_ptr += *(result_ptr++) * *left_ptr;
 				}
 			}
@@ -145,10 +147,13 @@ FORCE_INLINE void uncombine_sig_deriv(
 	for (uint64_t left_level = 1; left_level < degree; ++left_level) {
 		for (uint64_t level = left_level + 1, right_level = 1; level <= degree; ++level, ++right_level) {
 			double* result_ptr = sig_concat_deriv + level_index[level];
-			for (double* left_ptr = sig_concat_deriv + level_index[left_level]; left_ptr != sig_concat_deriv + level_index[left_level + 1]; ++left_ptr) {
-				const double* const right_ptr_upper_bound = sig2 + level_index[right_level + 1];
-				for (const double* right_ptr = sig2 + level_index[right_level]; right_ptr != right_ptr_upper_bound; ++right_ptr) {
-					*left_ptr += *(result_ptr++) * *right_ptr;
+			const double* const left_ptr_upper_bound = sig_concat_deriv + level_index[left_level + 1];
+			const double* right_ptr_ = sig2 + level_index[right_level];
+			const double* const right_ptr_upper_bound = sig2 + level_index[right_level + 1];
+
+			for (double* left_ptr = sig_concat_deriv + level_index[left_level]; left_ptr != left_ptr_upper_bound; ++left_ptr) {
+				for (const double* right_ptr = right_ptr_; right_ptr != right_ptr_upper_bound; ++right_ptr) {
+					*left_ptr += *(result_ptr++) * (*right_ptr);
 				}
 			}
 		}
@@ -169,11 +174,14 @@ FORCE_INLINE void linear_sig_deriv_to_increment_deriv(
 
 	for (uint64_t level = degree; level > 1; --level) {
 		const double one_over_level = 1. / level;
-		for (uint64_t j = 0; j < level_index[level] - level_index[level - 1]; ++j) {
-			for (uint64_t dd = 0; dd < dimension; ++dd) {
-				const double ii = sig_deriv[level_index[level] + dd + dimension * j] * one_over_level;
-				sig_deriv[level_index[level - 1] + j] += sig[1 + dd] * ii;
-				sig_deriv[1 + dd] += sig[level_index[level - 1] + j] * ii;
+		const uint64_t level_size = level_index[level] - level_index[level - 1];
+		for (uint64_t j = 0; j < level_size; ++j) {
+			const uint64_t offs1 = level_index[level] + dimension * j - 1;
+			const uint64_t offs2 = level_index[level - 1] + j;
+			for (uint64_t dd = 1; dd <= dimension; ++dd) {
+				const double ii = sig_deriv[offs1 + dd] * one_over_level;
+				sig_deriv[offs2] += sig[dd] * ii;
+				sig_deriv[dd] += sig[offs2] * ii;
 			}
 		}
 	}

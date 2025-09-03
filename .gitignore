@@ -2,6 +2,7 @@
 /.idea
 /__pycache__
 /pysiglib/__pycache__
+/pysiglib/torch_api/__pycache__
 /pysiglib/.idea
 /examples/__pycache__
 /examples/times_avx_2.pickle
