@@ -7,6 +7,16 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
+import subprocess
+
+def run_doxygen():
+    """Run doxygen to generate XML before Sphinx builds."""
+    if not os.path.exists("_build/doxygen/xml"):
+        os.makedirs("_build/doxygen/xml")
+    subprocess.call("doxygen Doxyfile", shell=True)
+
+run_doxygen()
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
@@ -21,7 +31,8 @@ release = '0.1.0'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    'breathe' #For C++
 ]
 
 autodoc_typehints = "none"
@@ -54,3 +65,10 @@ html_title = "Documentation"
 rst_epilog = """
 .. |release| replace:: %s
 """ % release
+
+# -- C++ options -------------------------------------------------
+
+breathe_projects = {
+    "siglib": "_build/doxygen/xml"
+}
+breathe_default_project = "siglib"

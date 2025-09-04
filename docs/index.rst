@@ -24,15 +24,38 @@ pySigLib |release|
    :align: center
    :class: only-dark
 
+Fast Signature Computations on CPU and GPU.
+
 .. toctree::
    :titlesonly:
    :maxdepth: 2
 
    /pages/installation
+
+.. toctree::
+   :titlesonly:
+   :maxdepth: 2
+
    /pages/transform_path
    /pages/sig_length
    /pages/signature
    /pages/sig_combine
    /pages/sig_kernel
+
+.. toctree::
+   :titlesonly:
+   :maxdepth: 2
+
    /pages/backprop
+
+.. toctree::
+   :titlesonly:
+   :maxdepth: 2
+
    /pages/torch_api
+
+.. toctree::
+   :titlesonly:
+   :maxdepth: 2
+
+   /pages/cpp
