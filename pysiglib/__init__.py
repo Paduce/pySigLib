@@ -23,3 +23,5 @@ from .transform_path import transform_path
 from .transform_path_backprop import transform_path_backprop
 
 import pysiglib.torch_api
+
+__version__ = "0.2.0"
