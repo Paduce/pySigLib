@@ -27,7 +27,7 @@ def sig_length(dimension : int, degree : int) -> int:
     where :math:`d` is the dimension of the underlying path and :math:`N`
     is the truncation level of the signature.
 
-    :param dimension: Dimension of the undelying path, :math:`d`
+    :param dimension: Dimension of the underlying path, :math:`d`
     :type dimension: int
     :param degree: Truncation level of the signature, :math:`N`
     :type degree: int

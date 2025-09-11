@@ -141,8 +141,8 @@ def transform_path(
     after the lead-lag transformation.
 
     :param path: The underlying path or batch of paths, given as a `numpy.ndarray` or `torch.tensor`.
-        For a single path, this must be of shape (length, dimension). For a batch of paths, this must
-        be of shape (batch size, length, dimension).
+        For a single path, this must be of shape ``(length, dimension)``. For a batch of paths, this must
+        be of shape ``(batch_size, length, dimension)``.
     :type path: numpy.ndarray | torch.tensor
     :param time_aug: If ``True``, applies time-augmentation by adding a linear channel to the path
         spanning :math:`[0, t_L]`. :math:`t_L` is given by the parameter ``end_time`` and defaults to 1.

@@ -34,11 +34,11 @@ def sig_score(
 
 
     :param sample: The batch of sample paths drawn from :math:`\\mu`, given as a `numpy.ndarray` or
-        `torch.tensor`. This must be of shape (batch size, length, dimension).
+        `torch.tensor`. This must be of shape ``(batch_size_1, length_1, dimension)``.
     :type sample: numpy.ndarray | torch.tensor
     :param y: The path(s) y, given as a `numpy.ndarray` or `torch.tensor`. For a single path,
-        this must be of shape (length, dimension). For a batch of paths, this must be of shape
-        (batch size, length, dimension).
+        this must be of shape ``(length_2, dimension)``. For a batch of paths, this must be of shape
+        ``(batch_size_2, length_2, dimension)``.
     :type y: numpy.ndarray | torch.tensor
     :param dyadic_order: If set to a positive integer :math:`\\lambda`, will refine the
         paths by a factor of :math:`2^\\lambda`. If set to a tuple of positive integers
@@ -49,7 +49,7 @@ def sig_score(
     :type lam: float
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
-        where :math`t_L` is given by the parameter ``end_time``.
+        where :math:`t_L` is given by the parameter ``end_time``.
     :type time_aug: bool
     :param lead_lag: If set to True, will compute the signature of the path after applying the lead-lag transformation.
     :type lead_lag: bool
@@ -126,10 +126,10 @@ def expected_sig_score(
 
 
     :param sample1: The batch of sample paths drawn from :math:`\\mu`, given as a `numpy.ndarray` or
-        `torch.tensor`. This must be of shape (batch size, length, dimension).
+        `torch.tensor`. This must be of shape ``(batch_size_1, length_1, dimension)``.
     :type sample1: numpy.ndarray | torch.tensor
     :param sample2: The batch of sample paths drawn from :math:`\\nu`, given as a `numpy.ndarray` or
-        `torch.tensor`. This must be of shape (batch size, length, dimension).
+        `torch.tensor`. This must be of shape ``(batch_size_2, length_2, dimension)``.
     :type sample2: numpy.ndarray | torch.tensor
     :param dyadic_order: If set to a positive integer :math:`\\lambda`, will refine the
         paths by a factor of :math:`2^\\lambda`. If set to a tuple of positive integers
@@ -140,7 +140,7 @@ def expected_sig_score(
     :type lam: float
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
-        where :math`t_L` is given by the parameter ``end_time``.
+        where :math:`t_L` is given by the parameter ``end_time``.
     :type time_aug: bool
     :param lead_lag: If set to True, will compute the signature of the path after applying the lead-lag transformation.
     :type lead_lag: bool
@@ -156,7 +156,7 @@ def expected_sig_score(
         If set to -1, the entire batch is computed in parallel.
     :type max_batch: int
     :return: Expected signature kernel score
-    :rtype: float
+    :rtype: numpy.ndarray | torch.tensor
 
     .. note::
 
@@ -204,10 +204,10 @@ def sig_mmd(
 
 
     :param sample1: The batch of sample paths drawn from :math:`\\mu`, given as a `numpy.ndarray` or
-        `torch.tensor`. This must be of shape (batch size, length, dimension).
+        `torch.tensor`. This must be of shape ``(batch_size_1, length_1, dimension)``.
     :type sample1: numpy.ndarray | torch.tensor
     :param sample2: The batch of sample paths drawn from :math:`\\nu`, given as a `numpy.ndarray` or
-        `torch.tensor`. This must be of shape (batch size, length, dimension).
+        `torch.tensor`. This must be of shape ``(batch_size_2, length_2, dimension)``.
     :type sample2: numpy.ndarray | torch.tensor
     :param dyadic_order: If set to a positive integer :math:`\\lambda`, will refine the
         paths by a factor of :math:`2^\\lambda`. If set to a tuple of positive integers
@@ -216,7 +216,7 @@ def sig_mmd(
     :type dyadic_order: int | tuple
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
-        where :math`t_L` is given by the parameter ``end_time``.
+        where :math:`t_L` is given by the parameter ``end_time``.
     :type time_aug: bool
     :param lead_lag: If set to True, will compute the signature of the path after applying the lead-lag transformation.
     :type lead_lag: bool
@@ -232,7 +232,7 @@ def sig_mmd(
         If set to -1, the entire batch is computed in parallel.
     :type max_batch: int
     :return: Signature MMD
-    :rtype: float
+    :rtype: numpy.ndarray | torch.tensor
 
     .. note::
 

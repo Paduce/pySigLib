@@ -174,8 +174,8 @@ def sig_backprop(
     :math:`\\partial F / \\partial x`.
 
     :param path: The underlying path or batch of paths, given as a `numpy.ndarray` or `torch.tensor`.
-        For a single path, this must be of shape (length, dimension). For a batch of paths, this must
-        be of shape (batch size, length, dimension).
+        For a single path, this must be of shape ``(length, dimension)``. For a batch of paths, this must
+        be of shape ``(batch_size, length, dimension)``.
     :type path: numpy.ndarray | torch.tensor
     :param sig: Signature(s) of the path or batch of paths.
     :type sig: numpy.ndarray | torch.tensor
@@ -187,7 +187,7 @@ def sig_backprop(
     :type degree: int
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
-        where :math`t_L` is given by the parameter ``end_time``.
+        where :math:`t_L` is given by the parameter ``end_time``.
     :type time_aug: bool
     :param lead_lag: If set to True, will compute the signature of the path after applying the lead-lag transformation.
     :type lead_lag: bool

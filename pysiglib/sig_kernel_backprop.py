@@ -173,12 +173,12 @@ def sig_kernel_backprop(
         of signature kernels, :math:`\\partial F / \\left< S(x), S(y) \\right>`.
     :type derivs: numpy.ndarray | torch.tensor
     :param path1: The first underlying path or batch of paths, given as a `numpy.ndarray` or
-        `torch.tensor`. For a single path, this must be of shape (length, dimension). For a
-        batch of paths, this must be of shape (batch size, length, dimension).
+        `torch.tensor`. For a single path, this must be of shape ``(length_1, dimension)``. For a
+        batch of paths, this must be of shape ``(batch_size, length_1, dimension)``.
     :type path1: numpy.ndarray | torch.tensor
     :param path2: The second underlying path or batch of paths, given as a `numpy.ndarray`
-        or `torch.tensor`. For a single path, this must be of shape (length, dimension).
-        For a batch of paths, this must be of shape (batch size, length, dimension).
+        or `torch.tensor`. For a single path, this must be of shape ``(length_2, dimension)``.
+        For a batch of paths, this must be of shape ``(batch_size, length_2, dimension)``.
     :type path2: numpy.ndarray | torch.tensor
     :param dyadic_order: The dyadic order(s) used to compute the signature kernels.
     :type dyadic_order: int | tuple
@@ -306,12 +306,12 @@ def sig_kernel_gram_backprop(
         :math:`\\partial F / G`.
     :type derivs: numpy.ndarray | torch.tensor
     :param path1: The first underlying path or batch of paths, given as a `numpy.ndarray` or
-        `torch.tensor`. For a single path, this must be of shape (length, dimension). For a
-        batch of paths, this must be of shape (batch size, length, dimension).
+        `torch.tensor`. For a single path, this must be of shape ``(length_1, dimension)``. For a
+        batch of paths, this must be of shape ``(batch_size_1, length_1, dimension)``.
     :type path1: numpy.ndarray | torch.tensor
     :param path2: The second underlying path or batch of paths, given as a `numpy.ndarray`
-        or `torch.tensor`. For a single path, this must be of shape (length, dimension).
-        For a batch of paths, this must be of shape (batch size, length, dimension).
+        or `torch.tensor`. For a single path, this must be of shape ``(length_2, dimension)``.
+        For a batch of paths, this must be of shape ``(batch_size_2, length_2, dimension)``.
     :type path2: numpy.ndarray | torch.tensor
     :param dyadic_order: The dyadic order(s) used to compute the signature kernels.
     :type dyadic_order: int | tuple

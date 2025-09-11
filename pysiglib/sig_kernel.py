@@ -87,12 +87,12 @@ def sig_kernel(
         \\left< u, v \\right>_{\\left(\\mathbb{R}^d\\right)^{\\otimes k}} := \\prod_{i=1}^k \\left< u_i, v_i \\right>_{\\mathbb{R}^d}
 
     :param path1: The first underlying path or batch of paths, given as a `numpy.ndarray` or
-        `torch.tensor`. For a single path, this must be of shape (length, dimension). For a
-        batch of paths, this must be of shape (batch size, length, dimension).
+        `torch.tensor`. For a single path, this must be of shape ``(length_1, dimension)``. For a
+        batch of paths, this must be of shape ``(batch_size, length_1, dimension)``.
     :type path1: numpy.ndarray | torch.tensor
     :param path2: The second underlying path or batch of paths, given as a `numpy.ndarray`
-        or `torch.tensor`. For a single path, this must be of shape (length, dimension).
-        For a batch of paths, this must be of shape (batch size, length, dimension).
+        or `torch.tensor`. For a single path, this must be of shape ``(length_2, dimension)``.
+        For a batch of paths, this must be of shape ``(batch_size, length_2, dimension)``.
     :type path2: numpy.ndarray | torch.tensor
     :param dyadic_order: If set to a positive integer :math:`\\lambda`, will refine the
         paths by a factor of :math:`2^\\lambda`. If set to a tuple of positive integers
@@ -101,7 +101,7 @@ def sig_kernel(
     :type dyadic_order: int | tuple
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
-        where :math`t_L` is given by the parameter ``end_time``.
+        where :math:`t_L` is given by the parameter ``end_time``.
     :type time_aug: bool
     :param lead_lag: If set to True, will compute the signature of the path after applying the lead-lag transformation.
     :type lead_lag: bool
@@ -210,12 +210,12 @@ def sig_kernel_gram(
         \\left< u, v \\right>_{\\left(\\mathbb{R}^d\\right)^{\\otimes k}} := \\prod_{i=1}^k \\left< u_i, v_i \\right>_{\\mathbb{R}^d}
 
     :param path1: The first underlying path or batch of paths, given as a `numpy.ndarray` or
-        `torch.tensor`. For a single path, this must be of shape (length, dimension). For a
-        batch of paths, this must be of shape (batch size, length, dimension).
+        `torch.tensor`. For a single path, this must be of shape ``(length_1, dimension)``. For a
+        batch of paths, this must be of shape ``(batch_size_1, length_1, dimension)``.
     :type path1: numpy.ndarray | torch.tensor
     :param path2: The second underlying path or batch of paths, given as a `numpy.ndarray`
-        or `torch.tensor`. For a single path, this must be of shape (length, dimension).
-        For a batch of paths, this must be of shape (batch size, length, dimension).
+        or `torch.tensor`. For a single path, this must be of shape ``(length_2, dimension)``.
+        For a batch of paths, this must be of shape ``(batch_size_2, length_2, dimension)``.
     :type path2: numpy.ndarray | torch.tensor
     :param dyadic_order: If set to a positive integer :math:`\\lambda`, will refine the
         paths by a factor of :math:`2^\\lambda`. If set to a tuple of positive integers
@@ -224,7 +224,7 @@ def sig_kernel_gram(
     :type dyadic_order: int | tuple
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
-        where :math`t_L` is given by the parameter ``end_time``.
+        where :math:`t_L` is given by the parameter ``end_time``.
     :type time_aug: bool
     :param lead_lag: If set to True, will compute the signature of the path after applying the lead-lag transformation.
     :type lead_lag: bool
