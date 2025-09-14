@@ -148,7 +148,7 @@ with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
 
 setup(
     name='pysiglib',
-    version="0.2.0",
+    version="0.2.1",
     description="Fast Signature Computations on CPU and GPU",
     packages=['pysiglib'],
     long_description=long_description,
@@ -190,3 +190,19 @@ setup(
         'build_py': CustomBuild,
     },
 )
+
+#################################################
+## Note on installing and/or uploading to PyPi
+#################################################
+#
+# pySigLib needs to compile the C++ dlls during install. This step is skipped during editable installs,
+# or installs from bdist/wheels. Editable installs are automatically blocked by this setup.py, although
+# this behaviour can be overwritten by setting the environment variable ALLOW_EDITABLE=1 in exceptional
+# cases where the editable install is required and you've precompiled the dlls separately.
+#
+# To distribute the package properly, use an sdist. For PyPi:
+#
+# python -m setup.py sdist
+# twine check dist/*
+# twine upload -r testpypi dist/*
+#
