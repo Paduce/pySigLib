@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =========================================================================
-from tabnanny import check
 
 from copy import deepcopy
 
@@ -163,7 +162,7 @@ def test_sig_mmd_backprop_random_cpu(dyadic_order):
 
 @pytest.mark.skipif(not (pysiglib.BUILT_WITH_CUDA and torch.cuda.is_available()), reason="CUDA not available or disabled")
 @pytest.mark.parametrize("dyadic_order", range(3))
-def test_sig_score_backprop_random_cpu(dyadic_order):
+def test_sig_score_backprop_random_cuda(dyadic_order):
     batch, len1, len2, dim = 8, 10, 10, 5
     X = torch.rand(size=(batch, len1, dim), device="cuda", dtype = torch.double, requires_grad = True)
     Y = torch.rand(size=(1, len2, dim), device="cuda", dtype = torch.double)
@@ -177,7 +176,7 @@ def test_sig_score_backprop_random_cpu(dyadic_order):
 
 @pytest.mark.skipif(not (pysiglib.BUILT_WITH_CUDA and torch.cuda.is_available()), reason="CUDA not available or disabled")
 @pytest.mark.parametrize("dyadic_order", range(3))
-def test_sig_score_backprop_random_cpu_batch(dyadic_order):
+def test_sig_score_backprop_random_cuda_batch(dyadic_order):
     batch, len1, len2, dim = 8, 10, 10, 5
     X = torch.rand(size=(batch, len1, dim), device="cuda", dtype = torch.double, requires_grad = True)
     Y = torch.rand(size=(4, len2, dim), device="cuda", dtype = torch.double)
@@ -191,7 +190,7 @@ def test_sig_score_backprop_random_cpu_batch(dyadic_order):
 
 @pytest.mark.skipif(not (pysiglib.BUILT_WITH_CUDA and torch.cuda.is_available()), reason="CUDA not available or disabled")
 @pytest.mark.parametrize("dyadic_order", range(3))
-def test_expected_sig_score_backprop_random_cpu(dyadic_order):
+def test_expected_sig_score_backprop_random_cuda(dyadic_order):
     batch, len1, len2, dim = 8, 10, 10, 5
     X = torch.rand(size=(batch, len1, dim), device="cuda", dtype = torch.double, requires_grad = True)
     Y = torch.rand(size=(batch, len2, dim), device="cuda", dtype = torch.double)
@@ -205,7 +204,7 @@ def test_expected_sig_score_backprop_random_cpu(dyadic_order):
 
 @pytest.mark.skipif(not (pysiglib.BUILT_WITH_CUDA and torch.cuda.is_available()), reason="CUDA not available or disabled")
 @pytest.mark.parametrize("dyadic_order", range(3))
-def test_sig_mmd_backprop_random_cpu(dyadic_order):
+def test_sig_mmd_backprop_random_cuda(dyadic_order):
     batch, len1, len2, dim = 8, 10, 10, 5
     X = torch.rand(size=(batch, len1, dim), device="cuda", dtype = torch.double, requires_grad = True)
     Y = torch.rand(size=(batch, len2, dim), device="cuda", dtype = torch.double)
