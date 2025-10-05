@@ -249,10 +249,10 @@ def sig_score(
     xx = sig_kernel_gram(sample, sample, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
     xy = sig_kernel_gram(sample, y, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
 
-    xx_sum = float((torch.sum(xx) - torch.sum(torch.diag(xx))) / (B * (B - 1)))
+    xx_sum = (torch.sum(xx) - torch.sum(torch.diag(xx))) / (B * (B - 1.))
     xy_sum = torch.sum(xy, dim=0) * (2. / B)
 
-    res = lam * torch.full(xy_sum.shape, xx_sum, device=xy_sum.device) - xy_sum
+    res = lam * xx_sum - xy_sum
     return res
 
 sig_score.__doc__ = sig_score_forward.__doc__
