@@ -187,7 +187,7 @@ def sig_kernel_gram(
         return_grid : bool = False
 ) -> Union[np.ndarray, torch.tensor]:
     """
-    Given batches of paths :math:`\{x_i\}_{i=1}^B` and :math:`\{y_i\}_{i=1}^B`, computes the gram matrix of signature kernels
+    Given batches of paths :math:`\\{x_i\\}_{i=1}^B` and :math:`\\{y_i\\}_{i=1}^B`, computes the gram matrix of signature kernels
 
     .. math::
 
