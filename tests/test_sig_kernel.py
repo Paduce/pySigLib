@@ -123,6 +123,36 @@ def test_sig_kernel_random_cpu(dyadic_order):
 
     check_close(kernel1, kernel2)
 
+@pytest.mark.parametrize("dyadic_order", range(3))
+def test_sig_kernel_scaled_linear_cpu(dyadic_order):
+    batch, len1, len2, dim = 32, 100, 100, 5
+    X = torch.rand(size=(batch, len1, dim), device="cpu", dtype = torch.double)
+    Y = torch.rand(size=(batch, len2, dim), device="cpu", dtype = torch.double)
+
+    static_kernel = sigkernel.LinearKernel(0.5)
+    signature_kernel = sigkernel.SigKernel(static_kernel, dyadic_order)
+    kernel1 = signature_kernel.compute_kernel(X, Y, 100)
+
+    static_kernel = pysiglib.ScaledLinearKernel(0.5)
+    kernel2 = pysiglib.sig_kernel(X, Y, dyadic_order, kernel = static_kernel)
+
+    check_close(kernel1, kernel2)
+
+@pytest.mark.parametrize("dyadic_order", range(3))
+def test_sig_kernel_rbf_cpu(dyadic_order):
+    batch, len1, len2, dim = 32, 100, 100, 5
+    X = torch.rand(size=(batch, len1, dim), device="cpu", dtype = torch.double)
+    Y = torch.rand(size=(batch, len2, dim), device="cpu", dtype = torch.double)
+
+    static_kernel = sigkernel.RBFKernel(0.5)
+    signature_kernel = sigkernel.SigKernel(static_kernel, dyadic_order)
+    kernel1 = signature_kernel.compute_kernel(X, Y, 100)
+
+    static_kernel = pysiglib.RBFKernel(0.5)
+    kernel2 = pysiglib.sig_kernel(X, Y, dyadic_order, kernel = static_kernel)
+
+    check_close(kernel1, kernel2)
+
 @pytest.mark.parametrize(("len1", "len2"), [(10, 100), (100, 10)])
 @pytest.mark.parametrize("dyadic_order", range(3))
 def test_sig_kernel_random_cpu_non_square(len1, len2, dyadic_order):

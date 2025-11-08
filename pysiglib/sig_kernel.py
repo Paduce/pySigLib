@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =========================================================================
-
-from typing import Union
+from typing import Union, Optional, Callable
 from ctypes import c_double, POINTER, cast
 
 import numpy as np
@@ -24,6 +23,7 @@ from .load_siglib import CPSIG, CUSIG, BUILT_WITH_CUDA
 from .param_checks import check_type
 from .error_codes import err_msg
 from .data_handlers import DoublePathInputHandler, ScalarOutputHandler, GridOutputHandler
+from .ambient_kernels import LinearKernel, Context
 
 def sig_kernel_(data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs, return_grid):
 
@@ -62,6 +62,7 @@ def sig_kernel(
         path1 : Union[np.ndarray, torch.tensor],
         path2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
+        kernel : Optional[Callable] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -99,6 +100,8 @@ def sig_kernel(
         :math:`(\\lambda_1, \\lambda_2)`, will refine the first path by :math:`2^{\\lambda_1}`
         and the second path by :math:`2^{\\lambda_2}`.
     :type dyadic_order: int | tuple
+    :param kernel: TODO
+    :type kernel: None | callable
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
         where :math:`t_L` is given by the parameter ``end_time``.
@@ -155,15 +158,19 @@ def sig_kernel(
     torch_path1 = torch.as_tensor(data.path1, dtype = torch.double)  # Avoids data copy
     torch_path2 = torch.as_tensor(data.path2, dtype = torch.double)
 
-    if data.is_batch:
-        x1 = torch_path1[:, 1:, :] - torch_path1[:, :-1, :]
-        y1 = torch_path2[:, 1:, :] - torch_path2[:, :-1, :]
-    else:
-        x1 = (torch_path1[1:, :] - torch_path1[:-1, :])[None, :, :]
-        y1 = (torch_path2[1:, :] - torch_path2[:-1, :])[None, :, :]
+    if not data.is_batch:
+        torch_path1 = torch_path1.unsqueeze(0)
+        torch_path2 = torch_path2.unsqueeze(0)
 
-    gram = torch.empty((x1.shape[0], x1.shape[1], y1.shape[1]), dtype=torch.double, device = x1.device)
-    torch.bmm(x1, y1.permute(0, 2, 1), out=gram)
+    ctx = Context()
+
+    if kernel is None:
+        kernel = LinearKernel()
+
+    if callable(kernel):
+        gram = kernel(ctx, torch_path1, torch_path2)
+    else:
+        raise ValueError()#TODO
 
     if data.device == "cpu":
         sig_kernel_(data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs, return_grid)
@@ -179,6 +186,7 @@ def sig_kernel_gram(
         path1 : Union[np.ndarray, torch.tensor],
         path2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
+        kernel : Optional[Callable] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -222,6 +230,8 @@ def sig_kernel_gram(
         :math:`(\\lambda_1, \\lambda_2)`, will refine the first path by :math:`2^{\\lambda_1}`
         and the second path by :math:`2^{\\lambda_2}`.
     :type dyadic_order: int | tuple
+    :param kernel: TODO
+    :type kernel: str
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
         where :math:`t_L` is given by the parameter ``end_time``.
@@ -295,7 +305,7 @@ def sig_kernel_gram(
             path1_ = path1[i:i + batch1_, :, :].repeat_interleave(batch2_, 0).contiguous().clone()
             path2_ = path2[j:j + batch2_, :, :].repeat(batch1_, 1, 1).contiguous().clone()
 
-            k = sig_kernel(path1_, path2_, dyadic_order, time_aug, lead_lag, end_time, n_jobs, return_grid)
+            k = sig_kernel(path1_, path2_, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, return_grid)
             k = k.reshape((batch1_, batch2_) + k.shape[1:])
             res[-1].append(k)
 

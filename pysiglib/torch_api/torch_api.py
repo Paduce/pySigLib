@@ -13,7 +13,7 @@
 # limitations under the License.
 # =========================================================================
 
-from typing import Union
+from typing import Union, Optional, Callable
 import numpy as np
 import torch
 from ..sig import signature as sig_forward
@@ -127,11 +127,12 @@ transform_path.__doc__ = transform_path_forward.__doc__
 
 class SigKernel(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, path1, path2, dyadic_order, time_aug, lead_lag, end_time, n_jobs):
-        k_grid = sig_kernel_forward(path1, path2, dyadic_order, time_aug, lead_lag, end_time, n_jobs, True)
+    def forward(ctx, path1, path2, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs):
+        k_grid = sig_kernel_forward(path1, path2, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, True)
 
         ctx.save_for_backward(k_grid, path1, path2)
         ctx.dyadic_order = dyadic_order
+        ctx.kernel = kernel
         ctx.time_aug = time_aug
         ctx.lead_lag = lead_lag
         ctx.end_time = end_time
@@ -148,29 +149,30 @@ class SigKernel(torch.autograd.Function):
         right_deriv = ctx.needs_input_grad[1]
 
         k_grid, path1, path2 = ctx.saved_tensors
-        new_derivs = sig_kernel_backprop(grad_output, path1, path2, ctx.dyadic_order,
+        new_derivs = sig_kernel_backprop(grad_output, path1, path2, ctx.dyadic_order, ctx.kernel,
                                          ctx.time_aug, ctx.lead_lag, ctx.end_time,
                                          left_deriv, right_deriv, k_grid, ctx.n_jobs)
 
-        return new_derivs[0], new_derivs[1], None, None, None, None, None, None, None
+        return new_derivs[0], new_derivs[1], None, None, None, None, None, None, None, None
 
 def sig_kernel(
         path1 : Union[np.ndarray, torch.tensor],
         path2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
+        kernel : Optional[Callable] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
         n_jobs : int = 1
 ) -> Union[np.ndarray, torch.tensor]:
-    return SigKernel.apply(path1, path2, dyadic_order, time_aug, lead_lag, end_time, n_jobs)
+    return SigKernel.apply(path1, path2, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs)
 
 sig_kernel.__doc__ = sig_kernel_forward.__doc__
 
 class SigKernelGram(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, path1, path2, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, save_kernel):
-        k_grid = sig_kernel_gram_forward(path1, path2, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, return_grid = save_kernel)
+    def forward(ctx, path1, path2, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, save_kernel):
+        k_grid = sig_kernel_gram_forward(path1, path2, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, return_grid = save_kernel)
 
         if save_kernel:
             ctx.save_for_backward(k_grid, path1, path2)
@@ -178,6 +180,7 @@ class SigKernelGram(torch.autograd.Function):
             ctx.save_for_backward(path1, path2)
 
         ctx.dyadic_order = dyadic_order
+        ctx.kernel = kernel
         ctx.time_aug = time_aug
         ctx.lead_lag = lead_lag
         ctx.end_time = end_time
@@ -201,16 +204,17 @@ class SigKernelGram(torch.autograd.Function):
             k_grid = None
             path1, path2 = ctx.saved_tensors
 
-        new_derivs = sig_kernel_gram_backprop(grad_output, path1, path2, ctx.dyadic_order,
+        new_derivs = sig_kernel_gram_backprop(grad_output, path1, path2, ctx.dyadic_order, ctx.kernel,
                                          ctx.time_aug, ctx.lead_lag, ctx.end_time,
                                          left_deriv, right_deriv, k_grid, ctx.n_jobs, ctx.max_batch)
 
-        return new_derivs[0], new_derivs[1], None, None, None, None, None, None, None
+        return new_derivs[0], new_derivs[1], None, None, None, None, None, None, None, None
 
 def sig_kernel_gram(
         path1: Union[np.ndarray, torch.tensor],
         path2: Union[np.ndarray, torch.tensor],
         dyadic_order: Union[int, tuple],
+        kernel : Optional[Callable] = None,
         time_aug: bool = False,
         lead_lag: bool = False,
         end_time: float = 1.,
@@ -218,7 +222,7 @@ def sig_kernel_gram(
         max_batch: int = -1,
         save_kernel: bool = False
 ) -> Union[np.ndarray, torch.tensor]:
-    return SigKernelGram.apply(path1, path2, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, save_kernel)
+    return SigKernelGram.apply(path1, path2, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, save_kernel)
 
 sig_kernel_gram.__doc__ = sig_kernel_gram_forward.__doc__
 
@@ -227,6 +231,7 @@ def sig_score(
         y : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
         lam : float = 1.,
+        kernel : Optional[Callable] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -246,8 +251,8 @@ def sig_score(
 
     B = sample.shape[0]
 
-    xx = sig_kernel_gram(sample, sample, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
-    xy = sig_kernel_gram(sample, y, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    xx = sig_kernel_gram(sample, sample, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    xy = sig_kernel_gram(sample, y, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
 
     xx_sum = (torch.sum(xx) - torch.sum(torch.diag(xx))) / (B * (B - 1.))
     xy_sum = torch.sum(xy, dim=0) * (2. / B)
@@ -262,13 +267,14 @@ def expected_sig_score(
         sample2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
         lam : float = 1.,
+        kernel : Optional[Callable] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
         n_jobs : int = 1,
         max_batch : int = -1
 ) -> Union[np.ndarray, torch.tensor]:
-    res = sig_score(sample1, sample2, dyadic_order, lam, time_aug, lead_lag, end_time, n_jobs, max_batch)
+    res = sig_score(sample1, sample2, dyadic_order, lam, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch)
     res = torch.mean(res, 0, True)
     return res
 
@@ -279,6 +285,7 @@ def sig_mmd(
         sample2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
         lam : float = 1.,
+        kernel : Optional[Callable] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -294,9 +301,9 @@ def sig_mmd(
     m = sample1.shape[0]
     n = sample2.shape[0]
 
-    xx = sig_kernel_gram(sample1, sample1, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
-    xy = sig_kernel_gram(sample1, sample2, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
-    yy = sig_kernel_gram(sample2, sample2, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    xx = sig_kernel_gram(sample1, sample1, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    xy = sig_kernel_gram(sample1, sample2, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    yy = sig_kernel_gram(sample2, sample2, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
 
     xx_sum = (torch.sum(xx) - torch.sum(torch.diag(xx))) / (m * (m - 1))
     xy_sum = 2. * torch.mean(xy)

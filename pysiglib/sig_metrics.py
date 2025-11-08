@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional, Callable
 import numpy as np
 import torch
 
@@ -12,6 +12,7 @@ def sig_score(
         y : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
         lam : float = 1.,
+        kernel : Optional[Callable] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -47,6 +48,8 @@ def sig_score(
     :type dyadic_order: int | tuple
     :param lam: The parameter :math:`\\lambda` of the generalised signature kernel score (default = 1.0).
     :type lam: float
+    :param kernel: TODO
+    :type kernel: str
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
         where :math:`t_L` is given by the parameter ``end_time``.
@@ -87,8 +90,8 @@ def sig_score(
 
     B = sample.shape[0]
 
-    xx = sig_kernel_gram(sample, sample, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
-    xy = sig_kernel_gram(sample, y, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    xx = sig_kernel_gram(sample, sample, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    xy = sig_kernel_gram(sample, y, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
 
     xx_sum = (torch.sum(xx) - torch.sum(torch.diag(xx))) / (B * (B - 1.))
     xy_sum = torch.sum(xy, dim = 0) * (2. / B)
@@ -104,6 +107,7 @@ def expected_sig_score(
         sample2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
         lam : float = 1.,
+        kernel : Optional[Callable] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -138,6 +142,8 @@ def expected_sig_score(
     :type dyadic_order: int | tuple
     :param lam: The parameter :math:`\\lambda` of the generalised signature kernel score (default = 1.0).
     :type lam: float
+    :param kernel: TODO
+    :type kernel: str
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
         where :math:`t_L` is given by the parameter ``end_time``.
@@ -165,7 +171,7 @@ def expected_sig_score(
         inefficient.
     """
 
-    res = sig_score(sample1, sample2, dyadic_order, lam, time_aug, lead_lag, end_time, n_jobs, max_batch)
+    res = sig_score(sample1, sample2, dyadic_order, lam, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch)
 
     if isinstance(res, torch.Tensor):
         res = torch.mean(res, 0, True)
@@ -178,6 +184,7 @@ def sig_mmd(
         sample1 : Union[np.ndarray, torch.tensor],
         sample2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
+        kernel : Optional[Callable] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -214,6 +221,8 @@ def sig_mmd(
         :math:`(\\lambda_1, \\lambda_2)`, will refine the first path by :math:`2^{\\lambda_1}`
         and the second path by :math:`2^{\\lambda_2}`.
     :type dyadic_order: int | tuple
+    :param kernel: TODO
+    :type kernel: str
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
         where :math:`t_L` is given by the parameter ``end_time``.
@@ -249,9 +258,9 @@ def sig_mmd(
     m = sample1.shape[0]
     n = sample2.shape[0]
 
-    xx = sig_kernel_gram(sample1, sample1, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
-    xy = sig_kernel_gram(sample1, sample2, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
-    yy = sig_kernel_gram(sample2, sample2, dyadic_order, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    xx = sig_kernel_gram(sample1, sample1, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    xy = sig_kernel_gram(sample1, sample2, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    yy = sig_kernel_gram(sample2, sample2, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
 
     xx_sum = (torch.sum(xx) - torch.sum(torch.diag(xx))) / (m * (m - 1))
     xy_sum = 2. * torch.mean(xy)

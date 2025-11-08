@@ -13,7 +13,7 @@
 # limitations under the License.
 # =========================================================================
 
-from typing import Union, Tuple
+from typing import Union, Tuple, Optional, Callable
 from ctypes import c_double, POINTER, cast
 
 import numpy as np
@@ -26,6 +26,7 @@ from .load_siglib import CPSIG, CUSIG, BUILT_WITH_CUDA
 from .param_checks import check_type
 from .error_codes import err_msg
 from .data_handlers import DoublePathInputHandler, ScalarInputHandler, GridOutputHandler, PathInputHandler
+from .ambient_kernels import LinearKernel, Context
 
 def sig_kernel_backprop_(data, derivs_data, result, gram, k_grid_data, dyadic_order_1, dyadic_order_2, n_jobs):
 
@@ -84,75 +85,12 @@ def gram_deriv(
 
     return result.data
 
-def gram_deriv_to_path_deriv_x(
-        data,
-        gram_derivs : Union[np.ndarray, torch.tensor],
-        y1 : Union[np.ndarray, torch.tensor],
-        time_aug: bool = False,
-        lead_lag: bool = False,
-        end_time: float = 1.,
-        n_jobs: int = 1
-):
-    # Now convert derivs wrt to gram into derivs wrt the path
-    # note result.data is a torch array
-    if data.is_batch:
-        out = torch.empty((data.batch_size, data.length_1, data.length_2 - 1), dtype=torch.float64,
-                          device=gram_derivs.device)
-        out[:, 0, :] = 0
-        out[:, 1:, :] = gram_derivs
-        out[:, :-1, :] -= gram_derivs
-    else:
-        out = torch.empty((data.length_1, data.length_2 - 1), dtype=torch.float64, device=gram_derivs.device)
-        out[0, :] = 0
-        out[1:, :] = gram_derivs
-        out[:-1, :] -= gram_derivs
-        out = out[None, :, :]
-
-    out = torch.bmm(out, y1)
-
-    if lead_lag or time_aug:
-        out = transform_path_backprop(out, time_aug, lead_lag, end_time, n_jobs)
-
-    if data.type_ == "numpy":
-        return out.numpy()
-    return out
-
-def gram_deriv_to_path_deriv_y(
-        data,
-        gram_derivs : Union[np.ndarray, torch.tensor],
-        x1 : Union[np.ndarray, torch.tensor],
-        time_aug: bool = False,
-        lead_lag: bool = False,
-        end_time: float = 1.,
-        n_jobs: int = 1
-):
-    if data.is_batch:
-        out = torch.empty((data.batch_size, data.length_1 - 1, data.length_2), dtype=torch.float64,
-                          device=gram_derivs.device)
-        out[:, :, 0] = 0
-        out[:, :, 1:] = gram_derivs
-        out[:, :, :-1] -= gram_derivs
-    else:
-        out = torch.empty((data.length_1 - 1, data.length_2), dtype=torch.float64, device=gram_derivs.device)
-        out[:, 0] = 0
-        out[:, 1:] = gram_derivs
-        out[:, :-1] -= gram_derivs
-        out = out[None, :, :]
-
-    out = torch.bmm(out.permute(0,2,1), x1)
-
-    if lead_lag or time_aug:
-        out = transform_path_backprop(out, time_aug, lead_lag, end_time, n_jobs)
-
-    if data.type_ == "numpy":
-        return out.numpy()
-    return out
-
 def sig_kernel_backprop(
         derivs : Union[np.ndarray, torch.tensor],
         path1 : Union[np.ndarray, torch.tensor],
         path2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
+        kernel : Optional[Callable] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -182,6 +120,8 @@ def sig_kernel_backprop(
     :type path2: numpy.ndarray | torch.tensor
     :param dyadic_order: The dyadic order(s) used to compute the signature kernels.
     :type dyadic_order: int | tuple
+    :param kernel: TODO
+    :type kernel: str
     :param time_aug: If ``True``, assumes the paths were time augmented.
     :type time_aug: bool
     :param lead_lag: If ``True``, assumes the lead-lag transform was applied.
@@ -254,28 +194,37 @@ def sig_kernel_backprop(
     torch_path2 = torch.as_tensor(data.path2, dtype = torch.double)
 
     if k_grid is None:
-        k_grid = sig_kernel(torch.as_tensor(path1), torch.as_tensor(path2), dyadic_order, False, False, end_time, n_jobs, True)
+        k_grid = sig_kernel(torch.as_tensor(path1), torch.as_tensor(path2), dyadic_order, kernel, False, False, end_time, n_jobs, True)
 
-    if data.is_batch:
-        x1 = torch_path1[:, 1:, :] - torch_path1[:, :-1, :]
-        y1 = torch_path2[:, 1:, :] - torch_path2[:, :-1, :]
+    if not data.is_batch:
+        torch_path1 = torch_path1.unsqueeze(0)
+        torch_path2 = torch_path2.unsqueeze(0)
+
+    ctx = Context()
+
+    if kernel is None:
+        kernel = LinearKernel()
+
+    if callable(kernel):
+        gram = kernel(ctx, torch_path1, torch_path2)
     else:
-        x1 = (torch_path1[1:, :] - torch_path1[:-1, :])[None, :, :]
-        y1 = (torch_path2[1:, :] - torch_path2[:-1, :])[None, :, :]
+        raise ValueError()  # TODO
 
-    gram = torch.empty((x1.shape[0], x1.shape[1], y1.shape[1]), dtype = torch.double, device = x1.device)
-    torch.bmm(x1, y1.permute(0, 2, 1), out = gram)
-
-    ld, rd = None, None
+    gram = gram.squeeze()
 
     k_grid_data = PathInputHandler(k_grid, False, False, 0., "k_grid")
     gram_derivs = gram_deriv(derivs_data, data, gram, k_grid_data, dyadic_order_1, dyadic_order_2, n_jobs)
 
-    if left_deriv:
-        ld = gram_deriv_to_path_deriv_x(data, gram_derivs, y1, time_aug, lead_lag, end_time, n_jobs)
+    ld = kernel.grad_x(ctx, gram_derivs) if left_deriv else None
+    rd = kernel.grad_y(ctx, gram_derivs) if right_deriv else None
 
-    if right_deriv:
-        rd = gram_deriv_to_path_deriv_y(data, gram_derivs, x1, time_aug, lead_lag, end_time, n_jobs)
+    if lead_lag or time_aug:
+        ld = transform_path_backprop(ld, time_aug, lead_lag, end_time, n_jobs)
+        rd = transform_path_backprop(rd, time_aug, lead_lag, end_time, n_jobs)
+
+    if data.type_ == "numpy":
+        ld = ld.numpy()
+        rd = rd.numpy()
 
     return ld, rd
 
@@ -285,6 +234,7 @@ def sig_kernel_gram_backprop(
         path1 : Union[np.ndarray, torch.tensor],
         path2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
+        kernel : Optional[Callable] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -315,6 +265,8 @@ def sig_kernel_gram_backprop(
     :type path2: numpy.ndarray | torch.tensor
     :param dyadic_order: The dyadic order(s) used to compute the signature kernels.
     :type dyadic_order: int | tuple
+    :param kernel: TODO
+    :type kernel: str
     :param time_aug: If ``True``, assumes the paths were time augmented.
     :type time_aug: bool
     :param lead_lag: If ``True``, assumes the lead-lag transform was applied.
@@ -409,13 +361,13 @@ def sig_kernel_gram_backprop(
             path2_ = path2[j:j + batch2_, :, :].repeat(batch1_, 1, 1).contiguous().clone()
 
             if k_grid is None:
-                k = sig_kernel(path1_, path2_, dyadic_order, time_aug, lead_lag, end_time, n_jobs, True)
+                k = sig_kernel(path1_, path2_, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, True)
             else:
                 k = k_grid[i:i + batch1_, j:j + batch2_, :, :].contiguous().clone()
 
             derivs_ = derivs[i:i + batch1_, j:j + batch2_].flatten().contiguous().clone()
 
-            ld_, rd_ = sig_kernel_backprop(derivs_, path1_, path2_, dyadic_order, time_aug, lead_lag, end_time, left_deriv, right_deriv, k, n_jobs)
+            ld_, rd_ = sig_kernel_backprop(derivs_, path1_, path2_, dyadic_order, kernel, time_aug, lead_lag, end_time, left_deriv, right_deriv, k, n_jobs)
 
             if left_deriv:
                 ld_ = ld_.reshape((batch1_, batch2_) + ld_.shape[1:])
