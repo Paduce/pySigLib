@@ -120,8 +120,9 @@ def sig_kernel_backprop(
     :type path2: numpy.ndarray | torch.tensor
     :param dyadic_order: The dyadic order(s) used to compute the signature kernels.
     :type dyadic_order: int | tuple
-    :param kernel: TODO
-    :type kernel: str
+    :param kernel: Ambient kernel. If ``None`` (default), the linear kernel will be used.
+        For details, see the documentation on :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
+    :type kernel: None | pysiglib.AmbientKernel
     :param time_aug: If ``True``, assumes the paths were time augmented.
     :type time_aug: bool
     :param lead_lag: If ``True``, assumes the lead-lag transform was applied.
@@ -262,8 +263,9 @@ def sig_kernel_gram_backprop(
     :type path2: numpy.ndarray | torch.tensor
     :param dyadic_order: The dyadic order(s) used to compute the signature kernels.
     :type dyadic_order: int | tuple
-    :param kernel: TODO
-    :type kernel: str
+    :param kernel: Ambient kernel. If ``None`` (default), the linear kernel will be used.
+        For details, see the documentation on :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
+    :type kernel: None | pysiglib.AmbientKernel
     :param time_aug: If ``True``, assumes the paths were time augmented.
     :type time_aug: bool
     :param lead_lag: If ``True``, assumes the lead-lag transform was applied.

@@ -36,15 +36,19 @@ Fast Signature Computations on CPU and GPU.
    :titlesonly:
    :maxdepth: 2
 
-   /pages/transform_path
-   /pages/sig_length
-   /pages/signature
-   /pages/sig_combine
-   /pages/sig_kernel
-   /pages/sig_kernel_gram
-   /pages/sig_score
-   /pages/expected_sig_score
-   /pages/sig_mmd
+   /pages/path_transformations
+
+.. toctree::
+   :titlesonly:
+   :maxdepth: 2
+
+   /pages/signatures
+
+.. toctree::
+   :titlesonly:
+   :maxdepth: 2
+
+   /pages/signature_kernels
 
 .. toctree::
    :titlesonly:

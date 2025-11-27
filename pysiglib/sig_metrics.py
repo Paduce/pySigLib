@@ -34,6 +34,8 @@ def sig_score(
 
         \\widehat{\\phi}_{\\text{sig}}(\\mu, y) := \\frac{\\lambda }{m(m-1)} \\sum_{j \\neq i} k(x_i, x_j) - \\frac{2}{m} \\sum_i k(x_i, y).
 
+    Optionally, an ambient kernel can be specified. For details, see the documentation on
+    :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
 
     :param sample: The batch of sample paths drawn from :math:`\\mu`, given as a `numpy.ndarray` or
         `torch.tensor`. This must be of shape ``(batch_size_1, length_1, dimension)``.
@@ -49,8 +51,10 @@ def sig_score(
     :type dyadic_order: int | tuple
     :param lam: The parameter :math:`\\lambda` of the generalised signature kernel score (default = 1.0).
     :type lam: float
-    :param kernel: TODO
-    :type kernel: str
+    :param kernel: Ambient kernel passed to the signature kernel computation. If ``None`` (default), the
+        linear kernel will be used. For details, see the documentation on
+        :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
+    :type kernel: None | pysiglib.AmbientKernel
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
         where :math:`t_L` is given by the parameter ``end_time``.
@@ -129,6 +133,8 @@ def expected_sig_score(
 
         \\frac{\\lambda }{m(m-1)} \\sum_{j \\neq i} k(x_i, x_j) - \\frac{2}{mn} \\sum_{i,j} k(x_i, y_j).
 
+    Optionally, an ambient kernel can be specified. For details, see the documentation on
+    :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
 
     :param sample1: The batch of sample paths drawn from :math:`\\mu`, given as a `numpy.ndarray` or
         `torch.tensor`. This must be of shape ``(batch_size_1, length_1, dimension)``.
@@ -143,8 +149,10 @@ def expected_sig_score(
     :type dyadic_order: int | tuple
     :param lam: The parameter :math:`\\lambda` of the generalised signature kernel score (default = 1.0).
     :type lam: float
-    :param kernel: TODO
-    :type kernel: str
+    :param kernel: Ambient kernel passed to the signature kernel computation. If ``None`` (default), the
+        linear kernel will be used. For details, see the documentation on
+        :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
+    :type kernel: None | pysiglib.AmbientKernel
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
         where :math:`t_L` is given by the parameter ``end_time``.
@@ -210,6 +218,8 @@ def sig_mmd(
 
         \\widehat{d}(\\mu, \\nu)^2 = \\frac{1}{m(m-1)}\\sum_{j \\neq i}k(x_i, x_j) - \\frac{2}{mn}\\sum_{i,j}k(x_i, x_j) + \\frac{1}{n(n-1)}\\sum_{j \\neq i} k(y_i, y_j).
 
+    Optionally, an ambient kernel can be specified. For details, see the documentation on
+    :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
 
     :param sample1: The batch of sample paths drawn from :math:`\\mu`, given as a `numpy.ndarray` or
         `torch.tensor`. This must be of shape ``(batch_size_1, length_1, dimension)``.
@@ -222,8 +232,10 @@ def sig_mmd(
         :math:`(\\lambda_1, \\lambda_2)`, will refine the first path by :math:`2^{\\lambda_1}`
         and the second path by :math:`2^{\\lambda_2}`.
     :type dyadic_order: int | tuple
-    :param kernel: TODO
-    :type kernel: str
+    :param kernel: Ambient kernel passed to the signature kernel computation. If ``None`` (default), the
+        linear kernel will be used. For details, see the documentation on
+        :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
+    :type kernel: None | pysiglib.AmbientKernel
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
         where :math:`t_L` is given by the parameter ``end_time``.
