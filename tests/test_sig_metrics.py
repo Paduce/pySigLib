@@ -109,7 +109,7 @@ def test_expected_sig_score_random_cpu_rbf(dyadic_order):
     static_kernel = sigkernel.RBFKernel(2.)
     signature_kernel = sigkernel.SigKernel(static_kernel, dyadic_order)
     d1 = float(signature_kernel.compute_expected_scoring_rule(X, Y, 100))
-    d2 = pysiglib.expected_sig_score(X, Y, dyadic_order, n_jobs = -1, kernel = pysiglib.RBFKernel(2.))
+    d2 = pysiglib.expected_sig_score(X, Y, dyadic_order, n_jobs = -1, static_kernel= pysiglib.RBFKernel(2.))
 
     assert not abs(d1 - d2) > EPSILON
 
@@ -149,7 +149,7 @@ def test_sig_mmd_random_cpu_rbf(dyadic_order):
     static_kernel = sigkernel.RBFKernel(2.)
     signature_kernel = sigkernel.SigKernel(static_kernel, dyadic_order)
     mmd1 = float(signature_kernel.compute_mmd(X, Y, 100))
-    mmd2 = pysiglib.sig_mmd(X, Y, dyadic_order, n_jobs = -1, kernel = pysiglib.RBFKernel(2.))
+    mmd2 = pysiglib.sig_mmd(X, Y, dyadic_order, n_jobs = -1, static_kernel= pysiglib.RBFKernel(2.))
 
     assert not abs(mmd1 - mmd2) > EPSILON
 

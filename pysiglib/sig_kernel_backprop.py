@@ -26,7 +26,7 @@ from .load_siglib import CPSIG, CUSIG, BUILT_WITH_CUDA
 from .param_checks import check_type
 from .error_codes import err_msg
 from .data_handlers import DoublePathInputHandler, ScalarInputHandler, GridOutputHandler, PathInputHandler
-from .ambient_kernels import AmbientKernel, LinearKernel, Context
+from .static_kernels import StaticKernel, LinearKernel, Context
 
 def sig_kernel_backprop_(data, derivs_data, result, gram, k_grid_data, dyadic_order_1, dyadic_order_2, n_jobs):
 
@@ -90,7 +90,7 @@ def sig_kernel_backprop(
         path1 : Union[np.ndarray, torch.tensor],
         path2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
-        kernel : Optional[AmbientKernel] = None,
+        static_kernel : Optional[StaticKernel] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -120,9 +120,9 @@ def sig_kernel_backprop(
     :type path2: numpy.ndarray | torch.tensor
     :param dyadic_order: The dyadic order(s) used to compute the signature kernels.
     :type dyadic_order: int | tuple
-    :param kernel: Ambient kernel. If ``None`` (default), the linear kernel will be used.
-        For details, see the documentation on :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
-    :type kernel: None | pysiglib.AmbientKernel
+    :param static_kernel: Static kernel. If ``None`` (default), the linear kernel will be used.
+        For details, see the documentation on :doc:`static kernels </pages/signature_kernels/static_kernels>`.
+    :type static_kernel: None | pysiglib.StaticKernel
     :param time_aug: If ``True``, assumes the paths were time augmented.
     :type time_aug: bool
     :param lead_lag: If ``True``, assumes the lead-lag transform was applied.
@@ -195,7 +195,7 @@ def sig_kernel_backprop(
     torch_path2 = torch.as_tensor(data.path2, dtype = torch.double)
 
     if k_grid is None:
-        k_grid = sig_kernel(torch.as_tensor(path1), torch.as_tensor(path2), dyadic_order, kernel, False, False, end_time, n_jobs, True)
+        k_grid = sig_kernel(torch.as_tensor(path1), torch.as_tensor(path2), dyadic_order, static_kernel, False, False, end_time, n_jobs, True)
 
     if not data.is_batch:
         torch_path1 = torch_path1.unsqueeze(0)
@@ -203,18 +203,18 @@ def sig_kernel_backprop(
 
     ctx = Context()
 
-    if kernel is None:
-        kernel = LinearKernel()
-    elif not isinstance(kernel, AmbientKernel):
-        raise ValueError("kernel must be a child class of pysiglib.AmbientKernel")
+    if static_kernel is None:
+        static_kernel = LinearKernel()
+    elif not isinstance(static_kernel, StaticKernel):
+        raise ValueError("kernel must be a child class of pysiglib.StaticKernel")
 
-    gram = kernel(ctx, torch_path1, torch_path2).squeeze()
+    gram = static_kernel(ctx, torch_path1, torch_path2).squeeze()
 
     k_grid_data = PathInputHandler(k_grid, False, False, 0., "k_grid")
     gram_derivs = gram_deriv(derivs_data, data, gram, k_grid_data, dyadic_order_1, dyadic_order_2, n_jobs)
 
-    ld = kernel.grad_x(ctx, gram_derivs) if left_deriv else None
-    rd = kernel.grad_y(ctx, gram_derivs) if right_deriv else None
+    ld = static_kernel.grad_x(ctx, gram_derivs) if left_deriv else None
+    rd = static_kernel.grad_y(ctx, gram_derivs) if right_deriv else None
 
     if lead_lag or time_aug:
         ld = transform_path_backprop(ld, time_aug, lead_lag, end_time, n_jobs)
@@ -232,7 +232,7 @@ def sig_kernel_gram_backprop(
         path1 : Union[np.ndarray, torch.tensor],
         path2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
-        kernel : Optional[AmbientKernel] = None,
+        static_kernel : Optional[StaticKernel] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -263,9 +263,9 @@ def sig_kernel_gram_backprop(
     :type path2: numpy.ndarray | torch.tensor
     :param dyadic_order: The dyadic order(s) used to compute the signature kernels.
     :type dyadic_order: int | tuple
-    :param kernel: Ambient kernel. If ``None`` (default), the linear kernel will be used.
-        For details, see the documentation on :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
-    :type kernel: None | pysiglib.AmbientKernel
+    :param static_kernel: Static kernel. If ``None`` (default), the linear kernel will be used.
+        For details, see the documentation on :doc:`static kernels </pages/signature_kernels/static_kernels>`.
+    :type static_kernel: None | pysiglib.StaticKernel
     :param time_aug: If ``True``, assumes the paths were time augmented.
     :type time_aug: bool
     :param lead_lag: If ``True``, assumes the lead-lag transform was applied.
@@ -360,13 +360,13 @@ def sig_kernel_gram_backprop(
             path2_ = path2[j:j + batch2_, :, :].repeat(batch1_, 1, 1).contiguous().clone()
 
             if k_grid is None:
-                k = sig_kernel(path1_, path2_, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, True)
+                k = sig_kernel(path1_, path2_, dyadic_order, static_kernel, time_aug, lead_lag, end_time, n_jobs, True)
             else:
                 k = k_grid[i:i + batch1_, j:j + batch2_, :, :].contiguous().clone()
 
             derivs_ = derivs[i:i + batch1_, j:j + batch2_].flatten().contiguous().clone()
 
-            ld_, rd_ = sig_kernel_backprop(derivs_, path1_, path2_, dyadic_order, kernel, time_aug, lead_lag, end_time, left_deriv, right_deriv, k, n_jobs)
+            ld_, rd_ = sig_kernel_backprop(derivs_, path1_, path2_, dyadic_order, static_kernel, time_aug, lead_lag, end_time, left_deriv, right_deriv, k, n_jobs)
 
             if left_deriv:
                 ld_ = ld_.reshape((batch1_, batch2_) + ld_.shape[1:])

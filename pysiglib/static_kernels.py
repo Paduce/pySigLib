@@ -18,10 +18,10 @@ import torch
 
 class Context:
     """
-    Provides context for backpropagation through ambient kernels.
+    Provides context for backpropagation through static kernels.
     It is not generally necessary to create instances of this class
     manually; documentation for this class is provided purely for
-    reference when constructing custom-made ambient kernels.
+    reference when constructing custom-made static kernels.
     """
 
     def __init__(self):
@@ -41,12 +41,12 @@ class Context:
         """
         self.saved_for_y = args
 
-class AmbientKernel(ABC):
+class StaticKernel(ABC):
 
     @abstractmethod
     def __call__(self, ctx : Context, x : torch.Tensor, y : torch.Tensor):
         """
-        Returns the gram matrix of ambient kernels:
+        Returns the gram matrix of static kernels:
 
         .. math::
 
@@ -70,7 +70,7 @@ class AmbientKernel(ABC):
     @abstractmethod
     def grad_x(self, ctx : Context, derivs : torch.Tensor):
         """
-        Backpropagates ``derivs`` through the kernel computation and returns the
+        Backpropagates ``derivs`` through the static kernel computation and returns the
         derivatives with respect to the path :math:`x`.
 
         :param ctx: ``pysiglib.Context`` object for backpropagation
@@ -85,7 +85,7 @@ class AmbientKernel(ABC):
     @abstractmethod
     def grad_y(self, ctx : Context, derivs : torch.Tensor):
         """
-        Backpropagates ``derivs`` through the kernel computation and returns the
+        Backpropagates ``derivs`` through the static kernel computation and returns the
         derivatives with respect to the path :math:`y`.
 
         :param ctx: ``pysiglib.Context`` object for backpropagation
@@ -97,7 +97,7 @@ class AmbientKernel(ABC):
         """
         pass
 
-class LinearKernel(AmbientKernel):
+class LinearKernel(StaticKernel):
     """
     The linear kernel, defined by :math:`\\kappa(x, y) = \\langle x, y \\rangle`.
     """
@@ -124,7 +124,7 @@ class LinearKernel(AmbientKernel):
         out[:, :, :-1] -= derivs
         return torch.bmm(out.permute(0, 2, 1), dx)
 
-class ScaledLinearKernel(AmbientKernel):
+class ScaledLinearKernel(StaticKernel):
     """
     The scaled linear kernel, defined by :math:`\\kappa(x, y) = \\langle \\alpha x, \\alpha y \\rangle = \\alpha^2 \\langle x, y \\rangle`,
     where :math:`\\alpha` is given by the parameter ``scale``. A choice of ``scale=1.0`` corresponds to the standard
@@ -145,7 +145,7 @@ class ScaledLinearKernel(AmbientKernel):
     def grad_y(self, ctx : Context, derivs : torch.Tensor):
         return self.linear_kernel.grad_y(ctx, derivs)
 
-class RBFKernel(AmbientKernel):
+class RBFKernel(StaticKernel):
     """
     The RBF kernel, defined by :math:`\\kappa(x, y) = \\exp\\left( -\\frac{\\lVert x - y \\rVert^2}{\\sigma} \\right)`.
     """

@@ -23,7 +23,7 @@ from .load_siglib import CPSIG, CUSIG, BUILT_WITH_CUDA
 from .param_checks import check_type
 from .error_codes import err_msg
 from .data_handlers import DoublePathInputHandler, ScalarOutputHandler, GridOutputHandler
-from .ambient_kernels import AmbientKernel, LinearKernel, Context
+from .static_kernels import StaticKernel, LinearKernel, Context
 
 def sig_kernel_(data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs, return_grid):
 
@@ -62,7 +62,7 @@ def sig_kernel(
         path1 : Union[np.ndarray, torch.tensor],
         path2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
-        kernel : Optional[AmbientKernel] = None,
+        static_kernel : Optional[StaticKernel] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -87,8 +87,8 @@ def sig_kernel(
 
         \\left< u, v \\right>_{\\left(\\mathbb{R}^d\\right)^{\\otimes k}} := \\prod_{i=1}^k \\left< u_i, v_i \\right>_{\\mathbb{R}^d}.
 
-    Optionally, an ambient kernel can be specified. For details, see the documentation on
-    :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
+    Optionally, a static kernel can be specified. For details, see the documentation on
+    :doc:`static kernels </pages/signature_kernels/static_kernels>`.
 
     :param path1: The first underlying path or batch of paths, given as a `numpy.ndarray` or
         `torch.tensor`. For a single path, this must be of shape ``(length_1, dimension)``. For a
@@ -103,9 +103,9 @@ def sig_kernel(
         :math:`(\\lambda_1, \\lambda_2)`, will refine the first path by :math:`2^{\\lambda_1}`
         and the second path by :math:`2^{\\lambda_2}`.
     :type dyadic_order: int | tuple
-    :param kernel: Ambient kernel. If ``None`` (default), the linear kernel will be used.
-        For details, see the documentation on :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
-    :type kernel: None | pysiglib.AmbientKernel
+    :param static_kernel: Static kernel. If ``None`` (default), the linear kernel will be used.
+        For details, see the documentation on :doc:`static kernels </pages/signature_kernels/static_kernels>`.
+    :type static_kernel: None | pysiglib.StaticKernel
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
         where :math:`t_L` is given by the parameter ``end_time``.
@@ -168,12 +168,12 @@ def sig_kernel(
 
     ctx = Context()
 
-    if kernel is None:
-        kernel = LinearKernel()
-    elif not isinstance(kernel, AmbientKernel):
-        raise ValueError("kernel must be a child class of pysiglib.AmbientKernel")
+    if static_kernel is None:
+        static_kernel = LinearKernel()
+    elif not isinstance(static_kernel, StaticKernel):
+        raise ValueError("kernel must be a child class of pysiglib.StaticKernel")
 
-    gram = kernel(ctx, torch_path1, torch_path2)
+    gram = static_kernel(ctx, torch_path1, torch_path2)
 
     if data.device == "cpu":
         sig_kernel_(data, result, gram, dyadic_order_1, dyadic_order_2, n_jobs, return_grid)
@@ -189,7 +189,7 @@ def sig_kernel_gram(
         path1 : Union[np.ndarray, torch.tensor],
         path2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
-        kernel : Optional[AmbientKernel] = None,
+        static_kernel : Optional[StaticKernel] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -220,8 +220,8 @@ def sig_kernel_gram(
 
         \\left< u, v \\right>_{\\left(\\mathbb{R}^d\\right)^{\\otimes k}} := \\prod_{i=1}^k \\left< u_i, v_i \\right>_{\\mathbb{R}^d}.
 
-    Optionally, an ambient kernel can be specified. For details, see the documentation on
-    :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
+    Optionally, a static kernel can be specified. For details, see the documentation on
+    :doc:`static kernels </pages/signature_kernels/static_kernels>`.
 
     :param path1: The first underlying path or batch of paths, given as a `numpy.ndarray` or
         `torch.tensor`. For a single path, this must be of shape ``(length_1, dimension)``. For a
@@ -236,9 +236,9 @@ def sig_kernel_gram(
         :math:`(\\lambda_1, \\lambda_2)`, will refine the first path by :math:`2^{\\lambda_1}`
         and the second path by :math:`2^{\\lambda_2}`.
     :type dyadic_order: int | tuple
-    :param kernel: Ambient kernel. If ``None`` (default), the linear kernel will be used.
-        For details, see the documentation on :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
-    :type kernel: None | pysiglib.AmbientKernel
+    :param static_kernel: Static kernel. If ``None`` (default), the linear kernel will be used.
+        For details, see the documentation on :doc:`static kernels </pages/signature_kernels/static_kernels>`.
+    :type static_kernel: None | pysiglib.StaticKernel
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
         where :math:`t_L` is given by the parameter ``end_time``.
@@ -312,7 +312,7 @@ def sig_kernel_gram(
             path1_ = path1[i:i + batch1_, :, :].repeat_interleave(batch2_, 0).contiguous().clone()
             path2_ = path2[j:j + batch2_, :, :].repeat(batch1_, 1, 1).contiguous().clone()
 
-            k = sig_kernel(path1_, path2_, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, return_grid)
+            k = sig_kernel(path1_, path2_, dyadic_order, static_kernel, time_aug, lead_lag, end_time, n_jobs, return_grid)
             k = k.reshape((batch1_, batch2_) + k.shape[1:])
             res[-1].append(k)
 

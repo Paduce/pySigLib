@@ -5,7 +5,7 @@ import torch
 from .param_checks import check_type_multiple
 from .data_handlers import DoublePathInputHandler
 
-from .ambient_kernels import AmbientKernel
+from .static_kernels import StaticKernel
 from .sig_kernel import sig_kernel_gram
 
 def sig_score(
@@ -13,7 +13,7 @@ def sig_score(
         y : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
         lam : float = 1.,
-        kernel : Optional[AmbientKernel] = None,
+        static_kernel : Optional[StaticKernel] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -34,8 +34,8 @@ def sig_score(
 
         \\widehat{\\phi}_{\\text{sig}}(\\mu, y) := \\frac{\\lambda }{m(m-1)} \\sum_{j \\neq i} k(x_i, x_j) - \\frac{2}{m} \\sum_i k(x_i, y).
 
-    Optionally, an ambient kernel can be specified. For details, see the documentation on
-    :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
+    Optionally, a static kernel can be specified. For details, see the documentation on
+    :doc:`static kernels </pages/signature_kernels/static_kernels>`.
 
     :param sample: The batch of sample paths drawn from :math:`\\mu`, given as a `numpy.ndarray` or
         `torch.tensor`. This must be of shape ``(batch_size_1, length_1, dimension)``.
@@ -51,10 +51,10 @@ def sig_score(
     :type dyadic_order: int | tuple
     :param lam: The parameter :math:`\\lambda` of the generalised signature kernel score (default = 1.0).
     :type lam: float
-    :param kernel: Ambient kernel passed to the signature kernel computation. If ``None`` (default), the
+    :param static_kernel: Static kernel passed to the signature kernel computation. If ``None`` (default), the
         linear kernel will be used. For details, see the documentation on
-        :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
-    :type kernel: None | pysiglib.AmbientKernel
+        :doc:`static kernels </pages/signature_kernels/static_kernels>`.
+    :type static_kernel: None | pysiglib.StaticKernel
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
         where :math:`t_L` is given by the parameter ``end_time``.
@@ -95,8 +95,8 @@ def sig_score(
 
     B = sample.shape[0]
 
-    xx = sig_kernel_gram(sample, sample, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
-    xy = sig_kernel_gram(sample, y, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    xx = sig_kernel_gram(sample, sample, dyadic_order, static_kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    xy = sig_kernel_gram(sample, y, dyadic_order, static_kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
 
     xx_sum = (torch.sum(xx) - torch.sum(torch.diag(xx))) / (B * (B - 1.))
     xy_sum = torch.sum(xy, dim = 0) * (2. / B)
@@ -112,7 +112,7 @@ def expected_sig_score(
         sample2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
         lam : float = 1.,
-        kernel : Optional[AmbientKernel] = None,
+        static_kernel : Optional[StaticKernel] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -133,8 +133,8 @@ def expected_sig_score(
 
         \\frac{\\lambda }{m(m-1)} \\sum_{j \\neq i} k(x_i, x_j) - \\frac{2}{mn} \\sum_{i,j} k(x_i, y_j).
 
-    Optionally, an ambient kernel can be specified. For details, see the documentation on
-    :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
+    Optionally, a static kernel can be specified. For details, see the documentation on
+    :doc:`static kernels </pages/signature_kernels/static_kernels>`.
 
     :param sample1: The batch of sample paths drawn from :math:`\\mu`, given as a `numpy.ndarray` or
         `torch.tensor`. This must be of shape ``(batch_size_1, length_1, dimension)``.
@@ -149,10 +149,10 @@ def expected_sig_score(
     :type dyadic_order: int | tuple
     :param lam: The parameter :math:`\\lambda` of the generalised signature kernel score (default = 1.0).
     :type lam: float
-    :param kernel: Ambient kernel passed to the signature kernel computation. If ``None`` (default), the
+    :param static_kernel: Static kernel passed to the signature kernel computation. If ``None`` (default), the
         linear kernel will be used. For details, see the documentation on
-        :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
-    :type kernel: None | pysiglib.AmbientKernel
+        :doc:`static kernels </pages/signature_kernels/static_kernels>`.
+    :type static_kernel: None | pysiglib.StaticKernel
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
         where :math:`t_L` is given by the parameter ``end_time``.
@@ -180,7 +180,7 @@ def expected_sig_score(
         inefficient.
     """
 
-    res = sig_score(sample1, sample2, dyadic_order, lam, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch)
+    res = sig_score(sample1, sample2, dyadic_order, lam, static_kernel, time_aug, lead_lag, end_time, n_jobs, max_batch)
 
     if isinstance(res, torch.Tensor):
         res = torch.mean(res, 0, True)
@@ -193,7 +193,7 @@ def sig_mmd(
         sample1 : Union[np.ndarray, torch.tensor],
         sample2 : Union[np.ndarray, torch.tensor],
         dyadic_order : Union[int, tuple],
-        kernel : Optional[AmbientKernel] = None,
+        static_kernel : Optional[StaticKernel] = None,
         time_aug : bool = False,
         lead_lag : bool = False,
         end_time : float = 1.,
@@ -218,8 +218,8 @@ def sig_mmd(
 
         \\widehat{d}(\\mu, \\nu)^2 = \\frac{1}{m(m-1)}\\sum_{j \\neq i}k(x_i, x_j) - \\frac{2}{mn}\\sum_{i,j}k(x_i, x_j) + \\frac{1}{n(n-1)}\\sum_{j \\neq i} k(y_i, y_j).
 
-    Optionally, an ambient kernel can be specified. For details, see the documentation on
-    :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
+    Optionally, a static kernel can be specified. For details, see the documentation on
+    :doc:`static kernels </pages/signature_kernels/static_kernels>`.
 
     :param sample1: The batch of sample paths drawn from :math:`\\mu`, given as a `numpy.ndarray` or
         `torch.tensor`. This must be of shape ``(batch_size_1, length_1, dimension)``.
@@ -232,10 +232,10 @@ def sig_mmd(
         :math:`(\\lambda_1, \\lambda_2)`, will refine the first path by :math:`2^{\\lambda_1}`
         and the second path by :math:`2^{\\lambda_2}`.
     :type dyadic_order: int | tuple
-    :param kernel: Ambient kernel passed to the signature kernel computation. If ``None`` (default), the
+    :param static_kernel: Static kernel passed to the signature kernel computation. If ``None`` (default), the
         linear kernel will be used. For details, see the documentation on
-        :doc:`ambient kernels </pages/signature_kernels/ambient_kernels>`.
-    :type kernel: None | pysiglib.AmbientKernel
+        :doc:`static kernels </pages/signature_kernels/static_kernels>`.
+    :type static_kernel: None | pysiglib.StaticKernel
     :param time_aug: If set to True, will compute the signature of the time-augmented path, :math:`\\hat{x}_t := (t, x_t)`,
         defined as the original path with an extra channel set to time, :math:`t`. This channel spans :math:`[0, t_L]`,
         where :math:`t_L` is given by the parameter ``end_time``.
@@ -271,9 +271,9 @@ def sig_mmd(
     m = sample1.shape[0]
     n = sample2.shape[0]
 
-    xx = sig_kernel_gram(sample1, sample1, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
-    xy = sig_kernel_gram(sample1, sample2, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
-    yy = sig_kernel_gram(sample2, sample2, dyadic_order, kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    xx = sig_kernel_gram(sample1, sample1, dyadic_order, static_kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    xy = sig_kernel_gram(sample1, sample2, dyadic_order, static_kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
+    yy = sig_kernel_gram(sample2, sample2, dyadic_order, static_kernel, time_aug, lead_lag, end_time, n_jobs, max_batch, False)
 
     xx_sum = (torch.sum(xx) - torch.sum(torch.diag(xx))) / (m * (m - 1))
     xy_sum = 2. * torch.mean(xy)

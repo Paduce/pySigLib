@@ -134,7 +134,7 @@ def test_sig_kernel_scaled_linear_cpu(dyadic_order):
     kernel1 = signature_kernel.compute_kernel(X, Y, 100)
 
     static_kernel = pysiglib.ScaledLinearKernel(0.5)
-    kernel2 = pysiglib.sig_kernel(X, Y, dyadic_order, kernel = static_kernel)
+    kernel2 = pysiglib.sig_kernel(X, Y, dyadic_order, static_kernel= static_kernel)
 
     check_close(kernel1, kernel2)
 
@@ -149,7 +149,7 @@ def test_sig_kernel_rbf_cpu(dyadic_order):
     kernel1 = signature_kernel.compute_kernel(X, Y, 100)
 
     static_kernel = pysiglib.RBFKernel(0.5)
-    kernel2 = pysiglib.sig_kernel(X, Y, dyadic_order, kernel = static_kernel)
+    kernel2 = pysiglib.sig_kernel(X, Y, dyadic_order, static_kernel= static_kernel)
 
     check_close(kernel1, kernel2)
 

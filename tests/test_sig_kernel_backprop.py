@@ -40,14 +40,14 @@ def finite_difference(x1, x2, dyadic_order, time_aug = False, lead_lag = False, 
     dim = x1.shape[2]
 
     eps = 1e-10
-    k = pysiglib.sig_kernel(x1, x2, dyadic_order, time_aug = time_aug, lead_lag = lead_lag, kernel = kernel)
+    k = pysiglib.sig_kernel(x1, x2, dyadic_order, time_aug = time_aug, lead_lag = lead_lag, static_kernel= kernel)
     out = np.empty(shape = (batch_size, length, dim))
 
     for i in range(length):
         for d in range(dim):
             x1_d = deepcopy(x1)
             x1_d[:,i,d] += eps
-            k_d = pysiglib.sig_kernel(x1_d, x2, dyadic_order, time_aug = time_aug, lead_lag = lead_lag, kernel = kernel)
+            k_d = pysiglib.sig_kernel(x1_d, x2, dyadic_order, time_aug = time_aug, lead_lag = lead_lag, static_kernel= kernel)
             out[:,i,d] = (k_d - k) / eps
     return out
 
@@ -92,7 +92,7 @@ def test_sig_kernel_scaled_linear_backprop_batch(dyadic_order):
 
     d1 = finite_difference(X, Y, dyadic_order, kernel = kernel)
     d2 = finite_difference(Y, X, dyadic_order, kernel = kernel)
-    d3, d4 = pysiglib.sig_kernel_backprop(derivs, X, Y, dyadic_order, left_deriv = True, right_deriv = True, kernel = kernel)
+    d3, d4 = pysiglib.sig_kernel_backprop(derivs, X, Y, dyadic_order, left_deriv = True, right_deriv = True, static_kernel= kernel)
 
     check_close(d1, d3)
     check_close(d2, d4)
@@ -107,8 +107,8 @@ def test_sig_kernel_rbf_backprop_batch(dyadic_order):
 
     d1 = finite_difference(X, Y, dyadic_order, kernel = kernel)
     d2 = finite_difference(Y, X, dyadic_order, kernel = kernel)
-    d3, d4 = pysiglib.sig_kernel_backprop(derivs, X, Y, dyadic_order, left_deriv = True, right_deriv = True, kernel = kernel)
-    _, d5 = pysiglib.sig_kernel_backprop(derivs, X, Y, dyadic_order, left_deriv = False, right_deriv = True, kernel=kernel)
+    d3, d4 = pysiglib.sig_kernel_backprop(derivs, X, Y, dyadic_order, left_deriv = True, right_deriv = True, static_kernel= kernel)
+    _, d5 = pysiglib.sig_kernel_backprop(derivs, X, Y, dyadic_order, left_deriv = False, right_deriv = True, static_kernel=kernel)
 
     check_close(d1, d3)
     check_close(d2, d4)

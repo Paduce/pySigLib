@@ -1,13 +1,11 @@
-Ambient Kernels
+Static Kernels
 ========================
 
 A common approach when using signature kernels is to first lift the underlying ambient
 space to a new feature space by means of a feature map, and then consider the signature
-kernel in this feature space.
-
-Practically, this can be achieved by modifying the signature kernel PDE to use a static
-kernel on the ambient space. Recall that the (standard) signature kernel :math:`k_{x,y}`
-is the solution to the Goursat PDE
+kernel in this feature space. Practically, this can be achieved by modifying the signature
+kernel PDE to use a static kernel on the ambient space. Recall that the (standard) signature
+kernel :math:`k_{x,y}` is the solution to the Goursat PDE
 
 .. math::
 
@@ -26,7 +24,7 @@ If instead one considers a static kernel :math:`\kappa` on the ambient space, th
     \frac{\partial^2 k_{x,y}}{\partial s \partial t} = \left( \kappa(x_s, y_t) - \kappa(x_{s-1}, y_t) - \kappa(x_s, y_{t-1}) + \kappa(x_{s-1}, y_{t-1}) \right) k_{x,y}, \quad k_{x,y}(u, \cdot) = k_{x,y}(\cdot, v) = 1.
 
 ``pysiglib`` functions which utilise signature kernels accept :math:`\kappa` as an optional
-parameter (``kernel``). By default, the standard linear kernel will be used. ``pysiglib``
+parameter (``static_kernel``). By default, the standard linear kernel will be used. ``pysiglib``
 provides implementations of the :ref:`linear kernel <linear-kernel-anchor>`,
 :ref:`scaled linear kernel <scaled-linear-kernel-anchor>` and :ref:`RBF kernel <rbf-kernel-anchor>`,
 which are documented below. In addition, one may define :ref:`custom kernels <custom-kernels-anchor>`.
@@ -44,11 +42,11 @@ which are documented below. In addition, one may define :ref:`custom kernels <cu
 
     # Explicitly passed linear kernel - same as default behaviour
     static_kernel = pysiglib.LinearKernel()
-    ker = pysiglib.sig_kernel(X, Y, dyadic_order=1, kernel=static_kernel)
+    ker = pysiglib.sig_kernel(X, Y, dyadic_order=1, static_kernel=static_kernel)
 
     # RBF kernel
     static_kernel = pysiglib.RBFKernel(0.5)
-    ker = pysiglib.sig_kernel(X, Y, dyadic_order=1, kernel=static_kernel)
+    ker = pysiglib.sig_kernel(X, Y, dyadic_order=1, static_kernel=static_kernel)
 
 
 Standard Kernels
@@ -66,16 +64,18 @@ Custom Kernels
 ------------------
 
 In addition to the provided kernels, one can use a custom kernel by defining a child
-class of the abstract base class ``pysiglib.AmbientKernel`` and using the methods of
+class of the abstract base class ``pysiglib.StaticKernel`` and using the methods of
 ``pysiglib.Context`` to save objects for re-use in backpropagation. For example,
 an implementation of ``pysiglib.LinearKernel`` is given below. When writing custom
 kernels, it is very important to make them as efficient as possible, as computation
-of the ambient kernel makes up a significant proportion of the overall computational
+of the static kernel makes up a significant proportion of the overall computational
 cost of signature kernels.
 
 .. code-block:: python
 
-    class LinearKernel(AmbientKernel):
+    from pysiglib import StaticKernel
+
+    class LinearKernel(StaticKernel):
 
     def __call__(self, ctx, x, y):
         dx = torch.diff(x, dim=1)
@@ -102,6 +102,6 @@ cost of signature kernels.
 .. autoclass:: pysiglib.Context
    :members:
 
-.. autoclass:: pysiglib.AmbientKernel
+.. autoclass:: pysiglib.StaticKernel
    :members:
    :special-members: __call__
