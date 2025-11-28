@@ -26,4 +26,4 @@ from .static_kernels import Context, StaticKernel, LinearKernel, ScaledLinearKer
 
 import pysiglib.torch_api
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
