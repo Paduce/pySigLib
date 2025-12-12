@@ -141,4 +141,3 @@ def test_sig_kernel_gram_random_cuda(dyadic_order):
 
     check_close(kernel1.cpu(), kernel2.cpu())
     check_close(kernel1.cpu(), kernel3.cpu())
-

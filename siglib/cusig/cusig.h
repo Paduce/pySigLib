@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 #ifdef CUSIG_EXPORTS
 #ifdef _WIN32
 #define CUSIG_API __declspec(dllexport)

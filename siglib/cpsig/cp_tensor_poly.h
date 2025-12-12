@@ -35,6 +35,24 @@ void exp_from_log_(
 	uint64_t degree
 );
 
+void sig_combine_(
+	const double* sig1,
+	const double* sig2,
+	double* out,
+	uint64_t dimension,
+	uint64_t degree
+);
+
+void batch_sig_combine_(
+	const double* sig1,
+	const double* sig2,
+	double* out,
+	uint64_t batch_size,
+	uint64_t dimension,
+	uint64_t degree,
+	int n_jobs
+);
+
 void log_sig_combine_(
 	const double* log_sig1,
 	const double* log_sig2,
