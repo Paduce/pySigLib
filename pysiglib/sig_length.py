@@ -43,3 +43,32 @@ def sig_length(dimension : int, degree : int) -> int:
     if out == 0:
         raise ValueError("Integer overflow encountered in sig_length")
     return out
+
+def log_sig_length(dimension : int, degree : int) -> int:
+    """
+    Returns the length of a truncated log-signature, given by the number of tensor coefficients
+    from level :math:`1` up to :math:`N`,
+
+    .. math::
+
+        \\sum_{i=1}^N d^i = \\frac{d^{N+1} - d}{d - 1},
+
+    where :math:`d` is the dimension of the underlying path and :math:`N`
+    is the truncation level of the log-signature.
+
+    :param dimension: Dimension of the underlying path, :math:`d`
+    :type dimension: int
+    :param degree: Truncation level of the log-signature, :math:`N`
+    :type degree: int
+    :return: Length of a truncated log-signature
+    :rtype: int
+    """
+    check_type(dimension, "dimension", int)
+    check_type(degree, "degree", int)
+    check_non_neg(dimension, "dimension")
+    check_non_neg(degree, "degree")
+
+    out = CPSIG.log_sig_length(dimension, degree)
+    if out == 0 and dimension != 0:
+        raise ValueError("Integer overflow encountered in log_sig_length")
+    return out

@@ -345,6 +345,12 @@ CPSIG.sig_length.argtypes = (
 )
 CPSIG.sig_length.restype = c_uint64
 
+CPSIG.log_sig_length.argtypes = (
+    c_uint64,
+    c_uint64
+)
+CPSIG.log_sig_length.restype = c_uint64
+
 ######################################################
 # sig_combine
 ######################################################
@@ -372,6 +378,34 @@ CPSIG.batch_sig_combine.argtypes = (
     c_int
 )
 CPSIG.batch_sig_combine.restype = c_int
+
+######################################################
+# log_sig_combine
+######################################################
+
+CPSIG.log_sig_combine.argtypes = (
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64
+)
+CPSIG.log_sig_combine.restype = c_int
+
+######################################################
+# batch_log_sig_combine
+######################################################
+
+CPSIG.batch_log_sig_combine.argtypes = (
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_int
+)
+CPSIG.batch_log_sig_combine.restype = c_int
 
 ######################################################
 # sig_combine_backprop
@@ -460,6 +494,62 @@ CPSIG.signature_double.argtypes = (
     c_bool
 )
 CPSIG.signature_double.restype = c_int
+
+######################################################
+# log_signature
+######################################################
+
+CPSIG.log_signature_int32.argtypes = (
+    POINTER(c_int32),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_double,
+    c_bool
+)
+CPSIG.log_signature_int32.restype = c_int
+
+CPSIG.log_signature_int64.argtypes = (
+    POINTER(c_int64),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_double,
+    c_bool
+)
+CPSIG.log_signature_int64.restype = c_int
+
+CPSIG.log_signature_float.argtypes = (
+    POINTER(c_float),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_double,
+    c_bool
+)
+CPSIG.log_signature_float.restype = c_int
+
+CPSIG.log_signature_double.argtypes = (
+    POINTER(c_double),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_double,
+    c_bool
+)
+CPSIG.log_signature_double.restype = c_int
 
 ######################################################
 # sig_backprop
@@ -584,6 +674,70 @@ CPSIG.batch_signature_double.argtypes = (
     c_int
 )
 CPSIG.batch_signature_double.restype = c_int
+
+######################################################
+# batch_log_signature
+######################################################
+
+CPSIG.batch_log_signature_int32.argtypes = (
+    POINTER(c_int32),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_double,
+    c_bool,
+    c_int
+)
+CPSIG.batch_log_signature_int32.restype = c_int
+
+CPSIG.batch_log_signature_int64.argtypes = (
+    POINTER(c_int64),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_double,
+    c_bool,
+    c_int
+)
+CPSIG.batch_log_signature_int64.restype = c_int
+
+CPSIG.batch_log_signature_float.argtypes = (
+    POINTER(c_float),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_double,
+    c_bool,
+    c_int
+)
+CPSIG.batch_log_signature_float.restype = c_int
+
+CPSIG.batch_log_signature_double.argtypes = (
+    POINTER(c_double),
+    POINTER(c_double),
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_uint64,
+    c_bool,
+    c_bool,
+    c_double,
+    c_bool,
+    c_int
+)
+CPSIG.batch_log_signature_double.restype = c_int
 
 ######################################################
 # batch_sig_backprop

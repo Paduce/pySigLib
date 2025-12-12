@@ -2,3 +2,5 @@ Requests
 setuptools
 numpy
 torch
+pytest
+iisignature

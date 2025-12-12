@@ -142,6 +142,16 @@ extern "C" {
 	CPSIG_API uint64_t sig_length(uint64_t dimension, uint64_t degree) noexcept;
 
 	/**
+	* @brief Returns the length of a truncated log-signature.
+	*
+	*
+	* @param dimension Dimension of the underlying path.
+	* @param degree Truncation degree of the log-signature.
+	* @return Length of a truncated log-signature. A returned value of 0 indicates integer overflow.
+	*/
+	CPSIG_API uint64_t log_sig_length(uint64_t dimension, uint64_t degree) noexcept;
+
+	/**
 	* @brief Combines two truncated signatures of the same degree and dimension into one signature.
 	*
 	*
@@ -171,6 +181,37 @@ extern "C" {
 	* @return Status code (0 = success).
 	*/
 	CPSIG_API int batch_sig_combine(const double* sig1, const double* sig2, double* out, uint64_t batch_size, uint64_t dimension, uint64_t degree, int n_jobs = 1) noexcept;
+
+	/**
+	* @brief Combines two truncated log-signatures of the same degree and dimension into one log-signature.
+	*
+	*
+	* @param log_sig1 Pointer to the first truncated log-signature, size = `log_sig_length(dimension, degree)`.
+	* @param log_sig2 Pointer to the second truncated log-signature, size = `log_sig_length(dimension, degree)`. Must have the same degree and dimension as the first.
+	* @param out Pointer to the output buffer (preallocated), size = `log_sig_length(dimension, degree)`.
+	* @param dimension Dimension of the underlying paths.
+	* @param degree Truncation degree of the log-signatures.
+	* @return Status code (0 = success).
+	*/
+	CPSIG_API int log_sig_combine(const double* log_sig1, const double* log_sig2, double* out, uint64_t dimension, uint64_t degree) noexcept;
+
+	/**
+	* @brief Combines a batch of pairs of truncated log-signatures of the same degree and dimension.
+	*
+	*
+	* @param log_sig1 Pointer to the batch of first truncated log-signatures (row-major), size = `batch_size * log_sig_length(dimension, degree)`.
+	* @param log_sig2 Pointer to the batch of second truncated log-signatures (row-major), size = `batch_size * log_sig_length(dimension, degree)`.
+	*					Must have the same batch size, degree and dimension as the first.
+	* @param out Pointer to the output buffer (row-major, preallocated), size = `batch_size * log_sig_length(dimension, degree)`.
+	* @param batch_size Batch size of log_sig1 and log_sig2.
+	* @param dimension Dimension of the underlying paths.
+	* @param degree Truncation degree of the log-signatures.
+	* @param n_jobs Number of threads to run in parallel. If n_jobs = 1, the computation is run serially. If set to -1, all 
+	*				available threads are used. For n_jobs below -1, (max_threads + 1 + n_jobs) threads are used. For example 
+	*				if n_jobs = -2, all threads but one are used (default = 1).
+	* @return Status code (0 = success).
+	*/
+	CPSIG_API int batch_log_sig_combine(const double* log_sig1, const double* log_sig2, double* out, uint64_t batch_size, uint64_t dimension, uint64_t degree, int n_jobs = 1) noexcept;
 
 	/**
 	* @brief Backpropagation through the sig_combine function.
@@ -230,6 +271,27 @@ extern "C" {
 	CPSIG_API int signature_int32(const int32_t* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, double end_time = 1., bool horner = true) noexcept;
 	/** @brief */
 	CPSIG_API int signature_int64(const int64_t* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, double end_time = 1., bool horner = true) noexcept;
+
+	/**
+	* @brief Computes the log-signature of a path of type float.
+	* @param path Pointer to path data (row-major), size = `length * dimension`.
+	* @param out Pointer to output buffer (preallocated), size = `log_sig_length(dimension, degree)`.
+	* @param dimension Dimension of the path.
+	* @param length Length of the path.
+	* @param degree Truncation degree of the log-signature.
+	* @param time_aug Whether to add time augmentation (default = false).
+	* @param lead_lag Whether to apply lead-lag transform (default = false).
+	* @param end_time End time for time augmentation (default = 1.0).
+	* @param horner Whether to use Horner's scheme for the intermediate signature computation (default = true).
+	* @return Status code (0 = success).
+	*/
+	CPSIG_API int log_signature_float(const float* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, double end_time = 1., bool horner = true) noexcept;
+	/** @brief */
+	CPSIG_API int log_signature_double(const double* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, double end_time = 1., bool horner = true) noexcept;
+	/** @brief */
+	CPSIG_API int log_signature_int32(const int32_t* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, double end_time = 1., bool horner = true) noexcept;
+	/** @brief */
+	CPSIG_API int log_signature_int64(const int64_t* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, double end_time = 1., bool horner = true) noexcept;
 	/** @} */
 
 
@@ -261,6 +323,31 @@ extern "C" {
 	CPSIG_API int batch_signature_int32(const int32_t* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, double end_time = 1., bool horner = true, int n_jobs = 1) noexcept;
 	/** @brief */
 	CPSIG_API int batch_signature_int64(const int64_t* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, double end_time = 1., bool horner = true, int n_jobs = 1) noexcept;
+
+	/**
+	* @brief Computes the log-signature of a batch of paths of type float.
+	* @param path Pointer to path batch data (row-major), size = `batch_size * length * dimension`.
+	* @param out Pointer to output buffer (row-major, preallocated), size = `batch_size * log_sig_length(dimension, degree)`.
+	* @param batch_size Batch size of the paths.
+	* @param dimension Dimension of the path.
+	* @param length Length of the path.
+	* @param degree Truncation degree of the log-signature.
+	* @param time_aug Whether to add time augmentation (default = false).
+	* @param lead_lag Whether to apply lead-lag transform (default = false).
+	* @param end_time End time for time augmentation (default = 1.0).
+	* @param horner Whether to use Horner's scheme for the intermediate signature computation (default = true).
+	* @param n_jobs Number of threads to run in parallel. If n_jobs = 1, the computation is run serially. If set to -1, all 
+	*				available threads are used. For n_jobs below -1, (max_threads + 1 + n_jobs) threads are used. For example 
+	*				if n_jobs = -2, all threads but one are used (default = 1).
+	* @return Status code (0 = success).
+	*/
+	CPSIG_API int batch_log_signature_float(const float* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, double end_time = 1., bool horner = true, int n_jobs = 1) noexcept;
+	/** @brief */
+	CPSIG_API int batch_log_signature_double(const double* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, double end_time = 1., bool horner = true, int n_jobs = 1) noexcept;
+	/** @brief */
+	CPSIG_API int batch_log_signature_int32(const int32_t* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, double end_time = 1., bool horner = true, int n_jobs = 1) noexcept;
+	/** @brief */
+	CPSIG_API int batch_log_signature_int64(const int64_t* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug = false, bool lead_lag = false, double end_time = 1., bool horner = true, int n_jobs = 1) noexcept;
 	/** @} */
 
 
@@ -396,5 +483,3 @@ extern "C" {
 	*/
 	CPSIG_API int batch_sig_kernel_backprop(const double* gram, double* out, const double* derivs, const double* k_grid, uint64_t batch_size, uint64_t dimension, uint64_t length1, uint64_t length2, uint64_t dyadic_order_1, uint64_t dyadic_order_2, int n_jobs = 1) noexcept;
 }
-
-

@@ -66,6 +66,11 @@ X = np.random.uniform(size=(32, 1000, 10))
 sig = pysiglib.signature(X, degree = 5)
 ```
 
+The tensor logarithm of a signature can be computed via `pysiglib.log_signature`, which mirrors the same API and
+returns the log-signature without the level-0 term. Log-signatures can be combined through
+`pysiglib.log_sig_combine`, which internally applies the tensor exponential and logarithm to remain consistent with
+signature concatenation.
+
 ### Signature Kernels
 
 pySigLib implements signature kernels through the function `pysiglib.sig_kernel`,

@@ -120,6 +120,68 @@ void signature_horner_step_(
 		sig[i + 1] += increments[i];
 }
 
+template<typename T>
+void log_signature_(
+	const T* path,
+	double* out,
+	uint64_t dimension,
+	uint64_t length,
+	uint64_t degree,
+	bool time_aug = false,
+	bool lead_lag = false,
+	double end_time = 1.,
+	bool horner = true
+)
+{
+	if (dimension == 0) { throw std::invalid_argument("log_signature received path of dimension 0"); }
+
+	Path<T> path_obj(path, dimension, length, time_aug, lead_lag, end_time);
+	const uint64_t sig_len = ::sig_length(path_obj.dimension(), degree);
+
+	auto sig_uptr = std::make_unique<double[]>(sig_len);
+	double* sig = sig_uptr.get();
+
+	signature_(path, sig, dimension, length, degree, time_aug, lead_lag, end_time, horner);
+	log_from_signature_(sig, out, path_obj.dimension(), degree);
+}
+
+template<typename T>
+void batch_log_signature_(
+	const T* path,
+	double* out,
+	uint64_t batch_size,
+	uint64_t dimension,
+	uint64_t length,
+	uint64_t degree,
+	bool time_aug = false,
+	bool lead_lag = false,
+	double end_time = 1.,
+	bool horner = true,
+	int n_jobs = 1
+)
+{
+	if (dimension == 0) { throw std::invalid_argument("log_signature received path of dimension 0"); }
+
+	Path<T> dummy_path_obj(nullptr, dimension, length, time_aug, lead_lag, end_time);
+	const uint64_t sig_len = ::sig_length(dummy_path_obj.dimension(), degree);
+	const uint64_t log_sig_len = ::log_sig_length(dummy_path_obj.dimension(), degree);
+
+	auto sig_uptr = std::make_unique<double[]>(sig_len * batch_size);
+	double* sig = sig_uptr.get();
+
+	batch_signature_(path, sig, batch_size, dimension, length, degree, time_aug, lead_lag, end_time, horner, n_jobs);
+
+	const double* sig_ptr = sig;
+	const double* sig_end = sig + sig_len * batch_size;
+	double* out_ptr = out;
+	for (; sig_ptr < sig_end;
+		sig_ptr += sig_len,
+		out_ptr += log_sig_len) {
+
+		log_from_signature_(sig_ptr, out_ptr, dummy_path_obj.dimension(), degree);
+	}
+}
+
 extern "C" {
 
 	CPSIG_API int signature_float(const float* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, double end_time, bool horner) noexcept {
@@ -138,6 +200,22 @@ extern "C" {
 		SAFE_CALL(signature_<int64_t>(path, out, dimension, length, degree, time_aug, lead_lag, end_time, horner));
 	}
 
+	CPSIG_API int log_signature_float(const float* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, double end_time, bool horner) noexcept {
+		SAFE_CALL(log_signature_<float>(path, out, dimension, length, degree, time_aug, lead_lag, end_time, horner));
+	}
+
+	CPSIG_API int log_signature_double(const double* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, double end_time, bool horner) noexcept {
+		SAFE_CALL(log_signature_<double>(path, out, dimension, length, degree, time_aug, lead_lag, end_time, horner));
+	}
+
+	CPSIG_API int log_signature_int32(const int32_t* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, double end_time, bool horner) noexcept {
+		SAFE_CALL(log_signature_<int32_t>(path, out, dimension, length, degree, time_aug, lead_lag, end_time, horner));
+	}
+
+	CPSIG_API int log_signature_int64(const int64_t* path, double* out, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, double end_time, bool horner) noexcept {
+		SAFE_CALL(log_signature_<int64_t>(path, out, dimension, length, degree, time_aug, lead_lag, end_time, horner));
+	}
+
 	CPSIG_API int batch_signature_float(const float* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, double end_time, bool horner, int n_jobs) noexcept {
 		SAFE_CALL(batch_signature_<float>(path, out, batch_size, dimension, length, degree, time_aug, lead_lag, end_time, horner, n_jobs));
 	}
@@ -152,6 +230,22 @@ extern "C" {
 
 	CPSIG_API int batch_signature_int64(const int64_t* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, double end_time, bool horner, int n_jobs) noexcept {
 		SAFE_CALL(batch_signature_<int64_t>(path, out, batch_size, dimension, length, degree, time_aug, lead_lag, end_time, horner, n_jobs));
+	}
+
+	CPSIG_API int batch_log_signature_float(const float* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, double end_time, bool horner, int n_jobs) noexcept {
+		SAFE_CALL(batch_log_signature_<float>(path, out, batch_size, dimension, length, degree, time_aug, lead_lag, end_time, horner, n_jobs));
+	}
+
+	CPSIG_API int batch_log_signature_double(const double* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, double end_time, bool horner, int n_jobs) noexcept {
+		SAFE_CALL(batch_log_signature_<double>(path, out, batch_size, dimension, length, degree, time_aug, lead_lag, end_time, horner, n_jobs));
+	}
+
+	CPSIG_API int batch_log_signature_int32(const int32_t* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, double end_time, bool horner, int n_jobs) noexcept {
+		SAFE_CALL(batch_log_signature_<int32_t>(path, out, batch_size, dimension, length, degree, time_aug, lead_lag, end_time, horner, n_jobs));
+	}
+
+	CPSIG_API int batch_log_signature_int64(const int64_t* path, double* out, uint64_t batch_size, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, double end_time, bool horner, int n_jobs) noexcept {
+		SAFE_CALL(batch_log_signature_<int64_t>(path, out, batch_size, dimension, length, degree, time_aug, lead_lag, end_time, horner, n_jobs));
 	}
 
 	CPSIG_API int sig_backprop_float(const float* path, double* out, const double* sig_derivs, const double* sig, uint64_t dimension, uint64_t length, uint64_t degree, bool time_aug, bool lead_lag, double end_time) noexcept {

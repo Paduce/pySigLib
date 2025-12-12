@@ -88,6 +88,20 @@ CPSIG_BATCH_SIGNATURE = {
     "float64": CPSIG.batch_signature_double
 }
 
+CPSIG_LOG_SIGNATURE = {
+    "int32": CPSIG.log_signature_int32,
+    "int64": CPSIG.log_signature_int64,
+    "float32": CPSIG.log_signature_float,
+    "float64": CPSIG.log_signature_double
+}
+
+CPSIG_BATCH_LOG_SIGNATURE = {
+    "int32": CPSIG.batch_log_signature_int32,
+    "int64": CPSIG.batch_log_signature_int64,
+    "float32": CPSIG.batch_log_signature_float,
+    "float64": CPSIG.batch_log_signature_double
+}
+
 CPSIG_SIG_BACKPROP = {
     "int32": CPSIG.sig_backprop_int32,
     "int64": CPSIG.sig_backprop_int64,

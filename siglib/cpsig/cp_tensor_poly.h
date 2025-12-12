@@ -21,6 +21,37 @@
 // Calculate power
 // Return 0 on error (integer overflow)
 uint64_t power(uint64_t base, uint64_t exp) noexcept;
+void log_from_signature_(
+	const double* sig,
+	double* log_sig,
+	uint64_t dimension,
+	uint64_t degree
+);
+
+void exp_from_log_(
+	const double* log_sig,
+	double* sig,
+	uint64_t dimension,
+	uint64_t degree
+);
+
+void log_sig_combine_(
+	const double* log_sig1,
+	const double* log_sig2,
+	double* out,
+	uint64_t dimension,
+	uint64_t degree
+);
+
+void batch_log_sig_combine_(
+	const double* log_sig1,
+	const double* log_sig2,
+	double* out,
+	uint64_t batch_size,
+	uint64_t dimension,
+	uint64_t degree,
+	int n_jobs
+);
 
 FORCE_INLINE void sig_combine_inplace_(
 	double* sig1, 
