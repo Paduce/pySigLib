@@ -18,6 +18,8 @@ import numpy as np
 import torch
 from ..sig import signature as sig_forward
 from ..sig import sig_combine as sig_combine_forward
+from ..sig import log_signature as log_sig_forward
+from ..sig import log_sig_combine as log_sig_combine_forward
 from ..sig_backprop import sig_backprop, sig_combine_backprop
 from ..static_kernels import StaticKernel
 from ..sig_kernel import sig_kernel as sig_kernel_forward
@@ -97,6 +99,49 @@ def sig_combine(
 
 
 sig_combine.__doc__ = sig_combine_forward.__doc__
+
+class LogSignature(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, path, degree, time_aug, lead_lag, end_time, horner, n_jobs):
+        return log_sig_forward(path, degree, time_aug, lead_lag, end_time, horner, n_jobs)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return None, None, None, None, None, None, None
+
+def log_signature(
+        path : Union[np.ndarray, torch.tensor],
+        degree : int,
+        time_aug : bool = False,
+        lead_lag : bool = False,
+        horner : bool = True,
+        end_time : float = 1.,
+        n_jobs : int = 1
+) -> Union[np.ndarray, torch.tensor]:
+    return LogSignature.apply(path, degree, time_aug, lead_lag, end_time, horner, n_jobs)
+
+log_signature.__doc__ = log_sig_forward.__doc__
+
+class LogSigCombine(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, log_sig1, log_sig2, dimension ,degree, n_jobs):
+        log_sig_combined = log_sig_combine_forward(log_sig1, log_sig2, dimension ,degree, n_jobs)
+        return log_sig_combined
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return None, None, None, None, None
+
+def log_sig_combine(
+        log_sig1 : Union[np.ndarray, torch.tensor],
+        log_sig2 : Union[np.ndarray, torch.tensor],
+        dimension : int,
+        degree : int,
+        n_jobs : int = 1
+) -> Union[np.ndarray, torch.tensor]:
+    return LogSigCombine.apply(log_sig1, log_sig2, dimension ,degree, n_jobs)
+
+log_sig_combine.__doc__ = log_sig_combine_forward.__doc__
 
 class TransformPath(torch.autograd.Function):
     @staticmethod
