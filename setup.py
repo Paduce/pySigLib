@@ -22,6 +22,11 @@ import platform
 from setuptools import setup
 from setuptools.command.build_py import build_py as _build_py
 
+# Ensure local build helpers are importable even when the build cwd differs.
+PROJECT_ROOT = Path(__file__).resolve().parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 ALLOW_EDITABLE = False
 if 'ALLOW_EDITABLE' in os.environ and int(os.environ['ALLOW_EDITABLE']) == 1:
     ALLOW_EDITABLE = True
