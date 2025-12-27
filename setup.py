@@ -27,6 +27,18 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+def _load_build_utils():
+    build_utils_path = PROJECT_ROOT / "build_utils.py"
+    if not build_utils_path.exists():
+        raise ModuleNotFoundError("build_utils")
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("build_utils", build_utils_path)
+    if spec is None or spec.loader is None:
+        raise ModuleNotFoundError("build_utils")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
 ALLOW_EDITABLE = False
 if 'ALLOW_EDITABLE' in os.environ and int(os.environ['ALLOW_EDITABLE']) == 1:
     ALLOW_EDITABLE = True
@@ -76,7 +88,12 @@ if USE_CUDA:
 class CustomBuild(_build_py):
     def run(self):
         # These imports are delayed until here because they require the packages in 'setup_requires'
-        from build_utils import get_b2, build_cpsig, build_cusig, get_avx_info, make_jamfiles
+        build_utils = _load_build_utils()
+        get_b2 = build_utils.get_b2
+        build_cpsig = build_utils.build_cpsig
+        build_cusig = build_utils.build_cusig
+        get_avx_info = build_utils.get_avx_info
+        make_jamfiles = build_utils.make_jamfiles
 
         global REBUILD, SYSTEM, USE_CUDA, USE_AVX, LIBS
 
